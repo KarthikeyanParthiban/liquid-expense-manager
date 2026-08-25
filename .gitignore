@@ -1,0 +1,18 @@
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+build/
+app/build/
+/captures
+.externalNativeBuild
+.cxx
+*.apk
+*.aab
+.kotlin/
+*.log
+
+# Sensitive personal test dumps
+device_sms_dump.txt
+app/src/test/resources/device_sms_dump.txt
