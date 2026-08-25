@@ -115,7 +115,11 @@ class AnalyticsViewModel(
 
     val paymentModeSplit: StateFlow<PaymentModeSplit> = monthTransactions.map { list ->
         val debits = list.filter { it.type == TransactionType.DEBIT && !it.isExcludedFromBudget }
-        val ccDebits = debits.filter { it.bankName.contains("Card", ignoreCase = true) || it.accountMask?.startsWith("XX") == true && (it.bankName.contains("YES", ignoreCase = true) || it.bankName.contains("Axis", ignoreCase = true) || it.bankName.contains("CRED", ignoreCase = true)) }
+        val ccDebits = debits.filter {
+            it.accountType == AccountType.CREDIT_CARD ||
+                    it.bankName.contains("Card", ignoreCase = true) ||
+                    (it.accountMask?.startsWith("XX") == true && (it.bankName.contains("YES", ignoreCase = true) || it.bankName.contains("Axis", ignoreCase = true) || it.bankName.contains("CRED", ignoreCase = true) || it.bankName.contains("Kiwi", ignoreCase = true)))
+        }
         val ccAmount = ccDebits.sumOf { it.amount }
         val totalAmount = debits.sumOf { it.amount }
         val bankUpiAmount = (totalAmount - ccAmount).coerceAtLeast(0.0)

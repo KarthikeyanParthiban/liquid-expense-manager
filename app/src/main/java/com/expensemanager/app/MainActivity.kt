@@ -4,8 +4,11 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.view.Surface
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
@@ -72,8 +75,10 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
+        enableHighRefreshRate()
         checkAndRequestPermissions()
 
         setContent {
@@ -94,13 +99,66 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        enableHighRefreshRate()
+    }
+
+    private fun enableHighRefreshRate() {
+        try {
+            // Android 11+ / 12+ (API 30+/31+) Request 120Hz via AttachedSurfaceControl
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                window.decorView.post {
+                    try {
+                        val surfaceControl = window.decorView.rootSurfaceControl
+                        if (surfaceControl != null) {
+                            val method = surfaceControl.javaClass.getMethod("setFrameRate", Float::class.javaPrimitiveType, Int::class.javaPrimitiveType)
+                            method.invoke(surfaceControl, 120.0f, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE)
+                        }
+                    } catch (e: Throwable) {
+                        // ignore if unsupported on specific OEM layer
+                    }
+                }
+            }
+
+            // Android 6.0+ (API 23+) & Android 8.0+ (API 26+) preferred display mode & refresh rate
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                val display = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    display
+                } else {
+                    @Suppress("DEPRECATION")
+                    windowManager.defaultDisplay
+                }
+
+                val modes = display?.supportedModes ?: emptyArray()
+                val bestMode = modes.maxByOrNull { it.refreshRate }
+
+                val params = window.attributes
+                if (bestMode != null && bestMode.refreshRate >= 90f) {
+                    params.preferredDisplayModeId = bestMode.modeId
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    params.preferredRefreshRate = bestMode?.refreshRate ?: 120.0f
+                }
+                window.attributes = params
+            }
+        } catch (e: Exception) {
+            // fallback gracefully
+        }
+    }
+
+
     private fun checkAndRequestPermissions() {
         val permissionsToRequest = mutableListOf<String>()
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
+        val hasReadSms = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED
+        val hasReceiveSms = ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) == PackageManager.PERMISSION_GRANTED
+
+        if (!hasReadSms) {
             permissionsToRequest.add(Manifest.permission.READ_SMS)
         }
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECEIVE_SMS) != PackageManager.PERMISSION_GRANTED) {
+        if (!hasReceiveSms) {
             permissionsToRequest.add(Manifest.permission.RECEIVE_SMS)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -111,6 +169,8 @@ class MainActivity : ComponentActivity() {
 
         if (permissionsToRequest.isNotEmpty()) {
             requestPermissionLauncher.launch(permissionsToRequest.toTypedArray())
+        } else if (hasReadSms || hasReceiveSms) {
+            dashboardViewModel.syncSms()
         }
     }
 

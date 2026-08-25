@@ -21,6 +21,8 @@ import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -28,6 +30,10 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,6 +52,7 @@ import com.expensemanager.app.ui.theme.AppleGreen
 import com.expensemanager.app.ui.theme.AppleGreenLight
 import com.expensemanager.app.ui.theme.AppleRed
 import com.expensemanager.app.ui.theme.AppleRedLight
+import com.expensemanager.app.ui.theme.BorderLight
 import com.expensemanager.app.ui.theme.TextPrimary
 import com.expensemanager.app.ui.theme.TextSecondary
 import com.expensemanager.app.ui.theme.appleCard
@@ -59,6 +66,8 @@ fun AccountLedgerSheet(
     onTransactionClick: (Transaction) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var sortByAmount by remember { mutableStateOf(false) }
+
     val accountTxns = transactions.filter {
         it.accountId == account.id ||
                 (it.bankName.equals(account.bankName, ignoreCase = true) &&
@@ -71,10 +80,15 @@ fun AccountLedgerSheet(
     val isCreditCard = account.accountType == AccountType.CREDIT_CARD
     val balanceLabel = if (isCreditCard) "AVAILABLE LIMIT" else "AVAILABLE BALANCE"
 
+    val sortedTxns = remember(accountTxns, sortByAmount) {
+        if (sortByAmount) accountTxns.sortedByDescending { it.amount }
+        else accountTxns.sortedByDescending { it.timestamp }
+    }
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color(0xFFF9FAFB),
+        containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     ) {
         Column(
@@ -208,15 +222,58 @@ fun AccountLedgerSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Transactions Header
-            Text(
-                text = "ACCOUNT LEDGER (${accountTxns.size})",
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                color = TextSecondary,
-                letterSpacing = 1.1.sp,
-                modifier = Modifier.padding(horizontal = 4.dp)
-            )
+            // Transactions Header with Sort Chips
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "ACCOUNT LEDGER (${accountTxns.size})",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = TextSecondary,
+                    letterSpacing = 1.1.sp
+                )
+
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    FilterChip(
+                        selected = !sortByAmount,
+                        onClick = { sortByAmount = false },
+                        label = { Text("Newest", fontSize = 11.sp) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = AppleBlueLight,
+                            selectedLabelColor = AppleBlue
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            borderColor = if (!sortByAmount) AppleBlue else BorderLight,
+                            selectedBorderColor = AppleBlue,
+                            enabled = true,
+                            selected = !sortByAmount
+                        ),
+                        modifier = Modifier.height(28.dp)
+                    )
+
+                    FilterChip(
+                        selected = sortByAmount,
+                        onClick = { sortByAmount = true },
+                        label = { Text("Amount", fontSize = 11.sp) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = AppleBlueLight,
+                            selectedLabelColor = AppleBlue
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            borderColor = if (sortByAmount) AppleBlue else BorderLight,
+                            selectedBorderColor = AppleBlue,
+                            enabled = true,
+                            selected = sortByAmount
+                        ),
+                        modifier = Modifier.height(28.dp)
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -228,7 +285,7 @@ fun AccountLedgerSheet(
                 contentPadding = PaddingValues(bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                items(accountTxns, key = { it.id }) { txn ->
+                items(sortedTxns, key = { it.id }) { txn ->
                     TransactionItem(
                         transaction = txn,
                         onClick = { onTransactionClick(txn) }

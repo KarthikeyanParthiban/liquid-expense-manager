@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -22,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.FilterAltOff
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -69,12 +71,14 @@ fun TransactionsScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedCategory by viewModel.selectedCategory.collectAsState()
     val selectedType by viewModel.selectedType.collectAsState()
+    val selectedSortOption by viewModel.selectedSortOption.collectAsState()
     val selectedTxnForEdit by viewModel.selectedTransactionForEdit.collectAsState()
 
-    val hasActiveFilters = searchQuery.isNotBlank() || selectedCategory != null || selectedType != null
+    val hasActiveFilters = searchQuery.isNotBlank() || selectedCategory != null || selectedType != null || selectedSortOption != TransactionSortOption.NEWEST_FIRST
     val totalFilteredAmount = transactions.sumOf { it.amount }
 
-    val groupedTransactions = transactions.groupBy { DateTimeUtils.formatDate(it.timestamp) }
+    // If sorted by amount, group by amount ranges or render directly; if sorted by time, group by date
+    val isTimeSorted = selectedSortOption == TransactionSortOption.NEWEST_FIRST || selectedSortOption == TransactionSortOption.OLDEST_FIRST
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(
@@ -115,105 +119,160 @@ fun TransactionsScreen(
 
             // Type Filter Chips (All, Expenses, Income, Transfers, Refunds)
             LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 3.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 item {
                     FilterChip(
                         selected = selectedType == null,
                         onClick = { viewModel.selectType(null) },
-                        label = { Text("All") },
+                        label = { Text("All Types") },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = AppleBlue,
-                            selectedLabelColor = Color.White,
-                            containerColor = LightCardSurface,
-                            labelColor = TextPrimary
+                            selectedContainerColor = TextPrimary,
+                            selectedLabelColor = MaterialTheme.colorScheme.background,
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            labelColor = TextSecondary
                         ),
                         border = FilterChipDefaults.filterChipBorder(
-                            enabled = true,
-                            selected = selectedType == null,
                             borderColor = BorderLight,
-                            selectedBorderColor = AppleBlue
-                        ),
-                        shape = RoundedCornerShape(12.dp)
+                            selectedBorderColor = Color.Transparent,
+                            enabled = true,
+                            selected = selectedType == null
+                        )
                     )
                 }
+
                 item {
                     FilterChip(
                         selected = selectedType == TransactionType.DEBIT,
                         onClick = { viewModel.selectType(TransactionType.DEBIT) },
-                        label = { Text("Expenses") },
+                        label = { Text("Debits") },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = AppleRed,
-                            selectedLabelColor = Color.White,
-                            containerColor = LightCardSurface,
-                            labelColor = TextPrimary
+                            selectedContainerColor = TextPrimary,
+                            selectedLabelColor = MaterialTheme.colorScheme.background,
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            labelColor = TextSecondary
                         ),
                         border = FilterChipDefaults.filterChipBorder(
-                            enabled = true,
-                            selected = selectedType == TransactionType.DEBIT,
                             borderColor = BorderLight,
-                            selectedBorderColor = AppleRed
-                        ),
-                        shape = RoundedCornerShape(12.dp)
+                            selectedBorderColor = Color.Transparent,
+                            enabled = true,
+                            selected = selectedType == TransactionType.DEBIT
+                        )
                     )
                 }
+
                 item {
                     FilterChip(
                         selected = selectedType == TransactionType.CREDIT,
                         onClick = { viewModel.selectType(TransactionType.CREDIT) },
-                        label = { Text("Income") },
+                        label = { Text("Credits") },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = AppleGreen,
-                            selectedLabelColor = Color.White,
-                            containerColor = LightCardSurface,
-                            labelColor = TextPrimary
+                            selectedContainerColor = TextPrimary,
+                            selectedLabelColor = MaterialTheme.colorScheme.background,
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            labelColor = TextSecondary
                         ),
                         border = FilterChipDefaults.filterChipBorder(
-                            enabled = true,
-                            selected = selectedType == TransactionType.CREDIT,
                             borderColor = BorderLight,
-                            selectedBorderColor = AppleGreen
-                        ),
-                        shape = RoundedCornerShape(12.dp)
+                            selectedBorderColor = Color.Transparent,
+                            enabled = true,
+                            selected = selectedType == TransactionType.CREDIT
+                        )
                     )
                 }
-                item {
-                    FilterChip(
-                        selected = selectedType == TransactionType.TRANSFER,
-                        onClick = { viewModel.selectType(TransactionType.TRANSFER) },
-                        label = { Text("Transfers & Bills") },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Color(0xFF5856D6),
-                            selectedLabelColor = Color.White,
-                            containerColor = LightCardSurface,
-                            labelColor = TextPrimary
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            enabled = true,
-                            selected = selectedType == TransactionType.TRANSFER,
-                            borderColor = BorderLight,
-                            selectedBorderColor = Color(0xFF5856D6)
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                }
+
                 item {
                     FilterChip(
                         selected = selectedType == TransactionType.REFUND,
                         onClick = { viewModel.selectType(TransactionType.REFUND) },
                         label = { Text("Refunds") },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Color(0xFF007AFF),
-                            selectedLabelColor = Color.White,
-                            containerColor = LightCardSurface,
-                            labelColor = TextPrimary
+                            selectedContainerColor = TextPrimary,
+                            selectedLabelColor = MaterialTheme.colorScheme.background,
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            labelColor = TextSecondary
                         ),
                         border = FilterChipDefaults.filterChipBorder(
-                            enabled = true,
-                            selected = selectedType == TransactionType.REFUND,
                             borderColor = BorderLight,
-                            selectedBorderColor = Color(0xFF007AFF)
+                            selectedBorderColor = Color.Transparent,
+                            enabled = true,
+                            selected = selectedType == TransactionType.REFUND
+                        )
+                    )
+                }
+
+                item {
+                    FilterChip(
+                        selected = selectedType == TransactionType.TRANSFER,
+                        onClick = { viewModel.selectType(TransactionType.TRANSFER) },
+                        label = { Text("Transfers") },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = TextPrimary,
+                            selectedLabelColor = MaterialTheme.colorScheme.background,
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            labelColor = TextSecondary
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            borderColor = BorderLight,
+                            selectedBorderColor = Color.Transparent,
+                            enabled = true,
+                            selected = selectedType == TransactionType.TRANSFER
+                        )
+                    )
+                }
+            }
+
+            // Sort Option Chips Row (Recency and Amount)
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 2.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                item {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(end = 4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Sort,
+                            contentDescription = "Sort",
+                            tint = TextSecondary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Sort:",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextSecondary
+                        )
+                    }
+                }
+
+                items(TransactionSortOption.values()) { option ->
+                    val isSelected = selectedSortOption == option
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { viewModel.setSortOption(option) },
+                        label = {
+                            Text(
+                                text = option.displayName,
+                                fontSize = 12.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = TextPrimary,
+                            selectedLabelColor = MaterialTheme.colorScheme.background,
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            labelColor = TextSecondary
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            borderColor = if (isSelected) Color.Transparent else BorderLight,
+                            selectedBorderColor = Color.Transparent,
+                            enabled = true,
+                            selected = isSelected
                         ),
                         shape = RoundedCornerShape(12.dp)
                     )
@@ -223,65 +282,56 @@ fun TransactionsScreen(
             // Category Filter Chips
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 2.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                items(Category.entries) { category ->
+                items(Category.values()) { category ->
                     val isSelected = selectedCategory == category
                     FilterChip(
                         selected = isSelected,
                         onClick = { viewModel.selectCategory(category) },
-                        leadingIcon = {
-                            Box(
-                                modifier = Modifier
-                                    .size(10.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(category.colorHex))
-                            )
-                        },
-                        label = { Text(category.displayName) },
+                        label = { Text(category.displayName, fontSize = 12.sp) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Color(category.colorHex),
-                            selectedLabelColor = Color.White,
-                            containerColor = LightCardSurface,
-                            labelColor = TextPrimary
+                            selectedContainerColor = TextPrimary,
+                            selectedLabelColor = MaterialTheme.colorScheme.background,
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            labelColor = TextSecondary
                         ),
                         border = FilterChipDefaults.filterChipBorder(
+                            borderColor = if (isSelected) Color.Transparent else BorderLight,
+                            selectedBorderColor = Color.Transparent,
                             enabled = true,
-                            selected = isSelected,
-                            borderColor = BorderLight,
-                            selectedBorderColor = Color(category.colorHex)
-                        ),
-                        shape = RoundedCornerShape(12.dp)
+                            selected = isSelected
+                        )
                     )
                 }
             }
 
-            // Filter Summary & Quick Reset Bar
+            // Results count + Total Amount Header
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 4.dp),
+                    .padding(horizontal = 20.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "${transactions.size} transactions • ${CurrencyFormatter.format(totalFilteredAmount)}",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextSecondary
+                    text = "${transactions.size} TRANSACTIONS",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = TextSecondary,
+                    letterSpacing = 1.sp
                 )
 
                 if (hasActiveFilters) {
-                    TextButton(
-                        onClick = { viewModel.clearAllFilters() },
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
-                    ) {
-                        Text(text = "Reset Filters", color = AppleBlue, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    TextButton(onClick = { viewModel.clearAllFilters() }) {
+                        Icon(Icons.Default.FilterAltOff, contentDescription = "Clear Filters", modifier = Modifier.size(16.dp), tint = AppleBlue)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Reset", style = MaterialTheme.typography.labelMedium, color = AppleBlue)
                     }
                 }
             }
 
-            // Transactions List grouped by date
+            // Transaction List
             if (transactions.isEmpty()) {
                 Box(
                     modifier = Modifier
@@ -290,38 +340,47 @@ fun TransactionsScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Default.FilterAltOff, contentDescription = null, tint = TextTertiary, modifier = Modifier.size(48.dp))
-                        Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = "No matching transactions found",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.SemiBold,
+                            text = "No transactions found",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = if (hasActiveFilters) "Try adjusting your search or filters" else "Sync SMS to load transactions",
+                            style = MaterialTheme.typography.bodyMedium,
                             color = TextSecondary
                         )
-                        if (hasActiveFilters) {
-                            TextButton(onClick = { viewModel.clearAllFilters() }) {
-                                Text("Clear all filters", color = AppleBlue)
-                            }
-                        }
                     }
                 }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 110.dp)
+                    contentPadding = PaddingValues(bottom = 100.dp)
                 ) {
-                    groupedTransactions.forEach { (dateHeader, txns) ->
-                        item {
-                            Text(
-                                text = dateHeader,
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = TextSecondary,
-                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
-                            )
-                        }
+                    if (isTimeSorted) {
+                        val grouped = transactions.groupBy { DateTimeUtils.formatDate(it.timestamp) }
+                        grouped.forEach { (dateStr, txns) ->
+                            item(key = "header_$dateStr") {
+                                Text(
+                                    text = dateStr,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextTertiary,
+                                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+                                )
+                            }
 
-                        items(txns, key = { it.id }) { txn ->
+                            items(txns, key = { it.id }) { txn ->
+                                TransactionItem(
+                                    transaction = txn,
+                                    onClick = { viewModel.openTransactionDetail(txn) }
+                                )
+                            }
+                        }
+                    } else {
+                        items(transactions, key = { it.id }) { txn ->
                             TransactionItem(
                                 transaction = txn,
                                 onClick = { viewModel.openTransactionDetail(txn) }
@@ -330,16 +389,6 @@ fun TransactionsScreen(
                     }
                 }
             }
-        }
-
-        // Transaction Detail / Edit Dialog
-        selectedTxnForEdit?.let { txn ->
-            TransactionDetailDialog(
-                transaction = txn,
-                onDismiss = { viewModel.closeTransactionDetail() },
-                onSave = { updated, applyRule -> viewModel.updateTransaction(updated, applyRule) },
-                onDelete = { id -> viewModel.deleteTransaction(id) }
-            )
         }
     }
 }

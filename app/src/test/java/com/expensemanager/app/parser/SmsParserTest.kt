@@ -170,4 +170,50 @@ class SmsParserTest {
         assertEquals("XX1006", balanceUpdate.accountMask)
         assertEquals(73248.27, balanceUpdate.balance, 0.01)
     }
+
+    @Test
+    fun `test parsing Federal Bank UPI debit SMS`() {
+        val sender = "VK-FEDBNK-S"
+        val body = "Rs 3000.00 sent via UPI on 17-06-2026 at 08:59:07 to KARISHMA P.Ref:616868340519.Not you? Call 18004251199/SMS BLOCKUPI"
+        val timestamp = 1782100000000L
+
+        val result = SmsParser.parse(sender, body, timestamp)
+        assertNotNull(result)
+        assertEquals(3000.00, result!!.amount, 0.01)
+        assertEquals(TransactionType.DEBIT, result.type)
+        assertEquals("Federal Bank", result.bankName)
+        assertEquals("616868340519", result.referenceId)
+    }
+
+    @Test
+    fun `test parsing Kiwi cashback credit SMS`() {
+        val sender = "VM-HDFCBK-S"
+        val body = "Credit Alert!\nRs.268.25 credited to HDFC Bank A/c XX7011 on 08-08-26 from VPA kiwicashback@axisbank (UPI 989594742206)"
+        val timestamp = 1786500000000L
+
+        val result = SmsParser.parse(sender, body, timestamp)
+        assertNotNull(result)
+        assertEquals(268.25, result!!.amount, 0.01)
+        assertEquals(TransactionType.CREDIT, result.type)
+        assertEquals("HDFC Bank", result.bankName)
+        assertEquals("XX7011", result.accountMask)
+    }
+
+    @Test
+    fun `test parsing HDFC IMPS Received SMS at 455 PM`() {
+        val sender = "VM-HDFCBK-S"
+        val body = "Received!\nINR 100.00 in HDFC Bank A/c xx7011\nOn 25-08-26\nFor IMPS -GROWW INVEST TECH PR- 623716016220\nAvl bal INR 88,248.00"
+        val timestamp = 1787657136000L
+
+        val isFin = SmsClassifier.isFinancialSms(body)
+        assertTrue("Should be financial SMS", isFin)
+
+        val result = SmsParser.parse(sender, body, timestamp)
+        assertNotNull("Result should not be null", result)
+        assertEquals(100.00, result!!.amount, 0.01)
+        assertEquals(TransactionType.CREDIT, result.type)
+        assertEquals("HDFC Bank", result.bankName)
+        assertEquals("XX7011", result.accountMask)
+        assertEquals(88248.00, result.balanceAfter ?: 0.0, 0.01)
+    }
 }

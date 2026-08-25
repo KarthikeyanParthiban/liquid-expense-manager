@@ -26,6 +26,7 @@ class ExpenseApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         instance = this
+        com.expensemanager.app.ui.theme.ThemeManager.init(this)
     }
 
     companion object {

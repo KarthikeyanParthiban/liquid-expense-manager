@@ -119,9 +119,46 @@ class SmsClassifierTest {
         val trade1 = "BSE Trade Confirmation Client Code FB3008 - Broker 6498 - EQ Value Rs 0.00 - FNO Value Rs 216038.00 - Dated 19-08-2026"
         val trade2 = "Your trades executed on 21/08/2026 14 buy Rs 21526 14 sell Rs 21493 CLCode FB3008 Mem.code 56550"
         val trade3 = "ZERODHABROKINGLIMITED on 14-08-2026 reported your Fund bal Rs.16362.630 & Securities bal 0.000."
+        val cdsl1 = "CDSL: Debit in a/c *01573896 for 54-GUJARAT THEMIS-EQ1/- on 08DEC"
 
         assertFalse(SmsClassifier.isFinancialSms(trade1))
         assertFalse(SmsClassifier.isFinancialSms(trade2))
         assertFalse(SmsClassifier.isFinancialSms(trade3))
+        assertFalse(SmsClassifier.isFinancialSms(cdsl1))
+    }
+
+    @Test
+    fun `test credit card statement alerts and due reminders are rejected`() {
+        val stmt1 = "YES BANK Credit Card XX1006 AUG-26 statement: Total due INR 41192.45  Min due INR 11084.14 Due by 03-SEP-2026. Pay full outstanding to avoid charges."
+        val stmt2 = "Your credit card bill for HDFC Bank XXXX-2942 has been generated.\n\nTotal amount: INR 1,399.00\nDue date: September 05, 2026"
+        val stmt3 = "Amount Due\nRs.2459 on HDFC Bank Credit Card 2942. Pay instantly by 08/MAR/2026 via PayZapp"
+        val stmt4 = "Your Axis Bank Credit Card no. XX9117 has an overdue. Pay the min due of INR 808.50 at https://ccm.axis.bank.in"
+
+        assertFalse(SmsClassifier.isFinancialSms(stmt1))
+        assertFalse(SmsClassifier.isFinancialSms(stmt2))
+        assertFalse(SmsClassifier.isFinancialSms(stmt3))
+        assertFalse(SmsClassifier.isFinancialSms(stmt4))
+    }
+
+    @Test
+    fun `test credit limit revision and autopay activation are rejected`() {
+        val limit1 = "The revised Credit Limit of your YES BANK Credit Card x1006 has been increased to Rs. 1,74,000.00."
+        val autopay1 = "AutoPay activation:\nSUCCESSFUL\nTxn amt: INR 2.00\nMerchant: Microsoft Businesses\nAxis Bank Credit Card: XX9117\nMax limit: INR 200000.00"
+        val emi1 = "Your Axis Visa Privilege Credit Card transaction of INR 25366 has been successfully converted into EMI."
+
+        assertFalse(SmsClassifier.isFinancialSms(limit1))
+        assertFalse(SmsClassifier.isFinancialSms(autopay1))
+        assertFalse(SmsClassifier.isFinancialSms(emi1))
+    }
+
+    @Test
+    fun `test epfo passbook and future advisories are rejected`() {
+        val epfo1 = "Dear XXXXXXXX9857, your passbook balance against THVSH**************0820 is Rs. 1,13,416/-. Contribution of Rs. 2,350/- for due month Dec-25 has been received."
+        val adv1 = "YOUR REMUNERATION OF RS. 82559 FOR THE MONTH OF MARCH-2026 HAS BEEN PROCESSED AND WILL BE CREDITED SHORTLY INTO YOUR HDFC BANK"
+        val adv2 = "We have initiated a refund of Rs.611.00 for ORD69674043700 into your UPI, which should reflect in 3-5 business days."
+
+        assertFalse(SmsClassifier.isFinancialSms(epfo1))
+        assertFalse(SmsClassifier.isFinancialSms(adv1))
+        assertFalse(SmsClassifier.isFinancialSms(adv2))
     }
 }

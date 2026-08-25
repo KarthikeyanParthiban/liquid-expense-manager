@@ -5,5 +5,10 @@ enum class TransactionType {
     CREDIT,
     TRANSFER,
     REFUND,
-    BILL_DUE
+    REVERSAL,
+    BILL_DUE,
+    CASH_WITHDRAWAL,
+    PAYMENT,
+    CARD_PAYMENT,
+    CARD_SETTLEMENT
 }

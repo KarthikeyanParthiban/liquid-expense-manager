@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -22,10 +23,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.CreditCard
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -77,7 +78,17 @@ fun AccountsScreen(
     val currentMonthSummary by viewModel.currentMonthSummary.collectAsState()
     val allTransactions by viewModel.allTransactions.collectAsState()
 
-    var isBalanceHidden by remember { mutableStateOf(false) }
+    val bankAccounts = remember(accounts) {
+        accounts.filter { it.accountType != AccountType.CREDIT_CARD && it.accountType != AccountType.WALLET }
+    }
+    val creditCards = remember(accounts) {
+        accounts.filter { it.accountType == AccountType.CREDIT_CARD }
+    }
+    val wallets = remember(accounts) {
+        accounts.filter { it.accountType == AccountType.WALLET }
+    }
+
+    var isBalanceHidden by remember { mutableStateOf(true) }
     var showBudgetDialog by remember { mutableStateOf(false) }
     var budgetInput by remember { mutableStateOf(monthlyBudget.toInt().toString()) }
     var selectedAccountForLedger by remember { mutableStateOf<Account?>(null) }
@@ -101,14 +112,33 @@ fun AccountsScreen(
         ) {
             // Header
             item {
-                Text(
-                    text = "Accounts & Budgets",
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = TextPrimary,
-                    letterSpacing = (-0.5).sp,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Accounts & Budgets",
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TextPrimary,
+                        letterSpacing = (-0.5).sp
+                    )
+
+                    IconButton(
+                        onClick = { isBalanceHidden = !isBalanceHidden },
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isBalanceHidden) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                            contentDescription = if (isBalanceHidden) "Show Balances" else "Hide Balances",
+                            tint = TextSecondary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
             }
 
             // Monthly Budget Card
@@ -190,43 +220,13 @@ fun AccountsScreen(
 
                         Text(
                             text = if (budgetUsedPercentage >= 1.0f) {
-                                "⚠️ Budget exceeded by ${CurrencyFormatter.format(currentMonthSummary.totalExpense - monthlyBudget)}"
+                                "Budget exceeded by ${CurrencyFormatter.format(currentMonthSummary.totalExpense - monthlyBudget)}"
                             } else {
                                 "${CurrencyFormatter.format(monthlyBudget - currentMonthSummary.totalExpense)} remaining of budget"
                             },
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.SemiBold,
                             color = if (budgetUsedPercentage >= 1.0f) AppleRed else TextSecondary
-                        )
-                    }
-                }
-            }
-
-            // Linked Accounts List Header with Eye Toggle
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Detected Accounts & Wallets",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
-
-                    IconButton(
-                        onClick = { isBalanceHidden = !isBalanceHidden },
-                        modifier = Modifier.size(24.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (isBalanceHidden) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                            contentDescription = if (isBalanceHidden) "Show Balances" else "Hide Balances",
-                            tint = TextSecondary,
-                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
@@ -250,79 +250,126 @@ fun AccountsScreen(
                     }
                 }
             } else {
-                items(accounts, key = { it.id }) { account ->
-                    val isCreditCard = account.accountType == AccountType.CREDIT_CARD
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 5.dp)
-                            .appleCard(shape = RoundedCornerShape(20.dp), elevation = 1.dp)
-                            .clickable { selectedAccountForLedger = account }
-                            .padding(16.dp)
-                    ) {
+                // Section 1: Bank Accounts
+                if (bankAccounts.isNotEmpty()) {
+                    item {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(40.dp)
-                                        .clip(CircleShape)
-                                        .background(
-                                            if (isCreditCard) Color(0xFF5856D6).copy(alpha = 0.12f)
-                                            else AppleBlueLight
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = if (isCreditCard) Icons.Default.CreditCard else Icons.Default.AccountBalance,
-                                        contentDescription = null,
-                                        tint = if (isCreditCard) Color(0xFF5856D6) else AppleBlue,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-
-                                Column(modifier = Modifier.padding(start = 12.dp)) {
-                                    Text(
-                                        text = account.bankName,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.Bold,
-                                        color = TextPrimary
-                                    )
-                                    Text(
-                                        text = "${account.accountType.name.replace("_", " ")} • ${account.maskNumber}",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = TextSecondary
-                                    )
-                                }
-                            }
-
-                            Column(horizontalAlignment = Alignment.End) {
-                                account.lastKnownBalance?.let { bal ->
-                                    Text(
-                                        text = if (isBalanceHidden) "₹ ••••••" else CurrencyFormatter.format(bal),
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = TextPrimary,
-                                        letterSpacing = if (isBalanceHidden) 2.sp else 0.sp
-                                    )
-                                    Text(
-                                        text = if (isCreditCard) "Available Limit" else "Available Bal",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = TextTertiary
-                                    )
-                                } ?: run {
-                                    Text(
-                                        text = "Active",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = AppleGreen,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                }
+                            Text(
+                                text = "Bank Accounts",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(AppleBlueLight)
+                                    .padding(horizontal = 7.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "${bankAccounts.size}",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AppleBlue
+                                )
                             }
                         }
+                    }
+
+                    items(bankAccounts, key = { it.id }) { account ->
+                        AccountListItem(
+                            account = account,
+                            isBalanceHidden = isBalanceHidden,
+                            onClick = { selectedAccountForLedger = account }
+                        )
+                    }
+                }
+
+                // Section 2: Credit Cards
+                if (creditCards.isNotEmpty()) {
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Credit Cards",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color(0xFFEEF2FF))
+                                    .padding(horizontal = 7.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "${creditCards.size}",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF6366F1)
+                                )
+                            }
+                        }
+                    }
+
+                    items(creditCards, key = { it.id }) { account ->
+                        AccountListItem(
+                            account = account,
+                            isBalanceHidden = isBalanceHidden,
+                            onClick = { selectedAccountForLedger = account }
+                        )
+                    }
+                }
+
+                // Section 3: Wallets & Others
+                if (wallets.isNotEmpty()) {
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Wallets & Digital Payments",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color(0xFFECFDF5))
+                                    .padding(horizontal = 7.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "${wallets.size}",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF10B981)
+                                )
+                            }
+                        }
+                    }
+
+                    items(wallets, key = { it.id }) { account ->
+                        AccountListItem(
+                            account = account,
+                            isBalanceHidden = isBalanceHidden,
+                            onClick = { selectedAccountForLedger = account }
+                        )
                     }
                 }
             }
@@ -362,7 +409,7 @@ fun AccountsScreen(
                         Text("Cancel", color = TextSecondary)
                     }
                 },
-                containerColor = Color.White,
+                containerColor = MaterialTheme.colorScheme.surface,
                 shape = RoundedCornerShape(20.dp)
             )
         }
@@ -378,6 +425,102 @@ fun AccountsScreen(
                     onTransactionClick(txn)
                 }
             )
+        }
+    }
+}
+
+@Composable
+private fun AccountListItem(
+    account: Account,
+    isBalanceHidden: Boolean,
+    onClick: () -> Unit
+) {
+    val isCreditCard = account.accountType == AccountType.CREDIT_CARD
+    val isWallet = account.accountType == AccountType.WALLET
+
+    val themeColor = when {
+        isCreditCard -> Color(0xFF6366F1)
+        isWallet -> Color(0xFF10B981)
+        else -> AppleBlue
+    }
+
+    val themeBgLight = when {
+        isCreditCard -> Color(0xFFEEF2FF)
+        isWallet -> Color(0xFFECFDF5)
+        else -> AppleBlueLight
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 5.dp)
+            .appleCard(shape = RoundedCornerShape(20.dp), elevation = 1.dp)
+            .clickable { onClick() }
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clip(CircleShape)
+                        .background(themeBgLight),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = when {
+                            isCreditCard -> Icons.Default.CreditCard
+                            isWallet -> Icons.Default.Wallet
+                            else -> Icons.Default.AccountBalance
+                        },
+                        contentDescription = null,
+                        tint = themeColor,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                Column(modifier = Modifier.padding(start = 14.dp)) {
+                    Text(
+                        text = account.bankName,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                    Text(
+                        text = if (isCreditCard) "Credit Card • ${account.maskNumber}" else "${account.accountType.name.replace("_", " ")} • ${account.maskNumber}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary
+                    )
+                }
+            }
+
+            Column(horizontalAlignment = Alignment.End) {
+                account.lastKnownBalance?.let { bal ->
+                    Text(
+                        text = if (isBalanceHidden) "₹ ••••••" else CurrencyFormatter.format(bal),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TextPrimary,
+                        letterSpacing = if (isBalanceHidden) 2.sp else 0.sp
+                    )
+                    Text(
+                        text = if (isCreditCard) "Available Limit" else if (isWallet) "Wallet Balance" else "Available Balance",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextTertiary
+                    )
+                } ?: run {
+                    Text(
+                        text = "Active",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = AppleGreen,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
         }
     }
 }

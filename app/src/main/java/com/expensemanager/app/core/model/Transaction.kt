@@ -7,10 +7,12 @@ data class Transaction(
     val amount: Double,
     val currency: String = "INR",
     val type: TransactionType,
+    val status: TransactionStatus = TransactionStatus.COMPLETED,
     val category: Category,
     val merchantName: String?,
     val accountId: String,
     val bankName: String,
+    val accountType: AccountType = AccountType.BANK_ACCOUNT,
     val accountMask: String?,
     val referenceId: String?,
     val balanceAfter: Double?,
@@ -18,5 +20,9 @@ data class Transaction(
     val note: String? = null,
     val isUserEdited: Boolean = false,
     val isExcludedFromBudget: Boolean = false,
+    val originalTransactionId: String? = null,
+    val relatedTransactionId: String? = null,
+    val confidence: Float = 1.0f,
+    val classificationReason: String? = null,
     val rawBody: String? = null
 )

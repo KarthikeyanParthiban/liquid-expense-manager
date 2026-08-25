@@ -1,24 +1,35 @@
 package com.expensemanager.app.ui.components
 
-import androidx.compose.foundation.Canvas
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,12 +37,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -39,14 +46,10 @@ import androidx.compose.ui.unit.sp
 import com.expensemanager.app.core.model.Category
 import com.expensemanager.app.core.util.CurrencyFormatter
 import com.expensemanager.app.data.local.dao.TransactionDao
-import com.expensemanager.app.ui.theme.AppleBlue
-import com.expensemanager.app.ui.theme.AppleBlueLight
-import com.expensemanager.app.ui.theme.BorderSubtle
 import com.expensemanager.app.ui.theme.LightElevatedSurface
 import com.expensemanager.app.ui.theme.TextPrimary
 import com.expensemanager.app.ui.theme.TextSecondary
 import com.expensemanager.app.ui.theme.TextTertiary
-import kotlin.math.atan2
 
 @Composable
 fun DonutChart(
@@ -58,216 +61,211 @@ fun DonutChart(
     onCategorySelected: ((Category) -> Unit)? = null
 ) {
     var highlightedCategory by remember { mutableStateOf<TransactionDao.CategorySpending?>(null) }
+    val isDark = com.expensemanager.app.ui.theme.LocalIsDarkTheme.current
 
-    val activeItem = highlightedCategory
-    val activeCategory = activeItem?.let {
-        runCatching { Category.valueOf(it.category) }.getOrDefault(Category.OTHERS)
+    val monoShades = if (isDark) listOf(
+        Color(0xFFFFFFFF), Color(0xFFE0E0E0), Color(0xFFBDBDBD), Color(0xFF9E9E9E), Color(0xFF757575), Color(0xFF616161)
+    ) else listOf(
+        Color(0xFF171717), Color(0xFF424242), Color(0xFF616161), Color(0xFF757575), Color(0xFF9E9E9E), Color(0xFFBDBDBD)
+    )
+
+    val animationProgress = remember { Animatable(0f) }
+    LaunchedEffect(spendingList, totalExpense) {
+        animationProgress.snapTo(0f)
+        animationProgress.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing)
+        )
+    }
+
+    if (spendingList.isEmpty() || totalExpense <= 0.0) {
+        Box(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(vertical = 18.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "No spending recorded for this period",
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextSecondary
+            )
+        }
+        return
     }
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // Centered Donut Ring with interactive center info
-        Box(
-            modifier = Modifier.size(chartSize),
-            contentAlignment = Alignment.Center
-        ) {
-            Canvas(
-                modifier = Modifier
-                    .size(chartSize)
-                    .pointerInput(spendingList, totalExpense) {
-                        detectTapGestures { offset ->
-                            if (spendingList.isEmpty() || totalExpense <= 0) return@detectTapGestures
-                            val center = Offset(size.width / 2f, size.height / 2f)
-                            val touchVec = offset - center
-                            var angle = Math.toDegrees(atan2(touchVec.y.toDouble(), touchVec.x.toDouble())).toFloat()
-                            angle = (angle + 90f + 360f) % 360f // Normalize starting from top (-90 deg)
-
-                            var currentAngle = 0f
-                            for (item in spendingList) {
-                                val sweep = ((item.totalAmount / totalExpense) * 360f).toFloat()
-                                if (angle in currentAngle..(currentAngle + sweep)) {
-                                    highlightedCategory = if (highlightedCategory == item) null else item
-                                    val cat = runCatching { Category.valueOf(item.category) }.getOrDefault(Category.OTHERS)
-                                    onCategorySelected?.invoke(cat)
-                                    break
-                                }
-                                currentAngle += sweep
-                            }
-                        }
-                    }
+        // 1. Proportional Segmented Monochrome Ribbon Bar
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                val strokeWidthPx = strokeWidth.toPx()
-                val radius = (size.minDimension - strokeWidthPx) / 2f
-                val topLeft = Offset((size.width - radius * 2) / 2f, (size.height - radius * 2) / 2f)
-                val arcSize = Size(radius * 2, radius * 2)
-
-                if (spendingList.isEmpty() || totalExpense <= 0.0) {
-                    drawArc(
-                        color = Color(0xFFE5E7EB),
-                        startAngle = 0f,
-                        sweepAngle = 360f,
-                        useCenter = false,
-                        topLeft = topLeft,
-                        size = arcSize,
-                        style = Stroke(width = strokeWidthPx, cap = StrokeCap.Round)
-                    )
-                } else {
-                    var currentAngle = -90f
-                    for (item in spendingList) {
-                        val isHighlighted = highlightedCategory == item
-                        val sweepAngle = ((item.totalAmount / totalExpense) * 360f).toFloat()
-                        val cat = runCatching { Category.valueOf(item.category) }.getOrDefault(Category.OTHERS)
-                        val color = Color(cat.colorHex)
-
-                        drawArc(
-                            color = if (highlightedCategory == null || isHighlighted) color else color.copy(alpha = 0.35f),
-                            startAngle = currentAngle,
-                            sweepAngle = (sweepAngle - 2f).coerceAtLeast(3f),
-                            useCenter = false,
-                            topLeft = topLeft,
-                            size = arcSize,
-                            style = Stroke(
-                                width = if (isHighlighted) strokeWidthPx * 1.2f else strokeWidthPx,
-                                cap = StrokeCap.Round
-                            )
-                        )
-                        currentAngle += sweepAngle
-                    }
-                }
+                Text(
+                    text = "SPENDING DISTRIBUTION",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = TextSecondary,
+                    letterSpacing = 1.sp
+                )
+                Text(
+                    text = "${spendingList.size} categories",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextTertiary
+                )
             }
 
-            // Center Content
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Multi-segment horizontal progress ribbon
             Box(
                 modifier = Modifier
-                    .size(chartSize - (strokeWidth * 2) - 14.dp)
-                    .clip(CircleShape)
-                    .background(Color.White),
-                contentAlignment = Alignment.Center
+                    .fillMaxWidth()
+                    .height(14.dp)
+                    .clip(RoundedCornerShape(7.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(8.dp)) {
-                    Text(
-                        text = activeCategory?.displayName ?: "TOTAL SPENT",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = if (activeCategory != null) Color(activeCategory.colorHex) else TextSecondary,
-                        letterSpacing = 0.8.sp,
-                        maxLines = 1
-                    )
-                    Text(
-                        text = CurrencyFormatter.format(activeItem?.totalAmount ?: totalExpense),
-                        fontSize = if (activeItem != null) 18.sp else 20.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = TextPrimary
-                    )
-                    if (activeItem != null) {
-                        val pct = if (totalExpense > 0) (activeItem.totalAmount / totalExpense * 100).toInt() else 0
-                        Text(
-                            text = "$pct% of total",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = AppleBlue
-                        )
-                    } else {
-                        Text(
-                            text = "${spendingList.sumOf { it.count }} txns",
-                            fontSize = 11.sp,
-                            color = TextTertiary
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Start
+                ) {
+                    spendingList.forEachIndexed { idx, item ->
+                        val cat = runCatching { Category.valueOf(item.category) }.getOrDefault(Category.OTHERS)
+                        val sliceColor = monoShades[idx % monoShades.size]
+                        val weight = (item.totalAmount / totalExpense).toFloat().coerceAtLeast(0.01f)
+                        val isHighlighted = highlightedCategory == item
+
+                        Box(
+                            modifier = Modifier
+                                .weight(weight)
+                                .fillMaxHeight()
+                                .padding(horizontal = 0.75.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(
+                                    if (highlightedCategory == null || isHighlighted) sliceColor else sliceColor.copy(alpha = 0.35f)
+                                )
+                                .clickable {
+                                    highlightedCategory = if (highlightedCategory == item) null else item
+                                    onCategorySelected?.invoke(cat)
+                                }
                         )
                     }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(18.dp))
+        // 2. Ranked Category Breakdown Cards
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            spendingList.forEachIndexed { index, item ->
+                val cat = runCatching { Category.valueOf(item.category) }.getOrDefault(Category.OTHERS)
+                val sliceColor = monoShades[index % monoShades.size]
+                val fraction = if (totalExpense > 0) (item.totalAmount / totalExpense).toFloat() else 0f
+                val percentage = (fraction * 100).toInt()
+                val isHighlighted = highlightedCategory == item
 
-        // Visual Segmented Proportional Bar
-        if (spendingList.isNotEmpty() && totalExpense > 0) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(10.dp)
-                    .clip(RoundedCornerShape(5.dp))
-                    .background(Color(0xFFE5E7EB))
-            ) {
-                for (item in spendingList) {
-                    val weight = (item.totalAmount / totalExpense).toFloat().coerceAtLeast(0.01f)
-                    val cat = runCatching { Category.valueOf(item.category) }.getOrDefault(Category.OTHERS)
-                    val isHighlighted = highlightedCategory == item
+                val interactionSource = remember { MutableInteractionSource() }
+                val isPressed by interactionSource.collectIsPressedAsState()
+                val itemScale by animateFloatAsState(
+                    targetValue = if (isPressed) 0.98f else 1f,
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessMediumLow),
+                    label = "categoryRowScale"
+                )
 
-                    Box(
-                        modifier = Modifier
-                            .weight(weight)
-                            .height(10.dp)
-                            .background(
-                                if (highlightedCategory == null || isHighlighted) Color(cat.colorHex)
-                                else Color(cat.colorHex).copy(alpha = 0.35f)
-                            )
-                    )
-                }
-            }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer {
+                            scaleX = itemScale
+                            scaleY = itemScale
+                        }
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(if (isHighlighted) MaterialTheme.colorScheme.surfaceVariant else LightElevatedSurface)
+                        .clickable(
+                            interactionSource = interactionSource,
+                            indication = null
+                        ) {
+                            highlightedCategory = if (highlightedCategory == item) null else item
+                            onCategorySelected?.invoke(cat)
+                        }
+                        .padding(horizontal = 14.dp, vertical = 12.dp)
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                CategoryIcon(category = cat, size = 36.dp, iconSize = 18.dp)
 
-            Spacer(modifier = Modifier.height(14.dp))
+                                Spacer(modifier = Modifier.width(10.dp))
 
-            // Explanatory Grid of Categories with percentage pills
-            val topCategories = spendingList.take(6)
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                topCategories.chunked(2).forEach { rowItems ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        rowItems.forEach { item ->
-                            val cat = runCatching { Category.valueOf(item.category) }.getOrDefault(Category.OTHERS)
-                            val pct = ((item.totalAmount / totalExpense) * 100).toInt()
-                            val isSelected = highlightedCategory == item
-
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(if (isSelected) AppleBlueLight else Color(0xFFF9FAFB))
-                                    .clickable {
-                                        highlightedCategory = if (highlightedCategory == item) null else item
-                                    }
-                                    .padding(horizontal = 10.dp, vertical = 6.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(8.dp)
-                                                .clip(CircleShape)
-                                                .background(Color(cat.colorHex))
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(
-                                            text = cat.displayName,
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = TextPrimary,
-                                            maxLines = 1
-                                        )
-                                    }
+                                Column {
                                     Text(
-                                        text = "$pct%",
-                                        fontSize = 12.sp,
+                                        text = cat.displayName,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextPrimary
+                                    )
+                                    Text(
+                                        text = "${item.count} transaction${if (item.count > 1) "s" else ""}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = TextTertiary
+                                    )
+                                }
+                            }
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Text(
+                                        text = CurrencyFormatter.format(item.totalAmount),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = TextPrimary
+                                    )
+                                    Text(
+                                        text = "$percentage% of spend",
+                                        style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold,
                                         color = TextSecondary
                                     )
                                 }
+
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                                    contentDescription = "Drill Down",
+                                    tint = TextTertiary,
+                                    modifier = Modifier.size(12.dp)
+                                )
                             }
                         }
-                        if (rowItems.size == 1) {
-                            Spacer(modifier = Modifier.weight(1f))
+
+                        // Individual Category Progress Bar
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(5.dp)
+                                .clip(RoundedCornerShape(3.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(fraction * animationProgress.value)
+                                    .fillMaxHeight()
+                                    .clip(RoundedCornerShape(3.dp))
+                                    .background(sliceColor)
+                            )
                         }
                     }
                 }

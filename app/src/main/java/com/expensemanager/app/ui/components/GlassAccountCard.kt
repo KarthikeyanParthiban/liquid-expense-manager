@@ -1,6 +1,7 @@
 package com.expensemanager.app.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -24,17 +26,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.expensemanager.app.core.model.Account
 import com.expensemanager.app.core.model.AccountType
 import com.expensemanager.app.core.util.CurrencyFormatter
-import com.expensemanager.app.ui.theme.AppleBlue
-import com.expensemanager.app.ui.theme.AppleBlueLight
 import com.expensemanager.app.ui.theme.TextPrimary
 import com.expensemanager.app.ui.theme.TextSecondary
+import com.expensemanager.app.ui.theme.TextTertiary
 import com.expensemanager.app.ui.theme.appleCard
 
 @Composable
@@ -45,19 +45,15 @@ fun GlassAccountCard(
     modifier: Modifier = Modifier
 ) {
     val isCreditCard = account.accountType == AccountType.CREDIT_CARD
+    val isWallet = account.accountType == AccountType.WALLET
 
-    val clickableModifier = if (onClick != null) {
-        modifier
-            .width(200.dp)
-            .appleCard(shape = RoundedCornerShape(20.dp), elevation = 1.dp)
-            .clickable { onClick() }
-            .padding(16.dp)
-    } else {
-        modifier
-            .width(200.dp)
-            .appleCard(shape = RoundedCornerShape(20.dp), elevation = 1.dp)
-            .padding(16.dp)
-    }
+    val clickableModifier = modifier
+        .width(215.dp)
+        .appleCard(shape = RoundedCornerShape(22.dp), elevation = 1.dp)
+        .then(
+            if (onClick != null) Modifier.clickable { onClick() } else Modifier
+        )
+        .padding(16.dp)
 
     Box(modifier = clickableModifier) {
         Column {
@@ -68,28 +64,36 @@ fun GlassAccountCard(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(38.dp)
                         .clip(CircleShape)
-                        .background(
-                            if (isCreditCard) Color(0xFF5856D6).copy(alpha = 0.12f)
-                            else AppleBlueLight
-                        ),
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = if (isCreditCard) Icons.Default.CreditCard else Icons.Default.AccountBalance,
+                        imageVector = when {
+                            isCreditCard -> Icons.Default.CreditCard
+                            isWallet -> Icons.Default.Wallet
+                            else -> Icons.Default.AccountBalance
+                        },
                         contentDescription = null,
-                        tint = if (isCreditCard) Color(0xFF5856D6) else AppleBlue,
-                        modifier = Modifier.size(18.dp)
+                        tint = TextPrimary,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
 
-                Text(
-                    text = account.maskNumber,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = TextSecondary
-                )
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = if (isCreditCard) "CARD • ${account.maskNumber}" else account.maskNumber,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -104,20 +108,19 @@ fun GlassAccountCard(
             Spacer(modifier = Modifier.height(2.dp))
 
             Text(
-                text = if (isCreditCard) "Available Limit" else "Available Balance",
+                text = if (isCreditCard) "Available Limit" else if (isWallet) "Wallet Balance" else "Available Balance",
                 style = MaterialTheme.typography.labelSmall,
-                color = TextSecondary
+                color = TextTertiary
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = if (hideBalance) "₹ ••••••"
-                else account.lastKnownBalance?.let { CurrencyFormatter.format(it) } ?: "Active",
-                fontSize = 17.sp,
+                text = if (hideBalance) "••••••" else account.lastKnownBalance?.let { CurrencyFormatter.format(it) } ?: "Active",
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.ExtraBold,
-                color = TextPrimary,
-                letterSpacing = if (hideBalance) 2.sp else 0.sp
+                color = if (account.lastKnownBalance != null) TextPrimary else TextSecondary,
+                letterSpacing = if (hideBalance) 2.sp else (-0.3).sp
             )
         }
     }

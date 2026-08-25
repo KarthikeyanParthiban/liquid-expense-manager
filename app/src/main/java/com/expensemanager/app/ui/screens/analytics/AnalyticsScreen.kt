@@ -1,7 +1,9 @@
 package com.expensemanager.app.ui.screens.analytics
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import com.expensemanager.app.ui.theme.BorderLight
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -87,27 +89,51 @@ fun AnalyticsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
-                        Text(
-                            text = "Spending Insights",
-                            fontSize = 26.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = TextPrimary,
-                            letterSpacing = (-0.5).sp
-                        )
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconButton(onClick = { viewModel.previousMonth() }, modifier = Modifier.size(26.dp)) {
-                                Icon(Icons.Default.ChevronLeft, contentDescription = "Previous Month", tint = TextSecondary)
-                            }
-                            Text(
-                                text = DateTimeUtils.formatMonthYear(monthTimestamp),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = AppleBlue
+                    Text(
+                        text = "Insights",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TextPrimary,
+                        letterSpacing = (-0.5).sp
+                    )
+
+                    // Sleek Monotone Month Capsule
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(MaterialTheme.colorScheme.surface)
+                            .border(1.dp, BorderLight, RoundedCornerShape(20.dp))
+                            .padding(horizontal = 4.dp, vertical = 2.dp)
+                    ) {
+                        IconButton(
+                            onClick = { viewModel.previousMonth() },
+                            modifier = Modifier.size(30.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ChevronLeft,
+                                contentDescription = "Previous Month",
+                                tint = TextPrimary,
+                                modifier = Modifier.size(20.dp)
                             )
-                            IconButton(onClick = { viewModel.nextMonth() }, modifier = Modifier.size(26.dp)) {
-                                Icon(Icons.Default.ChevronRight, contentDescription = "Next Month", tint = TextSecondary)
-                            }
+                        }
+                        Text(
+                            text = DateTimeUtils.formatMonthYear(monthTimestamp),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary,
+                            modifier = Modifier.padding(horizontal = 6.dp)
+                        )
+                        IconButton(
+                            onClick = { viewModel.nextMonth() },
+                            modifier = Modifier.size(30.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ChevronRight,
+                                contentDescription = "Next Month",
+                                tint = TextPrimary,
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                     }
                 }
@@ -149,67 +175,6 @@ fun AnalyticsScreen(
                             totalExpense = summary.totalExpense,
                             onCategorySelected = { cat -> viewModel.selectCategoryForDrilldown(cat) }
                         )
-                    }
-                }
-            }
-
-            // Interactive Category List Header
-            if (categorySpending.isNotEmpty()) {
-                item {
-                    Text(
-                        text = "CATEGORIES (TAP TO DRILL DOWN)",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = TextSecondary,
-                        letterSpacing = 1.1.sp,
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
-                    )
-                }
-
-                items(categorySpending, key = { it.category }) { item ->
-                    val catEnum = runCatching { Category.valueOf(item.category) }.getOrDefault(Category.OTHERS)
-                    val percentage = if (summary.totalExpense > 0) {
-                        (item.totalAmount / summary.totalExpense * 100).toInt()
-                    } else 0
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 3.dp)
-                            .appleCard(shape = RoundedCornerShape(16.dp), elevation = 0.5.dp)
-                            .clickable { viewModel.selectCategoryForDrilldown(catEnum) }
-                            .padding(horizontal = 16.dp, vertical = 12.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                CategoryIcon(category = catEnum, size = 38.dp)
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Column {
-                                    Text(
-                                        text = catEnum.displayName,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = TextPrimary
-                                    )
-                                    Text(
-                                        text = "${item.count} transactions • $percentage%",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = TextSecondary
-                                    )
-                                }
-                            }
-
-                            Text(
-                                text = CurrencyFormatter.format(item.totalAmount),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
-                            )
-                        }
                     }
                 }
             }

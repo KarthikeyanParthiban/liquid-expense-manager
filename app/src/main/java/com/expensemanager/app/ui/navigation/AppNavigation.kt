@@ -1,5 +1,13 @@
 package com.expensemanager.app.ui.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -10,11 +18,11 @@ import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -29,6 +37,7 @@ import com.expensemanager.app.ui.screens.dashboard.DashboardScreen
 import com.expensemanager.app.ui.screens.dashboard.DashboardViewModel
 import com.expensemanager.app.ui.screens.settings.SettingsScreen
 import com.expensemanager.app.ui.screens.settings.SettingsViewModel
+import com.expensemanager.app.ui.screens.transactions.TransactionDetailDialog
 import com.expensemanager.app.ui.screens.transactions.TransactionsScreen
 import com.expensemanager.app.ui.screens.transactions.TransactionsViewModel
 import com.expensemanager.app.ui.theme.CleanAppBackground
@@ -52,27 +61,67 @@ fun AppNavigation(
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    val selectedTxnForEdit by transactionsViewModel.selectedTransactionForEdit.collectAsState()
 
     CleanAppBackground {
         Box(modifier = Modifier.fillMaxSize()) {
             NavHost(
                 navController = navController,
                 startDestination = Screen.Dashboard.route,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                enterTransition = {
+                    fadeIn(animationSpec = tween(280, easing = FastOutSlowInEasing)) +
+                            slideIntoContainer(
+                                towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioLowBouncy,
+                                    stiffness = Spring.StiffnessMediumLow
+                                ),
+                                initialOffset = { (it * 0.08f).toInt() }
+                            )
+                },
+                exitTransition = {
+                    fadeOut(animationSpec = tween(200, easing = FastOutLinearInEasing)) +
+                            slideOutOfContainer(
+                                towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                                animationSpec = tween(200),
+                                targetOffset = { (-it * 0.08f).toInt() }
+                            )
+                },
+                popEnterTransition = {
+                    fadeIn(animationSpec = tween(280, easing = FastOutSlowInEasing)) +
+                            slideIntoContainer(
+                                towards = AnimatedContentTransitionScope.SlideDirection.End,
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioLowBouncy,
+                                    stiffness = Spring.StiffnessMediumLow
+                                ),
+                                initialOffset = { (-it * 0.08f).toInt() }
+                            )
+                },
+                popExitTransition = {
+                    fadeOut(animationSpec = tween(200, easing = FastOutLinearInEasing)) +
+                            slideOutOfContainer(
+                                towards = AnimatedContentTransitionScope.SlideDirection.End,
+                                animationSpec = tween(200),
+                                targetOffset = { (it * 0.08f).toInt() }
+                            )
+                }
             ) {
                 composable(Screen.Dashboard.route) {
                     DashboardScreen(
                         viewModel = dashboardViewModel,
                         onNavigateToTransactions = {
                             navController.navigate(Screen.Transactions.route) {
+                                popUpTo(Screen.Dashboard.route) {
+                                    saveState = true
+                                }
                                 launchSingleTop = true
+                                restoreState = true
                             }
                         },
                         onTransactionClick = { txn ->
                             transactionsViewModel.openTransactionDetail(txn)
-                            navController.navigate(Screen.Transactions.route) {
-                                launchSingleTop = true
-                            }
                         }
                     )
                 }
@@ -84,9 +133,6 @@ fun AppNavigation(
                         viewModel = analyticsViewModel,
                         onTransactionClick = { txn ->
                             transactionsViewModel.openTransactionDetail(txn)
-                            navController.navigate(Screen.Transactions.route) {
-                                launchSingleTop = true
-                            }
                         }
                     )
                 }
@@ -95,9 +141,6 @@ fun AppNavigation(
                         viewModel = accountsViewModel,
                         onTransactionClick = { txn ->
                             transactionsViewModel.openTransactionDetail(txn)
-                            navController.navigate(Screen.Transactions.route) {
-                                launchSingleTop = true
-                            }
                         }
                     )
                 }
@@ -106,16 +149,42 @@ fun AppNavigation(
                 }
             }
 
+            // Shared Global Transaction Detail Bottom Sheet
+            selectedTxnForEdit?.let { txn ->
+                TransactionDetailDialog(
+                    transaction = txn,
+                    onDismiss = { transactionsViewModel.closeTransactionDetail() },
+                    onSave = { updatedTxn, applyRule ->
+                        transactionsViewModel.updateTransaction(updatedTxn, applyRule)
+                    },
+                    onDelete = { id ->
+                        transactionsViewModel.deleteTransaction(id)
+                    }
+                )
+            }
+
             // Clean Floating Navigation Bar
             GlassBottomBar(
                 currentRoute = currentRoute,
                 onNavigate = { route ->
-                    navController.navigate(route) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
+                    if (currentRoute != route) {
+                        if (route == Screen.Dashboard.route) {
+                            // Directly pop back to Home / Dashboard without saveState/restoreState collision
+                            navController.navigate(Screen.Dashboard.route) {
+                                popUpTo(Screen.Dashboard.route) {
+                                    inclusive = false
+                                }
+                                launchSingleTop = true
+                            }
+                        } else {
+                            navController.navigate(route) {
+                                popUpTo(Screen.Dashboard.route) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
                         }
-                        launchSingleTop = true
-                        restoreState = true
                     }
                 },
                 modifier = Modifier

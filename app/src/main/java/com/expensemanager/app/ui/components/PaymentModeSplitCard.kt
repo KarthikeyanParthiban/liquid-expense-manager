@@ -1,6 +1,7 @@
 package com.expensemanager.app.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,7 +16,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CreditCard
-import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -29,11 +29,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.expensemanager.app.core.util.CurrencyFormatter
-import com.expensemanager.app.ui.theme.AppleBlue
-import com.expensemanager.app.ui.theme.AppleBlueLight
-import com.expensemanager.app.ui.theme.AppleGreen
-import com.expensemanager.app.ui.theme.AppleGreenLight
-import com.expensemanager.app.ui.theme.AppleOrange
 import com.expensemanager.app.ui.theme.TextPrimary
 import com.expensemanager.app.ui.theme.TextSecondary
 import com.expensemanager.app.ui.theme.appleCard
@@ -56,6 +51,7 @@ fun PaymentModeSplitCard(
     modifier: Modifier = Modifier
 ) {
     if (split.totalAmount <= 0) return
+    val isDark = com.expensemanager.app.ui.theme.LocalIsDarkTheme.current
 
     Box(
         modifier = modifier
@@ -75,20 +71,20 @@ fun PaymentModeSplitCard(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Multi-segment progress bar
+            // Multi-segment progress bar in Monotone
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(12.dp)
                     .clip(RoundedCornerShape(6.dp))
-                    .background(Color(0xFFE5E7EB))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 if (split.creditCardPercentage > 0) {
                     Box(
                         modifier = Modifier
                             .weight(split.creditCardPercentage.coerceAtLeast(0.01f))
                             .height(12.dp)
-                            .background(Color(0xFF5856D6)) // Apple Purple for Credit Card
+                            .background(if (isDark) Color(0xFFFFFFFF) else Color(0xFF171717))
                     )
                 }
                 if (split.bankUpiPercentage > 0) {
@@ -96,78 +92,112 @@ fun PaymentModeSplitCard(
                         modifier = Modifier
                             .weight(split.bankUpiPercentage.coerceAtLeast(0.01f))
                             .height(12.dp)
-                            .background(AppleBlue)
+                            .background(if (isDark) Color(0xFF737373) else Color(0xFF9E9E9E))
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Legend Items
+            // Legend Breakdown
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Credit Card item
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFF5856D6).copy(alpha = 0.12f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CreditCard,
-                            contentDescription = null,
-                            tint = Color(0xFF5856D6),
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
+                // Credit Card Pill
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(12.dp)
+                ) {
                     Column {
-                        Text(
-                            text = "Credit Cards (${(split.creditCardPercentage * 100).toInt()}%)",
-                            fontSize = 12.sp,
-                            color = TextSecondary
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.surface),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CreditCard,
+                                    contentDescription = null,
+                                    tint = TextPrimary,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "CREDIT CARD",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = TextSecondary,
+                                fontSize = 9.sp
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = CurrencyFormatter.format(split.creditCardAmount),
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.ExtraBold,
                             color = TextPrimary
+                        )
+                        Text(
+                            text = "${(split.creditCardPercentage * 100).toInt()}% of total",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary,
+                            fontSize = 10.sp
                         )
                     }
                 }
 
-                // Bank & UPI item
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clip(CircleShape)
-                            .background(AppleBlueLight),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AccountBalance,
-                            contentDescription = null,
-                            tint = AppleBlue,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
+                // Bank / UPI Pill
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(12.dp)
+                ) {
                     Column {
-                        Text(
-                            text = "Bank / UPI (${(split.bankUpiPercentage * 100).toInt()}%)",
-                            fontSize = 12.sp,
-                            color = TextSecondary
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.surface),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AccountBalance,
+                                    contentDescription = null,
+                                    tint = TextPrimary,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "BANK / UPI",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = TextSecondary,
+                                fontSize = 9.sp
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = CurrencyFormatter.format(split.bankUpiAmount),
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.ExtraBold,
                             color = TextPrimary
+                        )
+                        Text(
+                            text = "${(split.bankUpiPercentage * 100).toInt()}% of total",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary,
+                            fontSize = 10.sp
                         )
                     }
                 }

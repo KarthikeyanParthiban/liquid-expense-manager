@@ -20,15 +20,16 @@ import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.expensemanager.app.core.model.Category
+import com.expensemanager.app.ui.theme.TextPrimary
 
 @Composable
 fun CategoryIcon(
@@ -37,7 +38,6 @@ fun CategoryIcon(
     size: Dp = 44.dp,
     iconSize: Dp = 22.dp
 ) {
-    val categoryColor = Color(category.colorHex)
     val iconVector: ImageVector = when (category) {
         Category.FOOD -> Icons.Default.Restaurant
         Category.GROCERIES -> Icons.Default.ShoppingCart
@@ -59,13 +59,13 @@ fun CategoryIcon(
         modifier = modifier
             .size(size)
             .clip(CircleShape)
-            .background(categoryColor.copy(alpha = 0.12f)),
+            .background(MaterialTheme.colorScheme.surfaceVariant),
         contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = iconVector,
             contentDescription = category.displayName,
-            tint = categoryColor,
+            tint = TextPrimary,
             modifier = Modifier.size(iconSize)
         )
     }

@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Design Variations — Liquid Expense Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: #0A0A0A;
+      color: #FFFFFF;
+      min-height: 100vh;
+      padding: 30px 16px 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Top Controls Bar */
+    .top-bar {
+      max-width: 900px;
+      width: 100%;
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      background: #181818;
+      border: 1px solid #282828;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #A3A3A3;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 12px;
+    }
+
+    .top-bar h1 {
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      margin-bottom: 8px;
+    }
+
+    .top-bar p {
+      font-size: 14px;
+      color: #888888;
+      max-width: 600px;
+      margin: 0 auto 24px;
+      line-height: 1.5;
+    }
+
+    /* Variation Selector Switcher */
+    .variation-switcher {
+      display: flex;
+      gap: 8px;
+      background: #141414;
+      padding: 6px;
+      border-radius: 16px;
+      border: 1px solid #242424;
+      max-width: 800px;
+      margin: 0 auto 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .var-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: #888888;
+      padding: 9px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .var-btn:hover {
+      color: #FFFFFF;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .var-btn.active {
+      background: #262626;
+      color: #FFFFFF;
+      border-color: #383838;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Screen Mode Switcher (Dashboard / Transactions / Insights / Widget) */
+    .screen-switcher {
+      display: flex;
+      gap: 6px;
+      background: #111111;
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid #222222;
+      max-width: 500px;
+      margin: 0 auto;
+      justify-content: center;
+    }
+
+    .screen-btn {
+      background: transparent;
+      border: none;
+      color: #777777;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .screen-btn:hover {
+      color: #DDDDDD;
+    }
+
+    .screen-btn.active {
+      background: #FFFFFF;
+      color: #000000;
+      font-weight: 700;
+    }
+
+    /* Comparison Stage */
+    .stage {
+      display: flex;
+      gap: 32px;
+      justify-content: center;
+      align-items: flex-start;
+      margin-top: 30px;
+      width: 100%;
+      max-width: 1100px;
+      flex-wrap: wrap;
+    }
+
+    /* Phone Device Simulator Frame */
+    .phone-frame {
+      width: 375px;
+      min-height: 780px;
+      border-radius: 44px;
+      padding: 16px 14px 24px;
+      position: relative;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.6), 0 0 0 10px #1E1E1E, 0 0 0 12px #2A2A2A;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .phone-notch {
+      width: 120px;
+      height: 24px;
+      background: #000000;
+      border-radius: 14px;
+      margin: 0 auto 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .phone-camera {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #111111;
+      border: 1px solid #222222;
+    }
+
+    /* Theme Variable Classes */
+    /* 1. Pure OLED Monotone (Current) */
+    .theme-pure-monotone {
+      background: #000000;
+      color: #FFFFFF;
+      --card-surface: #121212;
+      --card-border: #262626;
+      --elevated-surface: #1C1C1C;
+      --text-pri: #FFFFFF;
+      --text-sec: #A3A3A3;
+      --text-ter: #737373;
+      --income-color: #FFFFFF;
+      --expense-color: #FFFFFF;
+      --accent-pill: #FFFFFF;
+      --accent-pill-text: #000000;
+    }
+
+    /* 2. Monotone + Micro-Semantic Accents (Linear / Apple Wallet) */
+    .theme-semantic-accents {
+      background: #000000;
+      color: #FFFFFF;
+      --card-surface: #121212;
+      --card-border: #262626;
+      --elevated-surface: #1C1C1C;
+      --text-pri: #FFFFFF;
+      --text-sec: #A3A3A3;
+      --text-ter: #737373;
+      --income-color: #30D158;
+      --expense-color: #FF453A;
+      --accent-pill: #30D158;
+      --accent-pill-text: #000000;
+    }
+
+    /* 3. Obsidian Glass & Titanium Wireframe */
+    .theme-obsidian-glass {
+      background: #080808;
+      color: #FFFFFF;
+      --card-surface: rgba(26, 26, 26, 0.7);
+      --card-border: rgba(255, 255, 255, 0.12);
+      --elevated-surface: rgba(255, 255, 255, 0.05);
+      --text-pri: #FFFFFF;
+      --text-sec: #9E9E9E;
+      --text-ter: #616161;
+      --income-color: #E0E0E0;
+      --expense-color: #BDBDBD;
+      --accent-pill: #FFFFFF;
+      --accent-pill-text: #000000;
+    }
+
+    /* 4. Crisp Editorial Light Mode */
+    .theme-crisp-light {
+      background: #F4F5F7;
+      color: #111827;
+      --card-surface: #FFFFFF;
+      --card-border: #E5E7EB;
+      --elevated-surface: #F3F4F6;
+      --text-pri: #111827;
+      --text-sec: #6B7280;
+      --text-ter: #9CA3AF;
+      --income-color: #111827;
+      --expense-color: #111827;
+      --accent-pill: #111827;
+      --accent-pill-text: #FFFFFF;
+    }
+
+    /* UI Components inside Phone Frame */
+    .ui-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      padding: 0 4px;
+    }
+
+    .month-pill {
+      display: flex;
+      align-items: center;
+      background: var(--card-surface);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 2px 6px;
+      gap: 6px;
+    }
+
+    .nav-arrow-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: transparent;
+      border: none;
+      color: var(--text-pri);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .month-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-pri);
+      padding: 0 4px;
+    }
+
+    .circle-action-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--card-surface);
+      border: 1px solid var(--card-border);
+      color: var(--text-pri);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    /* Main Balance Stat Card */
+    .stat-card {
+      background: var(--card-surface);
+      border: 1px solid var(--card-border);
+      border-radius: 22px;
+      padding: 18px;
+      margin-bottom: 12px;
+      backdrop-filter: blur(12px);
+    }
+
+    .stat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--text-sec);
+      text-transform: uppercase;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #32D74B;
+    }
+
+    .main-balance {
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      color: var(--text-pri);
+      margin-bottom: 14px;
+    }
+
+    .split-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .split-pill {
+      background: var(--elevated-surface);
+      border-radius: 14px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .split-icon-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--card-surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--income-color);
+    }
+
+    .split-val-title {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--text-sec);
+    }
+
+    .split-val-amount {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--income-color);
+    }
+
+    .split-val-amount.expense {
+      color: var(--expense-color);
+    }
+
+    /* Gamification & Quests Card */
+    .quest-card {
+      background: var(--card-surface);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 14px;
+      margin-bottom: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .quest-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .quest-score-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .score-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--elevated-surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-pri);
+    }
+
+    .quest-sub-row {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 8px;
+    }
+
+    .quest-sub-box {
+      background: var(--elevated-surface);
+      border-radius: 12px;
+      padding: 8px 10px;
+    }
+
+    /* Section Headers */
+    .section-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 10px 4px 8px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      color: var(--text-sec);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .count-chip {
+      background: var(--elevated-surface);
+      color: var(--text-pri);
+      padding: 1px 6px;
+      border-radius: 5px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    /* Account Cards Carousel */
+    .card-carousel {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      margin-bottom: 12px;
+    }
+
+    .account-card-mini {
+      min-width: 160px;
+      background: var(--card-surface);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .account-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .bank-icon-box {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--elevated-surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-pri);
+    }
+
+    /* Transaction List Items */
+    .txn-item {
+      background: var(--card-surface);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .txn-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .txn-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--elevated-surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-pri);
+    }
+
+    .txn-merchant {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-pri);
+      margin-bottom: 2px;
+    }
+
+    .txn-meta {
+      font-size: 10px;
+      color: var(--text-ter);
+    }
+
+    .txn-amount {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text-pri);
+      text-align: right;
+    }
+
+    .txn-amount.credit {
+      color: var(--income-color);
+    }
+
+    .txn-amount.debit {
+      color: var(--expense-color);
+    }
+
+    /* Bottom Navigation Bar */
+    .bottom-bar {
+      margin-top: auto;
+      background: var(--card-surface);
+      border: 1px solid var(--card-border);
+      border-radius: 999px;
+      padding: 4px 6px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+    }
+
+    .nav-btn {
+      padding: 8px 14px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-ter);
+      cursor: pointer;
+    }
+
+    .nav-btn.active {
+      background: var(--elevated-surface);
+      color: var(--text-pri);
+    }
+
+    /* Explanation Comparison Notes */
+    .variation-notes {
+      max-width: 380px;
+      background: #141414;
+      border: 1px solid #242424;
+      border-radius: 20px;
+      padding: 24px;
+    }
+
+    .variation-notes h2 {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      color: #FFFFFF;
+    }
+
+    .variation-notes p {
+      font-size: 13px;
+      color: #999999;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .feature-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 12px;
+      color: #CCCCCC;
+    }
+
+    .feature-item svg {
+      flex-shrink: 0;
+      margin-top: 2px;
+      color: #32D74B;
+    }
+
+    .ux-tag {
+      display: inline-block;
+      padding: 3px 8px;
+      background: #202020;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #AAAAAA;
+      margin-right: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header Controls -->
+  <div class="top-bar">
+    <div class="badge-pill">UX & Aesthetic Design Exploration</div>
+    <h1>Liquid Expense Manager — Variations</h1>
+    <p>Compare the visual hierarchy, cognitive scannability, and contrast of 4 curated design directions for your financial tracker.</p>
+
+    <!-- Variation Selector -->
+    <div class="variation-switcher">
+      <button class="var-btn active" onclick="switchTheme('theme-pure-monotone', this, 'Pure OLED Monotone', '100% monochrome palette. Maximum focus on amounts with zero color distraction. Perfect for night reading and battery life.')">
+        🌑 Option 1: Pure Monotone (Active)
+      </button>
+      <button class="var-btn" onclick="switchTheme('theme-semantic-accents', this, 'Monotone + Micro-Accents (Linear Style)', '98% dark monochrome with subtle emerald green (+₹) for credits and ruby red (-₹) for debits. Highly recommended for rapid transaction scanning.')">
+        ✨ Option 2: Monotone + Micro-Accents
+      </button>
+      <button class="var-btn" onclick="switchTheme('theme-obsidian-glass', this, 'Obsidian Glass & Titanium', 'Sleek frosted glass surfaces with hairline titanium borders and subtle tonal silver gradients.')">
+        💎 Option 3: Obsidian Glass
+      </button>
+      <button class="var-btn" onclick="switchTheme('theme-crisp-light', this, 'Crisp Editorial Light', 'Alabaster white monochrome theme with high-contrast black typography and soft neutral card surfaces.')">
+        ☀️ Option 4: Crisp Light Mode
+      </button>
+    </div>
+
+    <!-- Screen Switcher -->
+    <div class="screen-switcher">
+      <button class="screen-btn active" onclick="switchScreen('dashboard', this)">Dashboard</button>
+      <button class="screen-btn" onclick="switchScreen('transactions', this)">Transactions</button>
+      <button class="screen-btn" onclick="switchScreen('insights', this)">Insights & Analytics</button>
+    </div>
+  </div>
+
+  <!-- Main Stage -->
+  <div class="stage">
+    
+    <!-- Phone Mockup Frame -->
+    <div class="phone-frame theme-pure-monotone" id="phoneContainer">
+      
+      <!-- Phone Notch / Island -->
+      <div class="phone-notch">
+        <div class="phone-camera"></div>
+      </div>
+
+      <!-- VIEW 1: DASHBOARD -->
+      <div id="viewDashboard">
+        <!-- Top App Bar -->
+        <div class="ui-header">
+          <div class="month-pill">
+            <button class="nav-arrow-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <span class="month-title">August 2026</span>
+            <button class="nav-arrow-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+          </div>
+
+          <div style="display: flex; gap: 6px;">
+            <button class="circle-action-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
+            <button class="circle-action-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Hero Balance Stat Card -->
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-label">Total Available Balance</span>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-sec)"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <div class="status-dot"></div>
+            </div>
+          </div>
+          <div class="main-balance">₹ 1,28,450.00</div>
+
+          <div class="split-row">
+            <div class="split-pill">
+              <div class="split-icon-circle">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+              </div>
+              <div>
+                <div class="split-val-title">INCOME</div>
+                <div class="split-val-amount">₹ 85,000</div>
+              </div>
+            </div>
+
+            <div class="split-pill">
+              <div class="split-icon-circle">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+              </div>
+              <div>
+                <div class="split-val-title">SPENT</div>
+                <div class="split-val-amount expense">₹ 33,844</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gamification Card -->
+        <div class="quest-card">
+          <div class="quest-header">
+            <div class="quest-score-badge">
+              <div class="score-circle">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+              </div>
+              <div>
+                <div style="font-size: 12px; font-weight: 800; color: var(--text-pri)">LIQUID SCORE: 380</div>
+                <div style="font-size: 10px; color: var(--text-sec)">0% Savings Rate • Disciplined</div>
+              </div>
+            </div>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-ter)"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+
+          <div class="quest-sub-row">
+            <div class="quest-sub-box">
+              <div style="font-size: 8px; font-weight: 700; color: var(--text-sec); text-transform: uppercase;">SAVINGS STREAK</div>
+              <div style="font-size: 12px; font-weight: 800; color: var(--text-pri); margin-top: 2px;">1 Days Active</div>
+            </div>
+            <div class="quest-sub-box">
+              <div style="font-size: 8px; font-weight: 700; color: var(--text-sec); text-transform: uppercase;">SAFE ALLOWANCE</div>
+              <div style="font-size: 12px; font-weight: 800; color: var(--text-pri); margin-top: 2px;">₹ 1,740 / day</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bank Accounts Carousel Header -->
+        <div class="section-title-row">
+          <div class="section-title">
+            BANK ACCOUNTS <span class="count-chip">4</span>
+          </div>
+        </div>
+
+        <div class="card-carousel">
+          <div class="account-card-mini">
+            <div class="account-header">
+              <div class="bank-icon-box">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M3 10h18M5 10v11M19 10v11M9 10v11M14 10v11M2 10l10-7 10 7"/></svg>
+              </div>
+              <span style="font-size: 10px; font-weight: 700; color: var(--text-sec)">XX7011</span>
+            </div>
+            <div>
+              <div style="font-size: 12px; font-weight: 700; color: var(--text-pri)">HDFC Bank</div>
+              <div style="font-size: 13px; font-weight: 800; color: var(--text-pri); margin-top: 4px;">₹ 88,248.00</div>
+            </div>
+          </div>
+
+          <div class="account-card-mini">
+            <div class="account-header">
+              <div class="bank-icon-box">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M3 10h18M5 10v11M19 10v11M9 10v11M14 10v11M2 10l10-7 10 7"/></svg>
+              </div>
+              <span style="font-size: 10px; font-weight: 700; color: var(--text-sec)">XX4520</span>
+            </div>
+            <div>
+              <div style="font-size: 12px; font-weight: 700; color: var(--text-pri)">Federal Bank</div>
+              <div style="font-size: 13px; font-weight: 800; color: var(--text-pri); margin-top: 4px;">₹ 40,202.00</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="section-title-row">
+          <div class="section-title">RECENT TRANSACTIONS</div>
+          <span style="font-size: 11px; font-weight: 700; color: var(--text-sec)">See All</span>
+        </div>
+
+        <div class="txn-item">
+          <div class="txn-left">
+            <div class="txn-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8zM6 1v3M10 1v3M14 1v3"/></svg>
+            </div>
+            <div>
+              <div class="txn-merchant">Starbucks Coffee</div>
+              <div class="txn-meta">Today, 2:15 PM • HDFC XX7011</div>
+            </div>
+          </div>
+          <div class="txn-amount debit">−₹ 350.00</div>
+        </div>
+
+        <div class="txn-item">
+          <div class="txn-left">
+            <div class="txn-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <div>
+              <div class="txn-merchant">GROWW INVEST TECH</div>
+              <div class="txn-meta">Today, 4:55 PM • IMPS Transfer</div>
+            </div>
+          </div>
+          <div class="txn-amount credit">+₹ 100.00</div>
+        </div>
+      </div>
+
+      <!-- VIEW 2: TRANSACTIONS (Hidden by default) -->
+      <div id="viewTransactions" style="display: none;">
+        <div class="ui-header">
+          <span style="font-size: 20px; font-weight: 800; color: var(--text-pri)">Transactions</span>
+          <span style="font-size: 11px; font-weight: 700; color: var(--text-sec)">Export CSV</span>
+        </div>
+
+        <!-- Filter Chips Row -->
+        <div style="display: flex; gap: 6px; overflow-x: auto; margin-bottom: 14px;">
+          <div style="padding: 5px 12px; border-radius: 999px; background: var(--accent-pill); color: var(--accent-pill-text); font-size: 11px; font-weight: 700;">All Types</div>
+          <div style="padding: 5px 12px; border-radius: 999px; background: var(--elevated-surface); color: var(--text-sec); font-size: 11px; font-weight: 600;">Debits</div>
+          <div style="padding: 5px 12px; border-radius: 999px; background: var(--elevated-surface); color: var(--text-sec); font-size: 11px; font-weight: 600;">Credits</div>
+          <div style="padding: 5px 12px; border-radius: 999px; background: var(--elevated-surface); color: var(--text-sec); font-size: 11px; font-weight: 600;">Refunds</div>
+        </div>
+
+        <div class="txn-item">
+          <div class="txn-left">
+            <div class="txn-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+            <div>
+              <div class="txn-merchant">Zomato Online</div>
+              <div class="txn-meta">Food & Dining • 1:12 PM</div>
+            </div>
+          </div>
+          <div class="txn-amount debit">−₹ 489.00</div>
+        </div>
+
+        <div class="txn-item">
+          <div class="txn-left">
+            <div class="txn-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+            <div>
+              <div class="txn-merchant">Amazon India</div>
+              <div class="txn-meta">Shopping • Axis XX1006</div>
+            </div>
+          </div>
+          <div class="txn-amount debit">−₹ 2,199.00</div>
+        </div>
+
+        <div class="txn-item">
+          <div class="txn-left">
+            <div class="txn-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+            <div>
+              <div class="txn-merchant">Monthly Salary Credit</div>
+              <div class="txn-meta">Income • Federal Bank</div>
+            </div>
+          </div>
+          <div class="txn-amount credit">+₹ 85,000.00</div>
+        </div>
+      </div>
+
+      <!-- VIEW 3: INSIGHTS (Hidden by default) -->
+      <div id="viewInsights" style="display: none;">
+        <div class="ui-header">
+          <span style="font-size: 20px; font-weight: 800; color: var(--text-pri)">Insights</span>
+          <div class="month-pill">
+            <span class="month-title">August 2026</span>
+          </div>
+        </div>
+
+        <!-- Segmented Distribution Ribbon -->
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-label">Spending Distribution</span>
+            <span style="font-size: 11px; color: var(--text-sec)">5 Categories</span>
+          </div>
+          <div style="height: 12px; border-radius: 6px; background: var(--elevated-surface); display: flex; overflow: hidden; margin: 10px 0 14px;">
+            <div style="width: 45%; background: var(--text-pri);"></div>
+            <div style="width: 25%; background: var(--text-sec);"></div>
+            <div style="width: 18%; background: var(--text-ter);"></div>
+            <div style="width: 12%; background: #444444;"></div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; font-size: 12px;">
+              <span style="color: var(--text-pri); font-weight: 600;">Food & Dining</span>
+              <span style="font-weight: 800; color: var(--text-pri);">₹ 14,200 (45%)</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 12px;">
+              <span style="color: var(--text-sec); font-weight: 600;">Shopping & Gadgets</span>
+              <span style="font-weight: 800; color: var(--text-sec);">₹ 8,450 (25%)</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 12px;">
+              <span style="color: var(--text-ter); font-weight: 600;">Bills & Utilities</span>
+              <span style="font-weight: 800; color: var(--text-ter);">₹ 6,100 (18%)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Floating Nav Bar -->
+      <div class="bottom-bar">
+        <div class="nav-btn active"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg></div>
+        <div class="nav-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+        <div class="nav-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10h-10z"/></svg></div>
+        <div class="nav-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h0M2 9.5h20"/></svg></div>
+        <div class="nav-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+      </div>
+    </div>
+
+    <!-- UX Breakdown & Rationale Side Panel -->
+    <div class="variation-notes">
+      <div style="margin-bottom: 8px;">
+        <span class="ux-tag" id="uxCategoryTag">ACTIVE SELECTION</span>
+        <span class="ux-tag">FINTECH DESIGN</span>
+      </div>
+      <h2 id="variationTitle">Pure OLED Monotone (Option 1)</h2>
+      <p id="variationDesc">100% monochrome palette. Maximum focus on amounts with zero color distraction. Perfect for night reading and OLED battery efficiency.</p>
+
+      <ul class="feature-list" id="featureList">
+        <li class="feature-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <span><strong>Zero Visual Clutter:</strong> Eliminates rainbow category badges so only key financial metrics pop.</span>
+        </li>
+        <li class="feature-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <span><strong>Luminance Hierarchy:</strong> Pure white (`#FFFFFF`) for numbers, silver (`#A3A3A3`) for metadata, graphite (`#121212`) for cards.</span>
+        </li>
+        <li class="feature-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <span><strong>Inter Typography:</strong> Geometric grotesque font with tight number kerning (`-0.8sp`).</span>
+        </li>
+      </ul>
+
+      <div style="padding-top: 16px; border-top: 1px solid #242424; font-size: 11px; color: #888888; line-height: 1.5;">
+        💡 <strong>UX Tip:</strong> Notice how Option 2 introduces subtle micro-semantic tints on currency values without breaking the sleek monochrome background.
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const themes = {
+      'theme-pure-monotone': {
+        title: 'Option 1: Pure OLED Monotone (Currently on App)',
+        desc: '100% pitch black monochrome palette. Zero color distraction, maximum night-time battery efficiency, and institutional-grade minimalism.',
+        features: [
+          '<strong>Zero Visual Noise:</strong> Eliminates rainbow badges so eyes immediately register amounts.',
+          '<strong>True OLED Black:</strong> #000000 base with #121212 card elevation and subtle #262626 borders.',
+          '<strong>Clean Luminance Contrast:</strong> Uses 4 clear brightness steps for reading effortless typography.'
+        ]
+      },
+      'theme-semantic-accents': {
+        title: 'Option 2: Monotone + Micro-Semantic Accents (Linear / Apple)',
+        desc: '98% dark monochrome base, but adds subtle emerald green (+₹) for income/credits and ruby (-₹) for expenses. Ideal for rapid financial list scannability.',
+        features: [
+          '<strong>Instant Cash-Flow Scannability:</strong> Distinguish credits from debits in under 100ms without reading plus/minus.',
+          '<strong>Preserved Minimalism:</strong> Backgrounds, navigation, dialogs, and cards remain 100% dark monochrome.',
+          '<strong>Fintech Standard:</strong> The exact model adopted by Linear, Apple Wallet, and Stripe Dashboard.'
+        ]
+      },
+      'theme-obsidian-glass': {
+        title: 'Option 3: Obsidian Glass & Titanium Wireframe',
+        desc: 'Deep obsidian #080808 background with translucent frosted glass cards and hairline titanium silver borders.',
+        features: [
+          '<strong>Modern Layered Depth:</strong> Translucent card surfaces with subtle backdrop blur.',
+          '<strong>High-End Hardware Aesthetic:</strong> Hairline borders reminiscent of premium titanium phone hardware.',
+          '<strong>Monochrome Tonal Gradients:</strong> Subtle grayscale gradients on action buttons and charts.'
+        ]
+      },
+      'theme-crisp-light': {
+        title: 'Option 4: Crisp Editorial Light Mode',
+        desc: 'Alabaster white monochrome theme with high-contrast pure black typography and soft neutral card surfaces.',
+        features: [
+          '<strong>High Daylight Contrast:</strong> Perfectly legible in direct sunlight with 12:1 WCAG contrast.',
+          '<strong>Minimalist Monotone:</strong> Zero cartoonish pastel backgrounds; pure editorial luxury styling.',
+          '<strong>Seamless Switch:</strong> Automatically inverts the dark mode tokens with 1 tap.'
+        ]
+      }
+    };
+
+    function switchTheme(themeClass, btn, title, desc) {
+      // Update buttons
+      document.querySelectorAll('.var-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      // Update phone container class
+      const phone = document.getElementById('phoneContainer');
+      phone.className = 'phone-frame ' + themeClass;
+
+      // Update notes
+      const data = themes[themeClass];
+      document.getElementById('variationTitle').textContent = data.title;
+      document.getElementById('variationDesc').textContent = data.desc;
+
+      const featureList = document.getElementById('featureList');
+      featureList.innerHTML = data.features.map(f => `
+        <li class="feature-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>${f}</span>
+        </li>
+      `).join('');
+    }
+
+    function switchScreen(screenName, btn) {
+      document.querySelectorAll('.screen-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      document.getElementById('viewDashboard').style.display = screenName === 'dashboard' ? 'block' : 'none';
+      document.getElementById('viewTransactions').style.display = screenName === 'transactions' ? 'block' : 'none';
+      document.getElementById('viewInsights').style.display = screenName === 'insights' ? 'block' : 'none';
+    }
+  </script>
+</body>
+</html>

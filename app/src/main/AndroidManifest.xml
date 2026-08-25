@@ -10,6 +10,7 @@
     <application
         android:name=".ExpenseApplication"
         android:allowBackup="true"
+        android:hardwareAccelerated="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@android:drawable/sym_def_app_icon"
@@ -22,6 +23,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.ExpenseManager">
             <intent-filter>
@@ -38,6 +40,20 @@
             <intent-filter android:priority="999">
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
             </intent-filter>
+        </receiver>
+
+        <!-- Home Screen App Widget -->
+        <receiver
+            android:name=".widget.ExpenseWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.expensemanager.app.widget.ACTION_SYNC_WIDGET" />
+                <action android:name="com.expensemanager.app.widget.ACTION_TOGGLE_BALANCE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_expense_summary" />
         </receiver>
 
     </application>

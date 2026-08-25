@@ -1,6 +1,7 @@
 package com.expensemanager.app.ui.screens.dashboard
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +24,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -49,20 +52,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.expensemanager.app.core.model.Account
+import com.expensemanager.app.core.model.AccountType
 import com.expensemanager.app.core.model.Category
 import com.expensemanager.app.core.model.Transaction
 import com.expensemanager.app.core.util.DateTimeUtils
 import com.expensemanager.app.ui.components.AccountLedgerSheet
 import com.expensemanager.app.ui.components.CategoryDetailSheet
-import com.expensemanager.app.ui.components.CategoryIcon
 import com.expensemanager.app.ui.components.DonutChart
+import com.expensemanager.app.ui.components.GamificationCard
 import com.expensemanager.app.ui.components.GlassAccountCard
 import com.expensemanager.app.ui.components.GlassStatCard
 import com.expensemanager.app.ui.components.TransactionItem
-import com.expensemanager.app.ui.theme.AppleBlue
-import com.expensemanager.app.ui.theme.AppleBlueLight
+import com.expensemanager.app.ui.screens.gamification.WealthQuestsSheet
+import com.expensemanager.app.ui.theme.BorderLight
 import com.expensemanager.app.ui.theme.TextPrimary
 import com.expensemanager.app.ui.theme.TextSecondary
+import com.expensemanager.app.ui.theme.TextTertiary
 import com.expensemanager.app.ui.theme.appleCard
 
 @Composable
@@ -81,7 +86,24 @@ fun DashboardScreen(
     val isSyncing by viewModel.isSyncing.collectAsState()
     val syncMessage by viewModel.syncMessage.collectAsState()
 
-    var isBalanceHidden by remember { mutableStateOf(false) }
+    // Gamification & Wealth Flows
+    val liquidScore by viewModel.liquidScore.collectAsState()
+    val streakInfo by viewModel.streakInfo.collectAsState()
+    val activeQuests by viewModel.activeQuests.collectAsState()
+    val roundUpSummary by viewModel.roundUpSummary.collectAsState()
+
+    val bankAccounts = remember(accounts) {
+        accounts.filter { it.accountType != AccountType.CREDIT_CARD && it.accountType != AccountType.WALLET }
+    }
+    val creditCards = remember(accounts) {
+        accounts.filter { it.accountType == AccountType.CREDIT_CARD }
+    }
+    val wallets = remember(accounts) {
+        accounts.filter { it.accountType == AccountType.WALLET }
+    }
+
+    var isBalanceHidden by remember { mutableStateOf(true) }
+    var showWealthQuestsSheet by remember { mutableStateOf(false) }
     var selectedAccountForLedger by remember { mutableStateOf<Account?>(null) }
     var selectedCategoryForDetail by remember { mutableStateOf<Category?>(null) }
 
@@ -103,7 +125,7 @@ fun DashboardScreen(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(top = 12.dp, bottom = 110.dp)
         ) {
-            // Header with Month Selector & Sync Button
+            // Month Selector Header & Quick Actions
             item {
                 Row(
                     modifier = Modifier
@@ -112,43 +134,104 @@ fun DashboardScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
-                        Text(
-                            text = "Expense Manager",
-                            fontSize = 26.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = TextPrimary,
-                            letterSpacing = (-0.5).sp
-                        )
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconButton(onClick = { viewModel.previousMonth() }, modifier = Modifier.size(26.dp)) {
-                                Icon(Icons.Default.ChevronLeft, contentDescription = "Previous Month", tint = TextSecondary)
-                            }
-                            Text(
-                                text = DateTimeUtils.formatMonthYear(monthTimestamp),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = AppleBlue
+                    // Sleek Monotone Month Capsule
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(MaterialTheme.colorScheme.surface)
+                            .border(1.dp, BorderLight, RoundedCornerShape(20.dp))
+                            .padding(horizontal = 4.dp, vertical = 2.dp)
+                    ) {
+                        IconButton(
+                            onClick = { viewModel.previousMonth() },
+                            modifier = Modifier.size(30.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ChevronLeft,
+                                contentDescription = "Previous Month",
+                                tint = TextPrimary,
+                                modifier = Modifier.size(20.dp)
                             )
-                            IconButton(onClick = { viewModel.nextMonth() }, modifier = Modifier.size(26.dp)) {
-                                Icon(Icons.Default.ChevronRight, contentDescription = "Next Month", tint = TextSecondary)
-                            }
+                        }
+
+                        Text(
+                            text = DateTimeUtils.formatMonthYear(monthTimestamp),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary,
+                            modifier = Modifier.padding(horizontal = 6.dp)
+                        )
+
+                        IconButton(
+                            onClick = { viewModel.nextMonth() },
+                            modifier = Modifier.size(30.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ChevronRight,
+                                contentDescription = "Next Month",
+                                tint = TextPrimary,
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                     }
 
-                    Box(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(AppleBlueLight)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(
-                            onClick = { viewModel.syncSms() },
-                            enabled = !isSyncing
+                        // Quick Theme Toggle Button
+                        val context = androidx.compose.ui.platform.LocalContext.current
+                        val isDark = com.expensemanager.app.ui.theme.LocalIsDarkTheme.current
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surface)
+                                .border(1.dp, BorderLight, CircleShape),
+                            contentAlignment = Alignment.Center
                         ) {
-                            if (isSyncing) {
-                                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = AppleBlue)
-                            } else {
-                                Icon(Icons.Default.Sync, contentDescription = "Sync SMS", tint = AppleBlue)
+                            IconButton(
+                                onClick = { com.expensemanager.app.ui.theme.ThemeManager.toggleTheme(context, isDark) },
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (isDark) Icons.Default.LightMode else Icons.Default.DarkMode,
+                                    contentDescription = "Toggle Theme",
+                                    tint = TextPrimary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+
+                        // Sleek Sync Button
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surface)
+                                .border(1.dp, BorderLight, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            IconButton(
+                                onClick = { viewModel.syncSms() },
+                                enabled = !isSyncing,
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                if (isSyncing) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(18.dp),
+                                        strokeWidth = 2.dp,
+                                        color = TextPrimary
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Default.Sync,
+                                        contentDescription = "Sync SMS",
+                                        tint = TextPrimary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
                             }
                         }
                     }
@@ -167,10 +250,20 @@ fun DashboardScreen(
                 )
             }
 
-            // Bank Accounts Carousel (Clickable for Ledger & Eye Icon for Privacy)
-            if (accounts.isNotEmpty()) {
+            // Gamification & Wealth Discipline Card (Liquid Score, Streak & Compounder)
+            item {
+                GamificationCard(
+                    liquidScore = liquidScore,
+                    streakInfo = streakInfo,
+                    roundUpSummary = roundUpSummary,
+                    onClick = { showWealthQuestsSheet = true }
+                )
+            }
+
+            // Group 1: Bank Accounts Carousel
+            if (bankAccounts.isNotEmpty()) {
                 item {
-                    Column(modifier = Modifier.padding(top = 12.dp)) {
+                    Column(modifier = Modifier.padding(top = 14.dp)) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -178,24 +271,28 @@ fun DashboardScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "ACCOUNTS & CARDS",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = TextSecondary,
-                                letterSpacing = 1.1.sp
-                            )
-
-                            IconButton(
-                                onClick = { isBalanceHidden = !isBalanceHidden },
-                                modifier = Modifier.size(24.dp)
-                            ) {
-                                Icon(
-                                    imageVector = if (isBalanceHidden) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                    contentDescription = if (isBalanceHidden) "Show Balances" else "Hide Balances",
-                                    tint = TextSecondary,
-                                    modifier = Modifier.size(18.dp)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "BANK ACCOUNTS",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextSecondary,
+                                    letterSpacing = 1.1.sp
                                 )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                                        .padding(horizontal = 6.dp, vertical = 1.dp)
+                                ) {
+                                    Text(
+                                        text = "${bankAccounts.size}",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextPrimary
+                                    )
+                                }
                             }
                         }
 
@@ -203,7 +300,7 @@ fun DashboardScreen(
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            items(accounts, key = { it.id }) { account ->
+                            items(bankAccounts, key = { it.id }) { account ->
                                 GlassAccountCard(
                                     account = account,
                                     hideBalance = isBalanceHidden,
@@ -215,12 +312,116 @@ fun DashboardScreen(
                 }
             }
 
-            // Category Spending Breakdown (Clickable for Detail)
+            // Group 2: Credit Cards Carousel
+            if (creditCards.isNotEmpty()) {
+                item {
+                    Column(modifier = Modifier.padding(top = 10.dp)) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "CREDIT CARDS",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextSecondary,
+                                    letterSpacing = 1.1.sp
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                                        .padding(horizontal = 6.dp, vertical = 1.dp)
+                                ) {
+                                    Text(
+                                        text = "${creditCards.size}",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextPrimary
+                                    )
+                                }
+                            }
+                        }
+
+                        LazyRow(
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            items(creditCards, key = { it.id }) { account ->
+                                GlassAccountCard(
+                                    account = account,
+                                    hideBalance = isBalanceHidden,
+                                    onClick = { selectedAccountForLedger = account }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Group 3: Wallets & Passbooks Carousel
+            if (wallets.isNotEmpty()) {
+                item {
+                    Column(modifier = Modifier.padding(top = 10.dp)) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "WALLETS & PASSBOOKS",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextSecondary,
+                                    letterSpacing = 1.1.sp
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                                        .padding(horizontal = 6.dp, vertical = 1.dp)
+                                ) {
+                                    Text(
+                                        text = "${wallets.size}",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextPrimary
+                                    )
+                                }
+                            }
+                        }
+
+                        LazyRow(
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            items(wallets, key = { it.id }) { account ->
+                                GlassAccountCard(
+                                    account = account,
+                                    hideBalance = isBalanceHidden,
+                                    onClick = { selectedAccountForLedger = account }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Category Spending Section
             if (categorySpending.isNotEmpty()) {
                 item {
-                    Column(modifier = Modifier.padding(top = 12.dp)) {
+                    Column(modifier = Modifier.padding(top = 10.dp)) {
                         Text(
-                            text = "SPENDING BREAKDOWN",
+                            text = "MONTHLY SPENDING BREAKDOWN",
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             color = TextSecondary,
@@ -238,55 +439,21 @@ fun DashboardScreen(
                             DonutChart(
                                 spendingList = categorySpending,
                                 totalExpense = summary.totalExpense,
-                                onCategorySelected = { cat -> selectedCategoryForDetail = cat }
-                            )
-                        }
-                    }
-                }
-
-                items(categorySpending.take(4), key = { it.category }) { item ->
-                    val catEnum = runCatching { Category.valueOf(item.category) }.getOrDefault(Category.OTHERS)
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 3.dp)
-                            .appleCard(shape = RoundedCornerShape(16.dp), elevation = 0.5.dp)
-                            .clickable { selectedCategoryForDetail = catEnum }
-                            .padding(horizontal = 16.dp, vertical = 10.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                CategoryIcon(category = catEnum, size = 34.dp)
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Text(
-                                    text = catEnum.displayName,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = TextPrimary
-                                )
-                            }
-                            Text(
-                                text = com.expensemanager.app.core.util.CurrencyFormatter.format(item.totalAmount),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
+                                onCategorySelected = { category ->
+                                    selectedCategoryForDetail = category
+                                }
                             )
                         }
                     }
                 }
             }
 
-            // Recent Transactions Header
+            // Recent Transactions Section
             item {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp)
-                        .padding(top = 16.dp, bottom = 4.dp),
+                        .padding(start = 20.dp, end = 12.dp, top = 16.dp, bottom = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -301,52 +468,56 @@ fun DashboardScreen(
                     TextButton(onClick = onNavigateToTransactions) {
                         Text(
                             text = "See All",
-                            color = AppleBlue,
+                            style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.labelMedium
+                            color = TextPrimary
                         )
                     }
                 }
             }
 
-            // Recent Transactions List
             if (recentTransactions.isEmpty()) {
                 item {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 32.dp),
+                            .padding(16.dp)
+                            .appleCard(shape = RoundedCornerShape(20.dp), elevation = 1.dp)
+                            .padding(32.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "No transactions found.\nTap Sync to read bank SMS.",
-                            color = TextSecondary,
+                            text = "No transactions recorded for this month",
                             style = MaterialTheme.typography.bodyMedium,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            color = TextSecondary
                         )
                     }
                 }
             } else {
-                items(recentTransactions.take(8), key = { it.id }) { transaction ->
+                items(recentTransactions.take(15), key = { it.id }) { txn ->
                     TransactionItem(
-                        transaction = transaction,
-                        onClick = { onTransactionClick(transaction) }
+                        transaction = txn,
+                        onClick = { onTransactionClick(txn) }
                     )
                 }
             }
         }
 
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 90.dp)
-        )
+        // Gamification & Wealth Quests Sheet
+        if (showWealthQuestsSheet) {
+            WealthQuestsSheet(
+                liquidScore = liquidScore,
+                streakInfo = streakInfo,
+                quests = activeQuests,
+                roundUpSummary = roundUpSummary,
+                onDismiss = { showWealthQuestsSheet = false }
+            )
+        }
 
         // Account Ledger Bottom Sheet
-        selectedAccountForLedger?.let { acc ->
+        selectedAccountForLedger?.let { account ->
             AccountLedgerSheet(
-                account = acc,
+                account = account,
                 transactions = recentTransactions,
                 onDismiss = { selectedAccountForLedger = null },
                 onTransactionClick = { txn ->
@@ -357,9 +528,9 @@ fun DashboardScreen(
         }
 
         // Category Detail Bottom Sheet
-        selectedCategoryForDetail?.let { cat ->
+        selectedCategoryForDetail?.let { category ->
             CategoryDetailSheet(
-                category = cat,
+                category = category,
                 transactions = recentTransactions,
                 totalMonthExpense = summary.totalExpense,
                 onDismiss = { selectedCategoryForDetail = null },
@@ -369,5 +540,12 @@ fun DashboardScreen(
                 }
             )
         }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 90.dp)
+        )
     }
 }

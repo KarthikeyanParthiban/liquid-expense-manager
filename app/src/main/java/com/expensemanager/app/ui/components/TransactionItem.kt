@@ -20,10 +20,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.expensemanager.app.core.model.Transaction
+import com.expensemanager.app.core.model.TransactionStatus
 import com.expensemanager.app.core.model.TransactionType
 import com.expensemanager.app.core.util.CurrencyFormatter
 import com.expensemanager.app.core.util.DateTimeUtils
@@ -41,34 +43,65 @@ fun TransactionItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isCredit = transaction.type == TransactionType.CREDIT || transaction.type == TransactionType.REFUND
-    val amountColor = if (isCredit) AppleGreenDark else AppleRedDark
+    val isCredit = transaction.type == TransactionType.CREDIT ||
+            transaction.type == TransactionType.REFUND ||
+            transaction.type == TransactionType.REVERSAL ||
+            transaction.type == TransactionType.CARD_SETTLEMENT
+
+    val isDark = com.expensemanager.app.ui.theme.LocalIsDarkTheme.current
+    val amountColor = if (isCredit) {
+        if (isDark) com.expensemanager.app.ui.theme.AppleGreen else AppleGreenDark
+    } else {
+        if (isDark) com.expensemanager.app.ui.theme.AppleRed else AppleRedDark
+    }
+    val isRefundedOrReversed = transaction.status == TransactionStatus.REFUNDED || transaction.status == TransactionStatus.REVERSED
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-            .appleCard(shape = RoundedCornerShape(18.dp), elevation = 1.dp)
+            .padding(horizontal = 16.dp, vertical = 3.dp)
+            .appleCard(shape = RoundedCornerShape(16.dp), elevation = 0.5.dp)
             .clickable { onClick() }
-            .padding(horizontal = 16.dp, vertical = 14.dp)
+            .padding(horizontal = 16.dp, vertical = 13.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            CategoryIcon(category = transaction.category)
+            CategoryIcon(category = transaction.category, size = 40.dp)
 
             Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = transaction.merchantName ?: transaction.category.displayName,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = transaction.merchantName ?: transaction.category.displayName,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (isRefundedOrReversed) TextSecondary else TextPrimary,
+                        textDecoration = if (isRefundedOrReversed) TextDecoration.LineThrough else null,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    if (isRefundedOrReversed) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(Color(0xFFF3F4F6))
+                                .padding(horizontal = 4.dp, vertical = 1.dp)
+                        ) {
+                            Text(
+                                text = transaction.status.name.lowercase().replaceFirstChar { it.uppercase() },
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF6B7280)
+                            )
+                        }
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(2.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

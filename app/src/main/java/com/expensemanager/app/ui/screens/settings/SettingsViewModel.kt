@@ -38,7 +38,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             _isSyncing.value = true
             try {
-                val count = smsRepository.syncAllInboxSms { current, total ->
+                val count = smsRepository.syncAllInboxSms(forceFull = true) { current, total ->
                     _syncProgress.value = Pair(current, total)
                 }
                 _statusMessage.value = "Successfully imported $count transaction(s)!"

@@ -1,7 +1,10 @@
 package com.expensemanager.app.ui.components
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,11 +35,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.expensemanager.app.core.util.CurrencyFormatter
-import com.expensemanager.app.ui.theme.AppleBlue
 import com.expensemanager.app.ui.theme.AppleGreen
-import com.expensemanager.app.ui.theme.AppleGreenLight
 import com.expensemanager.app.ui.theme.AppleRed
-import com.expensemanager.app.ui.theme.AppleRedLight
 import com.expensemanager.app.ui.theme.TextPrimary
 import com.expensemanager.app.ui.theme.TextSecondary
 import com.expensemanager.app.ui.theme.appleCard
@@ -57,7 +57,7 @@ fun GlassStatCard(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp)
-            .appleCard(shape = RoundedCornerShape(24.dp), elevation = 2.dp)
+            .appleCard(shape = RoundedCornerShape(24.dp), elevation = 1.dp)
             .padding(20.dp)
     ) {
         Column {
@@ -94,23 +94,31 @@ fun GlassStatCard(
                         modifier = Modifier
                             .size(8.dp)
                             .clip(CircleShape)
-                            .background(if (displayPrimaryBalance >= 0) AppleGreen else AppleRed)
+                            .background(Color(0xFF32D74B))
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            Text(
-                text = if (hideBalance) "₹ ••••••••" else CurrencyFormatter.format(displayPrimaryBalance),
-                color = TextPrimary,
-                fontSize = 32.sp,
-                fontWeight = FontWeight.ExtraBold,
-                letterSpacing = if (hideBalance) 2.sp else (-0.5).sp
-            )
+            AnimatedContent(
+                targetState = hideBalance,
+                transitionSpec = { fadeIn() togetherWith fadeOut() },
+                label = "balanceVisibility"
+            ) { hidden ->
+                Text(
+                    text = if (hidden) "₹ ••••••••" else CurrencyFormatter.format(displayPrimaryBalance),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Black,
+                    color = TextPrimary,
+                    letterSpacing = if (hidden) 3.sp else (-0.8).sp,
+                    fontSize = 32.sp
+                )
+            }
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
+            // Income / Expense Split Pills with Micro-Semantic Accents
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -120,7 +128,7 @@ fun GlassStatCard(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(AppleGreenLight)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                         .padding(12.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -128,7 +136,7 @@ fun GlassStatCard(
                             modifier = Modifier
                                 .size(32.dp)
                                 .clip(CircleShape)
-                                .background(Color.White),
+                                .background(AppleGreen.copy(alpha = 0.15f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
@@ -138,18 +146,23 @@ fun GlassStatCard(
                                 modifier = Modifier.size(18.dp)
                             )
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Spacer(modifier = Modifier.width(10.dp))
+
                         Column {
                             Text(
-                                text = "Income",
+                                text = "INCOME",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
                                 color = TextSecondary,
-                                style = MaterialTheme.typography.labelSmall
+                                letterSpacing = 0.8.sp
                             )
                             Text(
                                 text = if (hideBalance) "••••" else CurrencyFormatter.format(totalIncome),
-                                color = TextPrimary,
-                                fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.bodyMedium
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = AppleGreen,
+                                letterSpacing = if (hideBalance) 2.sp else (-0.3).sp
                             )
                         }
                     }
@@ -160,7 +173,7 @@ fun GlassStatCard(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(AppleRedLight)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                         .padding(12.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -168,7 +181,7 @@ fun GlassStatCard(
                             modifier = Modifier
                                 .size(32.dp)
                                 .clip(CircleShape)
-                                .background(Color.White),
+                                .background(AppleRed.copy(alpha = 0.15f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
@@ -178,18 +191,23 @@ fun GlassStatCard(
                                 modifier = Modifier.size(18.dp)
                             )
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Spacer(modifier = Modifier.width(10.dp))
+
                         Column {
                             Text(
-                                text = "Spent",
+                                text = "SPENT",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
                                 color = TextSecondary,
-                                style = MaterialTheme.typography.labelSmall
+                                letterSpacing = 0.8.sp
                             )
                             Text(
                                 text = if (hideBalance) "••••" else CurrencyFormatter.format(totalExpense),
-                                color = TextPrimary,
-                                fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.bodyMedium
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = AppleRed,
+                                letterSpacing = if (hideBalance) 2.sp else (-0.3).sp
                             )
                         }
                     }

@@ -14,6 +14,13 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+enum class TransactionSortOption(val displayName: String) {
+    NEWEST_FIRST("Newest"),
+    OLDEST_FIRST("Oldest"),
+    AMOUNT_HIGH_TO_LOW("Highest Amount"),
+    AMOUNT_LOW_TO_HIGH("Lowest Amount")
+}
+
 class TransactionsViewModel(
     private val transactionRepository: TransactionRepository
 ) : ViewModel() {
@@ -27,6 +34,9 @@ class TransactionsViewModel(
     private val _selectedType = MutableStateFlow<TransactionType?>(null)
     val selectedType: StateFlow<TransactionType?> = _selectedType.asStateFlow()
 
+    private val _selectedSortOption = MutableStateFlow(TransactionSortOption.NEWEST_FIRST)
+    val selectedSortOption: StateFlow<TransactionSortOption> = _selectedSortOption.asStateFlow()
+
     private val _selectedTransactionForEdit = MutableStateFlow<Transaction?>(null)
     val selectedTransactionForEdit: StateFlow<Transaction?> = _selectedTransactionForEdit.asStateFlow()
 
@@ -34,9 +44,10 @@ class TransactionsViewModel(
         transactionRepository.getAllTransactions(),
         _searchQuery,
         _selectedCategory,
-        _selectedType
-    ) { transactions, query, category, type ->
-        transactions.filter { txn ->
+        _selectedType,
+        _selectedSortOption
+    ) { transactions, query, category, type, sort ->
+        val filtered = transactions.filter { txn ->
             val matchesQuery = if (query.isBlank()) true else {
                 val q = query.lowercase().trim()
                 (txn.merchantName?.lowercase()?.contains(q) == true) ||
@@ -52,6 +63,13 @@ class TransactionsViewModel(
 
             matchesQuery && matchesCategory && matchesType
         }
+
+        when (sort) {
+            TransactionSortOption.NEWEST_FIRST -> filtered.sortedByDescending { it.timestamp }
+            TransactionSortOption.OLDEST_FIRST -> filtered.sortedBy { it.timestamp }
+            TransactionSortOption.AMOUNT_HIGH_TO_LOW -> filtered.sortedByDescending { it.amount }
+            TransactionSortOption.AMOUNT_LOW_TO_HIGH -> filtered.sortedBy { it.amount }
+        }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun setSearchQuery(query: String) {
@@ -66,10 +84,15 @@ class TransactionsViewModel(
         _selectedType.value = if (_selectedType.value == type) null else type
     }
 
+    fun setSortOption(sortOption: TransactionSortOption) {
+        _selectedSortOption.value = sortOption
+    }
+
     fun clearAllFilters() {
         _searchQuery.value = ""
         _selectedCategory.value = null
         _selectedType.value = null
+        _selectedSortOption.value = TransactionSortOption.NEWEST_FIRST
     }
 
     fun openTransactionDetail(transaction: Transaction) {

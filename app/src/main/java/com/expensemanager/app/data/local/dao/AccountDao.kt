@@ -21,6 +21,9 @@ interface AccountDao {
     @Query("SELECT * FROM accounts ORDER BY lastUpdated DESC")
     fun getAllAccounts(): Flow<List<AccountEntity>>
 
+    @Query("SELECT * FROM accounts")
+    suspend fun getAllAccountsSnapshot(): List<AccountEntity>
+
     @Query("SELECT * FROM accounts WHERE id = :accountId LIMIT 1")
     suspend fun getAccountById(accountId: String): AccountEntity?
 
@@ -35,6 +38,9 @@ interface AccountDao {
 
     @Query("DELETE FROM accounts WHERE id = :accountId")
     suspend fun deleteAccount(accountId: String)
+
+    @Query("DELETE FROM accounts WHERE maskNumber = 'PRIMARY' AND bankName IN (SELECT bankName FROM accounts WHERE maskNumber != 'PRIMARY')")
+    suspend fun cleanDuplicatePrimaryAccounts()
 
     @Query("DELETE FROM accounts")
     suspend fun clearAll()

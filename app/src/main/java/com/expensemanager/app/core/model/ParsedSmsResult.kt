@@ -4,6 +4,7 @@ data class ParsedSmsResult(
     val amount: Double,
     val currency: String = "INR",
     val type: TransactionType,
+    val status: TransactionStatus = TransactionStatus.COMPLETED,
     val category: Category,
     val merchant: String?,
     val bankName: String,
@@ -15,6 +16,10 @@ data class ParsedSmsResult(
     val timestamp: Long,
     val confidence: Float = 1.0f,
     val isExcludedFromBudget: Boolean = false,
+    val originalTransactionId: String? = null,
+    val relatedTransactionId: String? = null,
+    val classificationReason: String? = null,
+    val diagnostics: ParsingDiagnostics = ParsingDiagnostics(),
     val rawSender: String,
     val rawBody: String
 )

@@ -46,6 +46,9 @@ class SmsBroadcastReceiver : BroadcastReceiver() {
                     if (parsedResult != null) {
                         app.transactionRepository.processAndSaveSms(parsedResult)
                     }
+
+                    // Update live homescreen widgets
+                    com.expensemanager.app.widget.ExpenseWidgetProvider.updateAllWidgets(context)
                 } catch (e: Exception) {
                     e.printStackTrace()
                 } finally {

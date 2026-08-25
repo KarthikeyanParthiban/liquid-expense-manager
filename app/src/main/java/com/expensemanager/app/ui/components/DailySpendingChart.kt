@@ -1,10 +1,9 @@
 package com.expensemanager.app.ui.components
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,8 +12,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -35,9 +32,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.expensemanager.app.core.util.CurrencyFormatter
-import com.expensemanager.app.ui.theme.AppleBlue
-import com.expensemanager.app.ui.theme.AppleBlueLight
-import com.expensemanager.app.ui.theme.BorderSubtle
 import com.expensemanager.app.ui.theme.TextPrimary
 import com.expensemanager.app.ui.theme.TextSecondary
 import com.expensemanager.app.ui.theme.TextTertiary
@@ -61,8 +55,7 @@ fun DailySpendingChart(
     val maxAmount = (dailySpends.maxOfOrNull { it.amount } ?: 1.0).coerceAtLeast(100.0)
     val totalMonthSpend = dailySpends.sumOf { it.amount }
     val avgDailySpend = if (dailySpends.isNotEmpty()) totalMonthSpend / dailySpends.size else 0.0
-
-    val primaryHighlight = selectedDay ?: dailySpends.maxByOrNull { it.amount }
+    val isDark = com.expensemanager.app.ui.theme.LocalIsDarkTheme.current
 
     Box(
         modifier = modifier
@@ -99,14 +92,14 @@ fun DailySpendingChart(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
-                            .background(AppleBlueLight)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Text(
-                            text = "Tap chart to reset",
+                            text = "Tap to reset",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = AppleBlue
+                            color = TextPrimary
                         )
                     }
                 }
@@ -114,7 +107,7 @@ fun DailySpendingChart(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Canvas Bar Chart
+            // Canvas Bar Chart in Monotone
             val barCount = dailySpends.size
             Canvas(
                 modifier = Modifier
@@ -136,7 +129,7 @@ fun DailySpendingChart(
                 // Draw average line
                 val avgY = canvasHeight - ((avgDailySpend / maxAmount).toFloat() * canvasHeight)
                 drawLine(
-                    color = Color.LightGray.copy(alpha = 0.5f),
+                    color = if (isDark) Color(0xFF333333) else Color(0xFFE0E0E0),
                     start = Offset(0f, avgY),
                     end = Offset(canvasWidth, avgY),
                     strokeWidth = 1.5f
@@ -150,11 +143,11 @@ fun DailySpendingChart(
                     val top = canvasHeight - barHeight
 
                     val barColor = when {
-                        isSelected -> AppleBlue
-                        isPeak -> Color(0xFFFF9500) // Apple Orange for peak
-                        spend.amount > avgDailySpend -> AppleBlue.copy(alpha = 0.75f)
-                        spend.amount > 0 -> AppleBlue.copy(alpha = 0.35f)
-                        else -> Color(0xFFE5E7EB) // Subtle gray for 0 spend days
+                        isSelected -> if (isDark) Color.White else Color(0xFF171717)
+                        isPeak -> if (isDark) Color(0xFFFFFFFF) else Color(0xFF212121)
+                        spend.amount > avgDailySpend -> if (isDark) Color(0xFFB0B0B0) else Color(0xFF616161)
+                        spend.amount > 0 -> if (isDark) Color(0xFF666666) else Color(0xFF9E9E9E)
+                        else -> if (isDark) Color(0xFF1F1F1F) else Color(0xFFE5E7EB)
                     }
 
                     drawRoundRect(

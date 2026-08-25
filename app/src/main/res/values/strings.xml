@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Expense Manager</string>
+    <string name="widget_description">Live bank balance and monthly expense tracking</string>
 </resources>

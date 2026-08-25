@@ -49,9 +49,26 @@ interface TransactionDao {
     suspend fun getTransactionsBetween(startTime: Long, endTime: Long): List<TransactionEntity>
 
     @Query("""
+        SELECT * FROM transactions 
+        WHERE (type IN ('DEBIT', 'CARD_PAYMENT'))
+          AND (merchantName LIKE '%' || :merchantKeyword || '%' OR :merchantKeyword LIKE '%' || merchantName || '%')
+          AND timestamp BETWEEN :startTime AND :endTime
+        ORDER BY timestamp DESC
+        LIMIT 1
+    """)
+    suspend fun findMatchingDebitForRefund(
+        merchantKeyword: String,
+        startTime: Long,
+        endTime: Long
+    ): TransactionEntity?
+
+    @Query("""
         SELECT 
-            COALESCE(SUM(CASE WHEN type = 'DEBIT' AND isExcludedFromBudget = 0 THEN amount ELSE 0 END), 0.0) AS totalExpense,
-            COALESCE(SUM(CASE WHEN type = 'CREDIT' THEN amount ELSE 0 END), 0.0) AS totalIncome,
+            MAX(0.0, 
+                COALESCE(SUM(CASE WHEN type IN ('DEBIT', 'CARD_PAYMENT') AND isExcludedFromBudget = 0 AND status != 'FAILED' THEN amount ELSE 0 END), 0.0) -
+                COALESCE(SUM(CASE WHEN type IN ('REFUND', 'REVERSAL') AND isExcludedFromBudget = 0 AND status != 'FAILED' THEN amount ELSE 0 END), 0.0)
+            ) AS totalExpense,
+            COALESCE(SUM(CASE WHEN type = 'CREDIT' AND isExcludedFromBudget = 0 AND status != 'FAILED' THEN amount ELSE 0 END), 0.0) AS totalIncome,
             COUNT(*) AS transactionCount
         FROM transactions
         WHERE timestamp BETWEEN :startTime AND :endTime
@@ -61,11 +78,12 @@ interface TransactionDao {
     @Query("""
         SELECT 
             category,
-            SUM(amount) AS totalAmount,
+            MAX(0.0, SUM(CASE WHEN type IN ('DEBIT', 'CARD_PAYMENT') THEN amount WHEN type IN ('REFUND', 'REVERSAL') THEN -amount ELSE 0.0 END)) AS totalAmount,
             COUNT(*) AS count
         FROM transactions
-        WHERE type = 'DEBIT' AND isExcludedFromBudget = 0 AND timestamp BETWEEN :startTime AND :endTime
+        WHERE isExcludedFromBudget = 0 AND status != 'FAILED' AND timestamp BETWEEN :startTime AND :endTime
         GROUP BY category
+        HAVING totalAmount > 0
         ORDER BY totalAmount DESC
     """)
     fun getCategorySpendingInRange(startTime: Long, endTime: Long): Flow<List<CategorySpending>>
@@ -78,6 +96,9 @@ interface TransactionDao {
 
     @Update
     suspend fun update(transaction: TransactionEntity)
+
+    @Query("UPDATE transactions SET status = :newStatus WHERE id = :id")
+    suspend fun updateStatus(id: String, newStatus: String)
 
     @Query("UPDATE transactions SET category = :newCategory, isUserEdited = 1 WHERE merchantName LIKE '%' || :merchantKeyword || '%'")
     suspend fun updateCategoryForMerchant(merchantKeyword: String, newCategory: String)

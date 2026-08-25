@@ -19,7 +19,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -27,6 +30,10 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,6 +46,8 @@ import com.expensemanager.app.core.model.Transaction
 import com.expensemanager.app.core.util.CurrencyFormatter
 import com.expensemanager.app.core.util.DateTimeUtils
 import com.expensemanager.app.ui.theme.AppleBlue
+import com.expensemanager.app.ui.theme.AppleBlueLight
+import com.expensemanager.app.ui.theme.BorderLight
 import com.expensemanager.app.ui.theme.BorderSubtle
 import com.expensemanager.app.ui.theme.LightCardSurface
 import com.expensemanager.app.ui.theme.TextPrimary
@@ -56,6 +65,8 @@ fun CategoryDetailSheet(
     onTransactionClick: (Transaction) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var sortByAmount by remember { mutableStateOf(false) }
+
     val categoryTxns = transactions.filter { it.category == category }
     val totalCategorySpent = categoryTxns.filter { it.type == com.expensemanager.app.core.model.TransactionType.DEBIT && !it.isExcludedFromBudget }.sumOf { it.amount }
     val percentageOfMonth = if (totalMonthExpense > 0) (totalCategorySpent / totalMonthExpense * 100).toInt() else 0
@@ -67,10 +78,15 @@ fun CategoryDetailSheet(
         .sortedByDescending { it.second }
         .take(5)
 
+    val sortedTxns = remember(categoryTxns, sortByAmount) {
+        if (sortByAmount) categoryTxns.sortedByDescending { it.amount }
+        else categoryTxns.sortedByDescending { it.timestamp }
+    }
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color(0xFFF9FAFB),
+        containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     ) {
         Column(
@@ -142,7 +158,7 @@ fun CategoryDetailSheet(
                         )
                         Text(
                             text = CurrencyFormatter.format(totalCategorySpent),
-                            fontSize = 24.sp,
+                            fontSize = 22.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = TextPrimary
                         )
@@ -191,7 +207,7 @@ fun CategoryDetailSheet(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(14.dp))
-                                .background(Color.White)
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
                                 .padding(horizontal = 10.dp, vertical = 8.dp)
                         ) {
                             Column {
@@ -216,15 +232,58 @@ fun CategoryDetailSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Transactions Header
-            Text(
-                text = "TRANSACTION HISTORY (${categoryTxns.size})",
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                color = TextSecondary,
-                letterSpacing = 1.1.sp,
-                modifier = Modifier.padding(horizontal = 4.dp)
-            )
+            // Transactions Header with Sort Chips
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "TRANSACTIONS (${categoryTxns.size})",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = TextSecondary,
+                    letterSpacing = 1.1.sp
+                )
+
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    FilterChip(
+                        selected = !sortByAmount,
+                        onClick = { sortByAmount = false },
+                        label = { Text("Newest", fontSize = 11.sp) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = AppleBlueLight,
+                            selectedLabelColor = AppleBlue
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            borderColor = if (!sortByAmount) AppleBlue else BorderLight,
+                            selectedBorderColor = AppleBlue,
+                            enabled = true,
+                            selected = !sortByAmount
+                        ),
+                        modifier = Modifier.height(28.dp)
+                    )
+
+                    FilterChip(
+                        selected = sortByAmount,
+                        onClick = { sortByAmount = true },
+                        label = { Text("Amount", fontSize = 11.sp) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = AppleBlueLight,
+                            selectedLabelColor = AppleBlue
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            borderColor = if (sortByAmount) AppleBlue else BorderLight,
+                            selectedBorderColor = AppleBlue,
+                            enabled = true,
+                            selected = sortByAmount
+                        ),
+                        modifier = Modifier.height(28.dp)
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -236,7 +295,7 @@ fun CategoryDetailSheet(
                 contentPadding = PaddingValues(bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                items(categoryTxns, key = { it.id }) { txn ->
+                items(sortedTxns, key = { it.id }) { txn ->
                     TransactionItem(
                         transaction = txn,
                         onClick = { onTransactionClick(txn) }

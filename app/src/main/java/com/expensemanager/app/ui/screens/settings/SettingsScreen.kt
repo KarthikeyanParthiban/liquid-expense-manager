@@ -1,6 +1,9 @@
 package com.expensemanager.app.ui.screens.settings
 
 import android.content.Intent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,8 +21,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BrightnessAuto
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
@@ -42,18 +48,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.expensemanager.app.ui.components.CategoryIcon
+import com.expensemanager.app.ui.theme.AppThemeMode
 import com.expensemanager.app.ui.theme.AppleBlue
 import com.expensemanager.app.ui.theme.AppleRed
 import com.expensemanager.app.ui.theme.AppleRedLight
+import com.expensemanager.app.ui.theme.BorderLight
 import com.expensemanager.app.ui.theme.LightElevatedSurface
 import com.expensemanager.app.ui.theme.TextPrimary
 import com.expensemanager.app.ui.theme.TextSecondary
+import com.expensemanager.app.ui.theme.ThemeManager
 import com.expensemanager.app.ui.theme.appleCard
 
 @Composable
@@ -89,13 +99,107 @@ fun SettingsScreen(
             // Header
             item {
                 Text(
-                    text = "Settings & Privacy",
+                    text = "Settings & Preferences",
                     fontSize = 26.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = TextPrimary,
                     letterSpacing = (-0.5).sp,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)
                 )
+            }
+
+            // Appearance & Theme Mode Card
+            item {
+                val currentMode by ThemeManager.themeMode.collectAsState()
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                        .appleCard(shape = RoundedCornerShape(20.dp), elevation = 1.dp)
+                        .padding(18.dp)
+                ) {
+                    Column {
+                        Text(
+                            text = "APPEARANCE",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = TextSecondary,
+                            letterSpacing = 1.1.sp
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Theme Preference",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "Switch between Dark OLED, Crisp Light, or System Default",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        // 3-way Segmented Control
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .padding(4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            AppThemeMode.values().forEach { mode ->
+                                val isSelected = currentMode == mode
+                                val modeIcon = when (mode) {
+                                    AppThemeMode.SYSTEM -> Icons.Default.BrightnessAuto
+                                    AppThemeMode.DARK -> Icons.Default.DarkMode
+                                    AppThemeMode.LIGHT -> Icons.Default.LightMode
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(
+                                            if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent
+                                        )
+                                        .then(
+                                            if (isSelected) Modifier.border(1.dp, BorderLight, RoundedCornerShape(10.dp)) else Modifier
+                                        )
+                                        .clickable {
+                                            ThemeManager.setThemeMode(context, mode)
+                                        }
+                                        .padding(vertical = 10.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = modeIcon,
+                                            contentDescription = mode.title,
+                                            tint = if (isSelected) TextPrimary else TextSecondary,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = when (mode) {
+                                                AppThemeMode.SYSTEM -> "System"
+                                                AppThemeMode.DARK -> "Dark"
+                                                AppThemeMode.LIGHT -> "Light"
+                                            },
+                                            fontSize = 12.sp,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                            color = if (isSelected) TextPrimary else TextSecondary
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             // SMS Sync Card
