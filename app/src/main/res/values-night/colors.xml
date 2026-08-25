@@ -1,17 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Widget Dark Mode Pure OLED Black + Titanium Wireframe Theme Tokens -->
-    <color name="widget_bg">#FF000000</color>
-    <color name="widget_border">#FF2A2A2A</color>
-    <color name="widget_chip_bg">#FF141414</color>
-    <color name="widget_chip_border">#FF2A2A2A</color>
+    <!-- Widget Dark Mode Frosted Titanium Glass Theme Tokens -->
+    <color name="widget_bg">#E614141B</color>
+    <color name="widget_border">#2EFFFFFF</color>
+    <color name="widget_chip_bg">#4D000000</color>
+    <color name="widget_chip_border">#1AFFFFFF</color>
     <color name="widget_text_primary">#FFFFFFFF</color>
-    <color name="widget_text_secondary">#FFA3A3A3</color>
-    <color name="widget_text_muted">#FF737373</color>
+    <color name="widget_text_secondary">#FFA2A2B2</color>
+    <color name="widget_text_muted">#FF707082</color>
     <color name="widget_brand">#FFFFFFFF</color>
-    <color name="widget_progress_bg">#FF202020</color>
-    <color name="widget_icon_tint">#FFA3A3A3</color>
+    <color name="widget_progress_bg">#1FFFFFFF</color>
+    <color name="widget_icon_tint">#FFD0D0E0</color>
     <color name="widget_spend_red">#FFFF453A</color>
     <color name="widget_safe_green">#FF30D158</color>
     <color name="widget_streak_orange">#FFFF9F0A</color>
+    <color name="widget_blue_accent">#FF0A84FF</color>
+    <color name="widget_purple_accent">#FFBF5AF2</color>
+    <color name="widget_pink_accent">#FFFF375F</color>
+    <color name="widget_teal_accent">#FF64D2FF</color>
 </resources>

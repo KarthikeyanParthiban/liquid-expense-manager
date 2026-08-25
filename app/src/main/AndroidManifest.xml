@@ -42,7 +42,7 @@
             </intent-filter>
         </receiver>
 
-        <!-- Home Screen App Widget -->
+        <!-- Home Screen App Widget 1: Primary Expense & Burn Rate -->
         <receiver
             android:name=".widget.ExpenseWidgetProvider"
             android:exported="true">
@@ -54,6 +54,45 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_info_expense_summary" />
+        </receiver>
+
+        <!-- Home Screen App Widget 2: Category Burn Spectrum -->
+        <receiver
+            android:name=".widget.CategorySpectrumWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.expensemanager.app.widget.ACTION_SYNC_CATEGORY" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_category_spectrum" />
+        </receiver>
+
+        <!-- Home Screen App Widget 3: Cash Flow & Savings Radar -->
+        <receiver
+            android:name=".widget.CashFlowWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.expensemanager.app.widget.ACTION_SYNC_CASH_FLOW" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_cash_flow" />
+        </receiver>
+
+        <!-- Home Screen App Widget 4: Upcoming Bills & Commitments -->
+        <receiver
+            android:name=".widget.UpcomingBillsWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.expensemanager.app.widget.ACTION_SYNC_BILLS" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_upcoming_bills" />
         </receiver>
 
     </application>

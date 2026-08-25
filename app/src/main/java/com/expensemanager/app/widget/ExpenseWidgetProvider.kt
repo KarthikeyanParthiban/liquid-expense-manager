@@ -48,9 +48,7 @@ class ExpenseWidgetProvider : AppWidgetProvider() {
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
                         app.smsRepository.syncAllInboxSms()
-                        val appWidgetManager = AppWidgetManager.getInstance(context)
-                        val ids = appWidgetManager.getAppWidgetIds(ComponentName(context, ExpenseWidgetProvider::class.java))
-                        updateWidgets(context, appWidgetManager, ids, app)
+                        WidgetUpdateHelper.updateAllWidgets(context)
                     } catch (e: Exception) {
                         e.printStackTrace()
                     } finally {
@@ -63,16 +61,7 @@ class ExpenseWidgetProvider : AppWidgetProvider() {
                 val currentHidden = prefs.getBoolean(PREF_HIDE_BALANCE, true)
                 prefs.edit().putBoolean(PREF_HIDE_BALANCE, !currentHidden).apply()
 
-                val pendingResult = goAsync()
-                CoroutineScope(Dispatchers.IO).launch {
-                    try {
-                        val appWidgetManager = AppWidgetManager.getInstance(context)
-                        val ids = appWidgetManager.getAppWidgetIds(ComponentName(context, ExpenseWidgetProvider::class.java))
-                        updateWidgets(context, appWidgetManager, ids, app)
-                    } finally {
-                        pendingResult.finish()
-                    }
-                }
+                WidgetUpdateHelper.updateAllWidgets(context)
             }
         }
     }
@@ -212,13 +201,7 @@ class ExpenseWidgetProvider : AppWidgetProvider() {
         const val PREF_HIDE_BALANCE = "widget_hide_balance"
 
         fun updateAllWidgets(context: Context) {
-            val intent = Intent(context, ExpenseWidgetProvider::class.java).apply {
-                action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                val ids = AppWidgetManager.getInstance(context)
-                    .getAppWidgetIds(ComponentName(context, ExpenseWidgetProvider::class.java))
-                putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
-            }
-            context.sendBroadcast(intent)
+            WidgetUpdateHelper.updateAllWidgets(context)
         }
     }
 }

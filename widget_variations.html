@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Frosted Titanium Glass Widget Suite — Liquid Expense Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #08080B;
+      --surface-1: #111116;
+      --surface-2: #181820;
+      --border-subtle: #252532;
+      --border-prominent: rgba(255, 255, 255, 0.2);
+      --text-primary: #FFFFFF;
+      --text-secondary: #A2A2B2;
+      --text-muted: #67677A;
+      --brand-accent: #FFFFFF;
+      --green-safe: #30D158;
+      --green-safe-bg: rgba(48, 209, 88, 0.14);
+      --red-alert: #FF453A;
+      --red-alert-bg: rgba(255, 69, 58, 0.14);
+      --orange-warn: #FF9F0A;
+      --orange-warn-bg: rgba(255, 159, 10, 0.14);
+      --blue-accent: #0A84FF;
+      --blue-accent-bg: rgba(10, 132, 255, 0.14);
+      --purple-accent: #BF5AF2;
+      --purple-accent-bg: rgba(191, 90, 242, 0.14);
+      --teal-accent: #64D2FF;
+      --titanium-border: rgba(255, 255, 255, 0.18);
+      --titanium-inner-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 32px 20px 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      max-width: 1280px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+    }
+
+    /* Header Bar */
+    .header-panel {
+      width: 100%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-subtle);
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #D6D6E2;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      background: #64D2FF;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #64D2FF;
+    }
+
+    h1 {
+      font-size: 36px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      background: linear-gradient(180deg, #FFFFFF 0%, #B2B2C4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    p.subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      max-width: 740px;
+      line-height: 1.6;
+    }
+
+    /* Global Interactive Toolbar */
+    .toolbar-dock {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: var(--surface-1);
+      border: 1px solid var(--border-subtle);
+      padding: 10px 18px;
+      border-radius: 22px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .dock-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 6px;
+    }
+
+    .dock-divider {
+      width: 1px;
+      height: 24px;
+      background: var(--border-subtle);
+    }
+
+    .dock-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .tool-btn {
+      background: var(--surface-2);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      padding: 7px 14px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .tool-btn:hover {
+      color: #FFFFFF;
+      border-color: rgba(255, 255, 255, 0.3);
+      background: #252530;
+    }
+
+    .tool-btn.active {
+      background: #FFFFFF;
+      color: #000000;
+      border-color: #FFFFFF;
+      font-weight: 700;
+      box-shadow: 0 2px 14px rgba(255, 255, 255, 0.25);
+    }
+
+    .view-mode-tabs {
+      display: flex;
+      background: #14141A;
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid var(--border-subtle);
+      gap: 4px;
+    }
+
+    .view-tab-btn {
+      padding: 6px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .view-tab-btn.active {
+      background: #2B2B38;
+      color: #FFFFFF;
+      font-weight: 700;
+    }
+
+    /* Section Headers */
+    .section-headline {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .section-headline h2 {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .tag-highlight {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(100, 210, 255, 0.15);
+      color: #64D2FF;
+      border: 1px solid rgba(100, 210, 255, 0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    /* ========================================================
+       WIDGET GRID DISPLAY
+       ======================================================== */
+    .widget-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 28px;
+      width: 100%;
+    }
+
+    .variation-card {
+      background: var(--surface-1);
+      border: 1px solid var(--border-subtle);
+      border-radius: 30px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+
+    .variation-card:hover {
+      border-color: rgba(255, 255, 255, 0.25);
+      box-shadow: 0 24px 56px rgba(0, 0, 0, 0.7);
+    }
+
+    .variation-card.featured {
+      border: 1px solid rgba(100, 210, 255, 0.4);
+      background: linear-gradient(180deg, #13131B 0%, #0E0E14 100%);
+      box-shadow: 0 0 30px rgba(100, 210, 255, 0.08);
+    }
+
+    .var-meta-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .var-title-group h3 {
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .var-title-group p {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 3px;
+      line-height: 1.4;
+    }
+
+    .size-tag {
+      background: #1F1F2A;
+      border: 1px solid var(--border-subtle);
+      color: #B4B4C6;
+      font-size: 10px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 3px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+
+    .widget-preview-box {
+      background: #000000;
+      padding: 24px 20px;
+      border-radius: 24px;
+      border: 1px dashed #2C2C3C;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 190px;
+      background-size: cover;
+      background-position: center;
+      transition: background 0.3s ease;
+      position: relative;
+    }
+
+    /* Universal Android Widget Container */
+    .widget-base {
+      width: 100%;
+      border-radius: 26px;
+      box-sizing: border-box;
+      position: relative;
+      user-select: none;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .widget-base:active {
+      transform: scale(0.985);
+    }
+
+    /* ========================================================
+       FROSTED TITANIUM GLASS ARCHITECTURE & VARIANTS
+       ======================================================== */
+    .titanium-glass-core {
+      background: rgba(22, 22, 28, 0.65);
+      backdrop-filter: blur(24px) saturate(190%);
+      -webkit-backdrop-filter: blur(24px) saturate(190%);
+      border: 1px solid var(--titanium-border);
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5), var(--titanium-inner-shadow);
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* ----------------------------------------------------
+       WIDGET 1: PRIMARY FROSTED TITANIUM BALANCE (4x2)
+       ---------------------------------------------------- */
+    .w-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .w-brand-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      color: #FFFFFF;
+    }
+
+    .w-glass-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green-safe);
+      box-shadow: 0 0 8px var(--green-safe);
+    }
+
+    .w-action-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .w-glass-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #E2E2EA;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .w-glass-btn:hover {
+      background: rgba(255, 255, 255, 0.16);
+      color: #FFFFFF;
+    }
+
+    .w-main-stat {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .w-bal-label {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      color: rgba(255, 255, 255, 0.55);
+      text-transform: uppercase;
+    }
+
+    .w-bal-value {
+      font-size: 27px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      color: #FFFFFF;
+      margin-top: 1px;
+      font-feature-settings: "tnum";
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+    }
+
+    .w-pacing-capsule {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 6px 10px;
+      text-align: right;
+    }
+
+    .w-pacing-spend {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--red-alert);
+    }
+
+    .w-pacing-safe {
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--green-safe);
+      margin-top: 1px;
+    }
+
+    .w-prog-track {
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      overflow: hidden;
+      width: 100%;
+    }
+
+    .w-prog-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green-safe) 0%, var(--orange-warn) 70%, var(--red-alert) 100%);
+      border-radius: 999px;
+      transition: width 0.4s ease;
+    }
+
+    .w-footer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .w-streak-pill {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: #FFA500;
+    }
+
+    .w-pace-status {
+      color: rgba(255, 255, 255, 0.65);
+      font-size: 9.5px;
+    }
+
+    /* ----------------------------------------------------
+       INSIGHT WIDGET 1: CATEGORY SPECTRUM & TOP BURN (4x2)
+       ---------------------------------------------------- */
+    .w-category-spectrum {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .w-cat-ribbon {
+      height: 8px;
+      border-radius: 999px;
+      display: flex;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.08);
+      gap: 2px;
+    }
+
+    .w-cat-seg {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    .w-cat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .w-cat-chip {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .w-cat-chip-head {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 8.5px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.6);
+      text-transform: uppercase;
+    }
+
+    .w-cat-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+    }
+
+    .w-cat-chip-amt {
+      font-size: 11px;
+      font-weight: 800;
+      color: #FFFFFF;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ----------------------------------------------------
+       INSIGHT WIDGET 2: CASH FLOW & NET SAVINGS RADAR (4x2)
+       ---------------------------------------------------- */
+    .w-flow-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .w-flow-box {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .w-flow-title {
+      font-size: 8.5px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.55);
+      text-transform: uppercase;
+    }
+
+    .w-flow-val {
+      font-size: 14px;
+      font-weight: 900;
+      margin-top: 2px;
+      font-feature-settings: "tnum";
+    }
+
+    .w-flow-bar-container {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 12px;
+      padding: 8px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .w-flow-bar-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 9.5px;
+      font-weight: 700;
+    }
+
+    .w-flow-track {
+      height: 5px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      overflow: hidden;
+      width: 100%;
+      margin-top: 2px;
+    }
+
+    .w-flow-fill {
+      height: 100%;
+      border-radius: 999px;
+    }
+
+    /* ----------------------------------------------------
+       INSIGHT WIDGET 3: UPCOMING BILLS & RECURRING HORIZON (4x2)
+       ---------------------------------------------------- */
+    .w-bills-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .w-bill-item {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 7px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .w-bill-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .w-bill-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFFFFF;
+    }
+
+    .w-bill-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: #FFFFFF;
+    }
+
+    .w-bill-due {
+      font-size: 9px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    .w-bill-amt {
+      font-size: 11.5px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      color: #FFFFFF;
+      text-align: right;
+    }
+
+    .w-bill-chip-urgent {
+      font-size: 8px;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: var(--red-alert-bg);
+      color: var(--red-alert);
+      border: 1px solid rgba(255, 69, 58, 0.3);
+      display: inline-block;
+      margin-top: 1px;
+    }
+
+    /* Technical RemoteViews Spec Block */
+    .tech-specs-box {
+      background: #0D0D11;
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 11px;
+    }
+
+    .tech-spec-row {
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-secondary);
+    }
+
+    .tech-spec-label {
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .tech-spec-val {
+      font-weight: 700;
+      color: #E2E2EA;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+    }
+
+    .pros-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .pros-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      color: #B5B5C4;
+      font-size: 11.5px;
+      line-height: 1.4;
+    }
+
+    .pros-item svg {
+      flex-shrink: 0;
+      margin-top: 2px;
+      color: var(--green-safe);
+    }
+
+    /* ========================================================
+       HOMESCREEN PHONE SIMULATOR
+       ======================================================== */
+    .simulator-section {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .phone-simulator-frame {
+      width: 380px;
+      height: 780px;
+      border-radius: 46px;
+      background-color: #000000;
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.8), 0 0 0 10px #18181E, 0 0 0 12px #262630;
+      padding: 16px 18px 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      transition: background-image 0.4s ease;
+    }
+
+    .phone-status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 10px 0;
+      font-size: 12px;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+
+    .phone-notch-island {
+      width: 100px;
+      height: 20px;
+      background: #000000;
+      border-radius: 20px;
+      margin: 0 auto;
+    }
+
+    .phone-clock-widget {
+      text-align: center;
+      margin-top: 10px;
+      margin-bottom: 14px;
+    }
+
+    .phone-clock-time {
+      font-size: 46px;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      color: #FFFFFF;
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+      line-height: 1;
+    }
+
+    .phone-clock-date {
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.7);
+      margin-top: 4px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+    }
+
+    .sim-widget-slot {
+      margin: 4px 0 12px;
+      width: 100%;
+    }
+
+    .homescreen-app-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px 10px;
+      padding: 8px 4px;
+      margin-top: auto;
+    }
+
+    .app-icon-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    .app-icon-box {
+      width: 50px;
+      height: 50px;
+      border-radius: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFFFFF;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .app-icon-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.85);
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+    }
+
+    .homescreen-dock {
+      background: rgba(255, 255, 255, 0.14);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-radius: 26px;
+      padding: 9px 14px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      margin-top: 12px;
+    }
+
+    .dock-icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFFFFF;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Wallpapers */
+    .bg-wall-obsidian {
+      background: radial-gradient(circle at 50% 20%, #1A1A24 0%, #060608 100%);
+    }
+    .bg-wall-cyberpunk {
+      background: linear-gradient(180deg, #0A0E17 0%, #180B26 50%, #06060A 100%);
+    }
+    .bg-wall-mountain {
+      background: linear-gradient(180deg, #1C2438 0%, #2E3E48 40%, #0F141C 100%);
+    }
+
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+    .spin-anim {
+      animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .toast-pill {
+      position: fixed;
+      bottom: 24px;
+      background: #242430;
+      color: #FFFFFF;
+      padding: 10px 20px;
+      border-radius: 999px;
+      border: 1px solid #3C3C4D;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 999;
+      pointer-events: none;
+    }
+    .toast-pill.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- Top Header -->
+    <div class="header-panel">
+      <div class="badge-pill">
+        <div class="badge-dot"></div>
+        Frosted Titanium Glass Suite
+      </div>
+      <h1>Liquid Homescreen Widget Ecosystem</h1>
+      <p class="subtitle">
+        Unified under the selected <strong>Frosted Titanium Glass</strong> aesthetic. Explore the Primary Balance widget + 3 dedicated financial insight widgets for your launcher.
+      </p>
+
+      <!-- Global Interactive Toolbar -->
+      <div class="toolbar-dock">
+        <!-- Privacy Eye Toggle -->
+        <div class="dock-group">
+          <span class="dock-label">Privacy</span>
+          <button class="tool-btn active" id="btnTogglePrivacy" onclick="toggleGlobalPrivacy()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="privacyIcon">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+            <span id="privacyLabel">Visible</span>
+          </button>
+        </div>
+
+        <div class="dock-divider"></div>
+
+        <!-- Budget / Pacing State Simulator -->
+        <div class="dock-group">
+          <span class="dock-label">Spend Pace</span>
+          <button class="tool-btn active" onclick="setBudgetState('ontrack', this)">🟢 On Track (38%)</button>
+          <button class="tool-btn" onclick="setBudgetState('warning', this)">🟡 Caution (85%)</button>
+          <button class="tool-btn" onclick="setBudgetState('over', this)">🔴 Over (115%)</button>
+        </div>
+
+        <div class="dock-divider"></div>
+
+        <!-- Wallpaper Switcher -->
+        <div class="dock-group">
+          <span class="dock-label">Wallpaper</span>
+          <button class="tool-btn" onclick="setWallpaper('bg-wall-obsidian', this)">Obsidian</button>
+          <button class="tool-btn" onclick="setWallpaper('bg-wall-cyberpunk', this)">Cyber Midnight</button>
+          <button class="tool-btn active" onclick="setWallpaper('bg-wall-mountain', this)">Slate Mountain</button>
+        </div>
+
+        <div class="dock-divider"></div>
+
+        <!-- View Mode Tabs -->
+        <div class="view-mode-tabs">
+          <button class="view-tab-btn active" onclick="switchViewMode('grid', this)">All 4 Widgets</button>
+          <button class="view-tab-btn" onclick="switchViewMode('simulator', this)">📱 Live Simulator</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================
+         VIEW 1: ALL 4 WIDGETS IN FROSTED TITANIUM GLASS
+         ======================================================== -->
+    <div class="widget-grid" id="viewGrid">
+
+      <!-- ==========================================
+           WIDGET 1: PRIMARY BALANCE & BURN RATE
+           ========================================== -->
+      <div class="variation-card featured">
+        <div class="var-meta-header">
+          <div class="var-title-group">
+            <h3>1. Primary Net Liquid & Burn Rate <span class="tag-highlight">Selected Core</span></h3>
+            <p>Main financial anchor with total liquid wealth, day spend, and streak pace</p>
+          </div>
+          <span class="size-tag">4 × 2 Grid</span>
+        </div>
+
+        <div class="widget-preview-box bg-wall-mountain">
+          <div class="widget-base titanium-glass-core" onclick="openAppToast('Primary Balance Widget')">
+            <div class="w-topbar">
+              <div class="w-brand-pill">
+                LIQUID <div class="w-glass-dot"></div>
+              </div>
+              <div class="w-action-group">
+                <button class="w-glass-btn" title="Toggle Balance Privacy" onclick="event.stopPropagation(); toggleGlobalPrivacy();">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+                <button class="w-glass-btn" title="Sync SMS Now" onclick="event.stopPropagation(); triggerSyncAnim(this);">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="w-main-stat">
+              <div>
+                <div class="w-bal-value dyn-balance">₹ 1,28,450.00</div>
+                <div class="w-bal-label">TOTAL LIQUID BALANCE</div>
+              </div>
+              <div class="w-pacing-capsule">
+                <div class="w-pacing-spend dyn-spend">TODAY: ₹ 489</div>
+                <div class="w-pacing-safe dyn-safe">Safe: ₹ 1,740/d</div>
+              </div>
+            </div>
+
+            <div class="w-prog-track">
+              <div class="w-prog-fill dyn-prog" style="width: 38%;"></div>
+            </div>
+
+            <div class="w-footer-row">
+              <div class="w-streak-pill">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+                <span>14d streak</span>
+              </div>
+              <div class="w-pace-status dyn-status">On Track (62% daily left)</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tech-specs-box">
+          <div class="tech-spec-row">
+            <span class="tech-spec-label">Primary Role:</span>
+            <span class="tech-spec-val">Hero Financial Command</span>
+          </div>
+          <div class="tech-spec-row">
+            <span class="tech-spec-label">Tap Interactivity:</span>
+            <span class="tech-spec-val">Direct SMS sync + Instant Privacy Toggle</span>
+          </div>
+          <ul class="pros-list">
+            <li class="pros-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Instant balance check without exposing bank passwords or unlocking apps</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- ==========================================
+           INSIGHT WIDGET 2: CATEGORY DISTRIBUTION & BURN SPECTRUM
+           ========================================== -->
+      <div class="variation-card">
+        <div class="var-meta-header">
+          <div class="var-title-group">
+            <h3>2. Category Burn Spectrum <span class="tag-highlight">Insight #1</span></h3>
+            <p>Visual breakdown of where money went this month across top categories</p>
+          </div>
+          <span class="size-tag">4 × 2 Grid</span>
+        </div>
+
+        <div class="widget-preview-box bg-wall-mountain">
+          <div class="widget-base titanium-glass-core" onclick="openAppToast('Category Spectrum Widget')">
+            <div class="w-topbar">
+              <div class="w-brand-pill">
+                MONTHLY BREAKDOWN <span style="font-size: 9px; opacity: 0.6;">AUG</span>
+              </div>
+              <div style="font-size: 10px; font-weight: 800; color: #FFFFFF;" class="dyn-total-spend">
+                ₹ 33,844 Spent
+              </div>
+            </div>
+
+            <!-- Segmented Category Spectrum Ribbon -->
+            <div class="w-category-spectrum">
+              <div class="w-cat-ribbon">
+                <div class="w-cat-seg" style="width: 42%; background: #FF375F;" title="Food & Dining"></div>
+                <div class="w-cat-seg" style="width: 25%; background: #BF5AF2;" title="Shopping"></div>
+                <div class="w-cat-seg" style="width: 18%; background: #0A84FF;" title="Bills & Utilities"></div>
+                <div class="w-cat-seg" style="width: 15%; background: #FF9F0A;" title="Travel & Fuel"></div>
+              </div>
+
+              <!-- Top 3 Categories Quick Matrix -->
+              <div class="w-cat-grid">
+                <div class="w-cat-chip">
+                  <div class="w-cat-chip-head">
+                    <div class="w-cat-dot" style="background: #FF375F;"></div>
+                    <span>Food</span>
+                  </div>
+                  <span class="w-cat-chip-amt dyn-cat-1">₹ 14.2k</span>
+                </div>
+
+                <div class="w-cat-chip">
+                  <div class="w-cat-chip-head">
+                    <div class="w-cat-dot" style="background: #BF5AF2;"></div>
+                    <span>Shopping</span>
+                  </div>
+                  <span class="w-cat-chip-amt dyn-cat-2">₹ 8.5k</span>
+                </div>
+
+                <div class="w-cat-chip">
+                  <div class="w-cat-chip-head">
+                    <div class="w-cat-dot" style="background: #0A84FF;"></div>
+                    <span>Bills</span>
+                  </div>
+                  <span class="w-cat-chip-amt dyn-cat-3">₹ 6.1k</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="w-footer-row">
+              <span style="font-size: 9.5px; color: rgba(255,255,255,0.65);">Top Drain: Food & Dining (42%)</span>
+              <span style="font-size: 9.5px; color: var(--green-safe); font-weight: 800;">Budget 67% Left</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tech-specs-box">
+          <div class="tech-spec-row">
+            <span class="tech-spec-label">Insight Type:</span>
+            <span class="tech-spec-val">Category Allocation & Budget Drain</span>
+          </div>
+          <div class="tech-spec-row">
+            <span class="tech-spec-label">Room Query:</span>
+            <span class="tech-spec-val">CategorySummary groupBy type</span>
+          </div>
+          <ul class="pros-list">
+            <li class="pros-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Color-segmented proportional ribbon shows spending leaks at a single glance</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- ==========================================
+           INSIGHT WIDGET 3: CASH FLOW & NET SAVINGS RADAR
+           ========================================== -->
+      <div class="variation-card">
+        <div class="var-meta-header">
+          <div class="var-title-group">
+            <h3>3. Cash Flow & Savings Radar <span class="tag-highlight">Insight #2</span></h3>
+            <p>Income vs Expense balance + real-time monthly savings rate ratio</p>
+          </div>
+          <span class="size-tag">4 × 2 Grid</span>
+        </div>
+
+        <div class="widget-preview-box bg-wall-mountain">
+          <div class="widget-base titanium-glass-core" onclick="openAppToast('Cash Flow Radar Widget')">
+            <div class="w-topbar">
+              <div class="w-brand-pill">
+                CASH FLOW <div class="w-glass-dot" style="background: var(--blue-accent); box-shadow: 0 0 8px var(--blue-accent);"></div>
+              </div>
+              <div style="font-size: 10px; font-weight: 800; color: var(--green-safe); background: var(--green-safe-bg); padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(48,209,88,0.3);">
+                +60.2% SAVED
+              </div>
+            </div>
+
+            <!-- Income vs Spend Dual Boxes -->
+            <div class="w-flow-stats">
+              <div class="w-flow-box">
+                <div class="w-flow-title" style="color: var(--green-safe);">TOTAL INFLOW</div>
+                <div class="w-flow-val dyn-inflow" style="color: var(--green-safe);">+₹ 85,000</div>
+              </div>
+
+              <div class="w-flow-box">
+                <div class="w-flow-title" style="color: var(--red-alert);">TOTAL OUTFLOW</div>
+                <div class="w-flow-val dyn-outflow" style="color: var(--red-alert);">−₹ 33,844</div>
+              </div>
+            </div>
+
+            <!-- Flow Bar Trajectory -->
+            <div class="w-flow-bar-container">
+              <div class="w-flow-bar-row">
+                <span style="color: rgba(255,255,255,0.7);">Net Surplus Retained</span>
+                <span class="dyn-net-surplus" style="color: #FFFFFF; font-weight: 800; font-family: 'JetBrains Mono', monospace;">+₹ 51,156</span>
+              </div>
+              <div class="w-flow-track">
+                <div class="w-flow-fill" style="width: 60%; background: linear-gradient(90deg, var(--green-safe), #64D2FF);"></div>
+              </div>
+            </div>
+
+            <div class="w-footer-row">
+              <span style="font-size: 9.5px; color: rgba(255,255,255,0.65);">6 Days Left in August</span>
+              <span style="font-size: 9.5px; color: #FFFFFF; font-weight: 800;">Trajectory: Strong</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tech-specs-box">
+          <div class="tech-spec-row">
+            <span class="tech-spec-label">Insight Type:</span>
+            <span class="tech-spec-val">Net Savings Ratio & Cash-Flow Velocity</span>
+          </div>
+          <div class="tech-spec-row">
+            <span class="tech-spec-label">Formula:</span>
+            <span class="tech-spec-val">((Inflow - Outflow) / Inflow) * 100</span>
+          </div>
+          <ul class="pros-list">
+            <li class="pros-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Builds wealth consciousness by comparing actual savings against total income</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- ==========================================
+           INSIGHT WIDGET 4: UPCOMING BILLS & RECURRING HORIZON
+           ========================================== -->
+      <div class="variation-card">
+        <div class="var-meta-header">
+          <div class="var-title-group">
+            <h3>4. Upcoming Bills & Commitments <span class="tag-highlight">Insight #3</span></h3>
+            <p>Smart timeline of upcoming credit card dues, SIP investments, & EMIs</p>
+          </div>
+          <span class="size-tag">4 × 2 Grid</span>
+        </div>
+
+        <div class="widget-preview-box bg-wall-mountain">
+          <div class="widget-base titanium-glass-core" onclick="openAppToast('Upcoming Bills Widget')">
+            <div class="w-topbar">
+              <div class="w-brand-pill">
+                UPCOMING DUES <div class="w-glass-dot" style="background: var(--orange-warn); box-shadow: 0 0 8px var(--orange-warn);"></div>
+              </div>
+              <div style="font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.7);">
+                2 Pending This Week
+              </div>
+            </div>
+
+            <!-- Mini List of Upcoming Dues -->
+            <div class="w-bills-list">
+              <div class="w-bill-item">
+                <div class="w-bill-left">
+                  <div class="w-bill-icon">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                  </div>
+                  <div>
+                    <div class="w-bill-title">HDFC Credit Card</div>
+                    <div class="w-bill-due">Due in 3 days (Aug 28)</div>
+                  </div>
+                </div>
+                <div>
+                  <div class="w-bill-amt dyn-bill-1">₹ 12,450</div>
+                  <div class="w-bill-chip-urgent">Due Soon</div>
+                </div>
+              </div>
+
+              <div class="w-bill-item">
+                <div class="w-bill-left">
+                  <div class="w-bill-icon">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                  </div>
+                  <div>
+                    <div class="w-bill-title">Groww Mutual Fund SIP</div>
+                    <div class="w-bill-due">Auto-debit on Sep 1</div>
+                  </div>
+                </div>
+                <div>
+                  <div class="w-bill-amt dyn-bill-2">₹ 5,000</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="w-footer-row">
+              <span style="font-size: 9.5px; color: rgba(255,255,255,0.65);">Total Scheduled: ₹ 17,450</span>
+              <span style="font-size: 9.5px; color: #64D2FF; font-weight: 800;">Covered by Liquid Balance</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tech-specs-box">
+          <div class="tech-spec-row">
+            <span class="tech-spec-label">Insight Type:</span>
+            <span class="tech-spec-val">Predictive Dues & Liability Horizon</span>
+          </div>
+          <div class="tech-spec-row">
+            <span class="tech-spec-label">Detection:</span>
+            <span class="tech-spec-val">SMS bill statements + CC payment reminders</span>
+          </div>
+          <ul class="pros-list">
+            <li class="pros-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Prevents late fee penalties and keeps credit score high with proactive due alerts</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ========================================================
+         VIEW 2: FULL HOMESCREEN PHONE SIMULATOR
+         ======================================================== -->
+    <div class="simulator-section" id="viewSimulator" style="display: none;">
+      
+      <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; justify-content: center;">
+        <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">Select Mounted Titanium Widget:</span>
+        <button class="tool-btn active" onclick="mountSimWidget('primary', this)">1. Primary Balance</button>
+        <button class="tool-btn" onclick="mountSimWidget('category', this)">2. Category Spectrum</button>
+        <button class="tool-btn" onclick="mountSimWidget('flow', this)">3. Cash Flow Radar</button>
+        <button class="tool-btn" onclick="mountSimWidget('bills', this)">4. Upcoming Bills</button>
+      </div>
+
+      <!-- Phone Frame Simulator -->
+      <div class="phone-simulator-frame bg-wall-mountain" id="phoneSimFrame">
+        
+        <!-- Status Bar -->
+        <div class="phone-status-bar">
+          <span>7:32</span>
+          <div class="phone-notch-island"></div>
+          <div style="display: flex; gap: 4px; align-items: center;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L12 22l7.03-4.39C20.26 16.07 21 14.12 21 12c0-4.97-4.03-9-9-9z"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="7" width="18" height="11" rx="2" ry="2"/><line x1="22" y1="11" x2="22" y2="13"/></svg>
+          </div>
+        </div>
+
+        <!-- Clock Widget -->
+        <div class="phone-clock-widget">
+          <div class="phone-clock-time">07:32</div>
+          <div class="phone-clock-date">Tuesday, August 25 • 28°C Clear</div>
+        </div>
+
+        <!-- Interactive Widget Mounted on Phone Homescreen -->
+        <div class="sim-widget-slot" id="simWidgetSlot">
+          <!-- Default: Primary Balance Widget -->
+          <div class="widget-base titanium-glass-core" onclick="openAppToast('Primary Balance Widget')">
+            <div class="w-topbar">
+              <div class="w-brand-pill">LIQUID <div class="w-glass-dot"></div></div>
+              <div class="w-action-group">
+                <button class="w-glass-btn" onclick="event.stopPropagation(); toggleGlobalPrivacy();"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <button class="w-glass-btn" onclick="event.stopPropagation(); triggerSyncAnim(this);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+              </div>
+            </div>
+
+            <div class="w-main-stat">
+              <div>
+                <div class="w-bal-value dyn-balance">₹ 1,28,450.00</div>
+                <div class="w-bal-label">TOTAL LIQUID BALANCE</div>
+              </div>
+              <div class="w-pacing-capsule">
+                <div class="w-pacing-spend dyn-spend">TODAY: ₹ 489</div>
+                <div class="w-pacing-safe dyn-safe">Safe: ₹ 1,740/d</div>
+              </div>
+            </div>
+
+            <div class="w-prog-track"><div class="w-prog-fill dyn-prog" style="width: 38%;"></div></div>
+
+            <div class="w-footer-row">
+              <div class="w-streak-pill">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+                <span>14d streak</span>
+              </div>
+              <div class="w-pace-status dyn-status">On Track (62% daily left)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Homescreen App Icons Grid -->
+        <div class="homescreen-app-grid">
+          <div class="app-icon-item" onclick="openAppToast('Liquid App')">
+            <div class="app-icon-box" style="background: linear-gradient(135deg, #1C1C24, #000000); border: 1px solid #333344;">💧</div>
+            <span class="app-icon-label">Liquid</span>
+          </div>
+          <div class="app-icon-item" onclick="openAppToast('Camera')">
+            <div class="app-icon-box" style="background: linear-gradient(135deg, #2C2D35, #181920);">📷</div>
+            <span class="app-icon-label">Camera</span>
+          </div>
+          <div class="app-icon-item" onclick="openAppToast('Settings')">
+            <div class="app-icon-box" style="background: linear-gradient(135deg, #3A3B45, #22232B);">⚙️</div>
+            <span class="app-icon-label">Settings</span>
+          </div>
+          <div class="app-icon-item" onclick="openAppToast('HDFC')">
+            <div class="app-icon-box" style="background: #004C8F;">🏦</div>
+            <span class="app-icon-label">HDFC Bank</span>
+          </div>
+        </div>
+
+        <!-- Bottom Dock -->
+        <div class="homescreen-dock">
+          <div class="dock-icon-box" style="background: #30D158;">📞</div>
+          <div class="dock-icon-box" style="background: #0A84FF;">💬</div>
+          <div class="dock-icon-box" style="background: #FFFFFF; color: #000000;">🌐</div>
+          <div class="dock-icon-box" style="background: #FF9F0A;">🎵</div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Toast Notification element -->
+  <div class="toast-pill" id="appToast">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--green-safe);"><polyline points="20 6 9 17 4 12"/></svg>
+    <span id="toastMsg">Action triggered</span>
+  </div>
+
+  <script>
+    let isPrivacyHidden = false;
+    let currentBudgetState = 'ontrack';
+
+    const stateData = {
+      ontrack: {
+        balance: '₹ 1,28,450.00',
+        spend: 'TODAY: ₹ 489',
+        safe: 'Safe: ₹ 1,740/d',
+        status: 'On Track (62% daily left)',
+        progPct: '38%',
+        progGradient: 'linear-gradient(90deg, #30D158 0%, #30D158 100%)',
+        totalSpend: '₹ 33,844 Spent',
+        cat1: '₹ 14.2k',
+        cat2: '₹ 8.5k',
+        cat3: '₹ 6.1k',
+        inflow: '+₹ 85,000',
+        outflow: '−₹ 33,844',
+        surplus: '+₹ 51,156',
+        bill1: '₹ 12,450',
+        bill2: '₹ 5,000'
+      },
+      warning: {
+        balance: '₹ 1,28,450.00',
+        spend: 'TODAY: ₹ 1,520',
+        safe: 'Safe: ₹ 1,740/d',
+        status: 'Caution (12% daily left)',
+        progPct: '87%',
+        progGradient: 'linear-gradient(90deg, #30D158 0%, #FF9F0A 100%)',
+        totalSpend: '₹ 45,200 Spent',
+        cat1: '₹ 21.0k',
+        cat2: '₹ 12.5k',
+        cat3: '₹ 7.2k',
+        inflow: '+₹ 85,000',
+        outflow: '−₹ 45,200',
+        surplus: '+₹ 39,800',
+        bill1: '₹ 12,450',
+        bill2: '₹ 5,000'
+      },
+      over: {
+        balance: '₹ 1,28,450.00',
+        spend: 'TODAY: ₹ 2,340',
+        safe: 'Safe: ₹ 1,740/d',
+        status: 'Over Budget (₹600 excess)',
+        progPct: '100%',
+        progGradient: 'linear-gradient(90deg, #FF9F0A 0%, #FF453A 100%)',
+        totalSpend: '₹ 58,400 Spent',
+        cat1: '₹ 28.5k',
+        cat2: '₹ 16.0k',
+        cat3: '₹ 8.9k',
+        inflow: '+₹ 85,000',
+        outflow: '−₹ 58,400',
+        surplus: '+₹ 26,600',
+        bill1: '₹ 12,450',
+        bill2: '₹ 5,000'
+      }
+    };
+
+    function updateWidgetRenderings() {
+      const data = stateData[currentBudgetState];
+      
+      const balStr = isPrivacyHidden ? '₹ ••••••••' : data.balance;
+      const spendStr = isPrivacyHidden ? 'TODAY: ••••' : data.spend;
+      const safeStr = isPrivacyHidden ? 'Safe: ••••/d' : data.safe;
+      const totalSpendStr = isPrivacyHidden ? '•••••• Spent' : data.totalSpend;
+      const cat1Str = isPrivacyHidden ? '••••' : data.cat1;
+      const cat2Str = isPrivacyHidden ? '••••' : data.cat2;
+      const cat3Str = isPrivacyHidden ? '••••' : data.cat3;
+      const inflowStr = isPrivacyHidden ? '+••••••' : data.inflow;
+      const outflowStr = isPrivacyHidden ? '−••••••' : data.outflow;
+      const surplusStr = isPrivacyHidden ? '+••••••' : data.surplus;
+      const bill1Str = isPrivacyHidden ? '••••••' : data.bill1;
+      const bill2Str = isPrivacyHidden ? '••••••' : data.bill2;
+
+      document.querySelectorAll('.dyn-balance').forEach(el => el.textContent = balStr);
+      document.querySelectorAll('.dyn-spend').forEach(el => el.textContent = spendStr);
+      document.querySelectorAll('.dyn-safe').forEach(el => el.textContent = safeStr);
+      document.querySelectorAll('.dyn-status').forEach(el => el.textContent = data.status);
+      document.querySelectorAll('.dyn-total-spend').forEach(el => el.textContent = totalSpendStr);
+      document.querySelectorAll('.dyn-cat-1').forEach(el => el.textContent = cat1Str);
+      document.querySelectorAll('.dyn-cat-2').forEach(el => el.textContent = cat2Str);
+      document.querySelectorAll('.dyn-cat-3').forEach(el => el.textContent = cat3Str);
+      document.querySelectorAll('.dyn-inflow').forEach(el => el.textContent = inflowStr);
+      document.querySelectorAll('.dyn-outflow').forEach(el => el.textContent = outflowStr);
+      document.querySelectorAll('.dyn-net-surplus').forEach(el => el.textContent = surplusStr);
+      document.querySelectorAll('.dyn-bill-1').forEach(el => el.textContent = bill1Str);
+      document.querySelectorAll('.dyn-bill-2').forEach(el => el.textContent = bill2Str);
+
+      document.querySelectorAll('.dyn-prog').forEach(el => {
+        el.style.width = data.progPct;
+        el.style.background = data.progGradient;
+      });
+    }
+
+    function toggleGlobalPrivacy() {
+      isPrivacyHidden = !isPrivacyHidden;
+      const label = document.getElementById('privacyLabel');
+      const icon = document.getElementById('privacyIcon');
+      const btn = document.getElementById('btnTogglePrivacy');
+
+      if (isPrivacyHidden) {
+        label.textContent = 'Hidden';
+        btn.classList.remove('active');
+        icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+        showToast('Privacy Mode Enabled: Numbers Masked');
+      } else {
+        label.textContent = 'Visible';
+        btn.classList.add('active');
+        icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+        showToast('Privacy Mode Disabled: Balances Shown');
+      }
+      updateWidgetRenderings();
+    }
+
+    function setBudgetState(state, btn) {
+      currentBudgetState = state;
+      btn.parentElement.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      updateWidgetRenderings();
+      showToast(`Spend pace state set to: ${state.toUpperCase()}`);
+    }
+
+    function setWallpaper(wallClass, btn) {
+      btn.parentElement.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      const walls = ['bg-wall-obsidian', 'bg-wall-cyberpunk', 'bg-wall-mountain'];
+      document.querySelectorAll('.widget-preview-box').forEach(box => {
+        walls.forEach(w => box.classList.remove(w));
+        box.classList.add(wallClass);
+      });
+
+      const simFrame = document.getElementById('phoneSimFrame');
+      walls.forEach(w => simFrame.classList.remove(w));
+      simFrame.classList.add(wallClass);
+
+      showToast(`Wallpaper changed to: ${btn.textContent}`);
+    }
+
+    function switchViewMode(mode, btn) {
+      btn.parentElement.querySelectorAll('.view-tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      document.getElementById('viewGrid').style.display = mode === 'grid' ? 'grid' : 'none';
+      document.getElementById('viewSimulator').style.display = mode === 'simulator' ? 'flex' : 'none';
+    }
+
+    function mountSimWidget(variantKey, btn) {
+      btn.parentElement.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const slot = document.getElementById('simWidgetSlot');
+      let html = '';
+
+      if (variantKey === 'primary') {
+        html = `
+          <div class="widget-base titanium-glass-core" onclick="openAppToast('Primary Balance Widget')">
+            <div class="w-topbar">
+              <div class="w-brand-pill">LIQUID <div class="w-glass-dot"></div></div>
+              <div class="w-action-group">
+                <button class="w-glass-btn" onclick="event.stopPropagation(); toggleGlobalPrivacy();"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                <button class="w-glass-btn" onclick="event.stopPropagation(); triggerSyncAnim(this);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+              </div>
+            </div>
+            <div class="w-main-stat">
+              <div>
+                <div class="w-bal-value dyn-balance">₹ 1,28,450.00</div>
+                <div class="w-bal-label">TOTAL LIQUID BALANCE</div>
+              </div>
+              <div class="w-pacing-capsule">
+                <div class="w-pacing-spend dyn-spend">TODAY: ₹ 489</div>
+                <div class="w-pacing-safe dyn-safe">Safe: ₹ 1,740/d</div>
+              </div>
+            </div>
+            <div class="w-prog-track"><div class="w-prog-fill dyn-prog" style="width: 38%;"></div></div>
+            <div class="w-footer-row">
+              <div class="w-streak-pill"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg><span>14d streak</span></div>
+              <div class="w-pace-status dyn-status">On Track (62% daily left)</div>
+            </div>
+          </div>`;
+      } else if (variantKey === 'category') {
+        html = `
+          <div class="widget-base titanium-glass-core" onclick="openAppToast('Category Spectrum Widget')">
+            <div class="w-topbar">
+              <div class="w-brand-pill">MONTHLY BREAKDOWN <span style="font-size: 9px; opacity: 0.6;">AUG</span></div>
+              <div style="font-size: 10px; font-weight: 800; color: #FFFFFF;" class="dyn-total-spend">₹ 33,844 Spent</div>
+            </div>
+            <div class="w-category-spectrum">
+              <div class="w-cat-ribbon">
+                <div class="w-cat-seg" style="width: 42%; background: #FF375F;"></div>
+                <div class="w-cat-seg" style="width: 25%; background: #BF5AF2;"></div>
+                <div class="w-cat-seg" style="width: 18%; background: #0A84FF;"></div>
+                <div class="w-cat-seg" style="width: 15%; background: #FF9F0A;"></div>
+              </div>
+              <div class="w-cat-grid">
+                <div class="w-cat-chip"><div class="w-cat-chip-head"><div class="w-cat-dot" style="background: #FF375F;"></div><span>Food</span></div><span class="w-cat-chip-amt dyn-cat-1">₹ 14.2k</span></div>
+                <div class="w-cat-chip"><div class="w-cat-chip-head"><div class="w-cat-dot" style="background: #BF5AF2;"></div><span>Shopping</span></div><span class="w-cat-chip-amt dyn-cat-2">₹ 8.5k</span></div>
+                <div class="w-cat-chip"><div class="w-cat-chip-head"><div class="w-cat-dot" style="background: #0A84FF;"></div><span>Bills</span></div><span class="w-cat-chip-amt dyn-cat-3">₹ 6.1k</span></div>
+              </div>
+            </div>
+            <div class="w-footer-row">
+              <span style="font-size: 9.5px; color: rgba(255,255,255,0.65);">Top Drain: Food & Dining (42%)</span>
+              <span style="font-size: 9.5px; color: var(--green-safe); font-weight: 800;">Budget 67% Left</span>
+            </div>
+          </div>`;
+      } else if (variantKey === 'flow') {
+        html = `
+          <div class="widget-base titanium-glass-core" onclick="openAppToast('Cash Flow Radar Widget')">
+            <div class="w-topbar">
+              <div class="w-brand-pill">CASH FLOW <div class="w-glass-dot" style="background: var(--blue-accent); box-shadow: 0 0 8px var(--blue-accent);"></div></div>
+              <div style="font-size: 10px; font-weight: 800; color: var(--green-safe); background: var(--green-safe-bg); padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(48,209,88,0.3);">+60.2% SAVED</div>
+            </div>
+            <div class="w-flow-stats">
+              <div class="w-flow-box"><div class="w-flow-title" style="color: var(--green-safe);">TOTAL INFLOW</div><div class="w-flow-val dyn-inflow" style="color: var(--green-safe);">+₹ 85,000</div></div>
+              <div class="w-flow-box"><div class="w-flow-title" style="color: var(--red-alert);">TOTAL OUTFLOW</div><div class="w-flow-val dyn-outflow" style="color: var(--red-alert);">−₹ 33,844</div></div>
+            </div>
+            <div class="w-flow-bar-container">
+              <div class="w-flow-bar-row"><span style="color: rgba(255,255,255,0.7);">Net Surplus Retained</span><span class="dyn-net-surplus" style="color: #FFFFFF; font-weight: 800; font-family: 'JetBrains Mono', monospace;">+₹ 51,156</span></div>
+              <div class="w-flow-track"><div class="w-flow-fill" style="width: 60%; background: linear-gradient(90deg, var(--green-safe), #64D2FF);"></div></div>
+            </div>
+            <div class="w-footer-row">
+              <span style="font-size: 9.5px; color: rgba(255,255,255,0.65);">6 Days Left in August</span>
+              <span style="font-size: 9.5px; color: #FFFFFF; font-weight: 800;">Trajectory: Strong</span>
+            </div>
+          </div>`;
+      } else if (variantKey === 'bills') {
+        html = `
+          <div class="widget-base titanium-glass-core" onclick="openAppToast('Upcoming Bills Widget')">
+            <div class="w-topbar">
+              <div class="w-brand-pill">UPCOMING DUES <div class="w-glass-dot" style="background: var(--orange-warn); box-shadow: 0 0 8px var(--orange-warn);"></div></div>
+              <div style="font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.7);">2 Pending This Week</div>
+            </div>
+            <div class="w-bills-list">
+              <div class="w-bill-item">
+                <div class="w-bill-left"><div class="w-bill-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><div><div class="w-bill-title">HDFC Credit Card</div><div class="w-bill-due">Due in 3 days (Aug 28)</div></div></div>
+                <div><div class="w-bill-amt dyn-bill-1">₹ 12,450</div><div class="w-bill-chip-urgent">Due Soon</div></div>
+              </div>
+              <div class="w-bill-item">
+                <div class="w-bill-left"><div class="w-bill-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><div><div class="w-bill-title">Groww Mutual Fund SIP</div><div class="w-bill-due">Auto-debit on Sep 1</div></div></div>
+                <div><div class="w-bill-amt dyn-bill-2">₹ 5,000</div></div>
+              </div>
+            </div>
+            <div class="w-footer-row">
+              <span style="font-size: 9.5px; color: rgba(255,255,255,0.65);">Total Scheduled: ₹ 17,450</span>
+              <span style="font-size: 9.5px; color: #64D2FF; font-weight: 800;">Covered by Liquid Balance</span>
+            </div>
+          </div>`;
+      }
+
+      slot.innerHTML = html;
+      updateWidgetRenderings();
+      showToast(`Mounted ${btn.textContent} onto homescreen simulator`);
+    }
+
+    function triggerSyncAnim(btn) {
+      const svg = btn.querySelector('svg');
+      if (svg) {
+        svg.classList.add('spin-anim');
+        setTimeout(() => svg.classList.remove('spin-anim'), 800);
+      }
+      showToast('⚡ Sync Triggered: Reading latest inbox SMS');
+    }
+
+    let toastTimer = null;
+    function showToast(msg) {
+      const toast = document.getElementById('appToast');
+      document.getElementById('toastMsg').textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2400);
+    }
+
+    function openAppToast(name) {
+      showToast(`🚀 Launched Liquid App via ${name}`);
+    }
+  </script>
+</body>
+</html>

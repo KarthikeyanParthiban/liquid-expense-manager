@@ -3,7 +3,7 @@
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/widget_background"
+    android:background="@drawable/widget_titanium_bg"
     android:orientation="vertical"
     android:padding="16dp">
 
@@ -25,9 +25,9 @@
                 android:layout_height="wrap_content"
                 android:text="LIQUID"
                 android:textColor="@color/widget_brand"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:textStyle="bold"
-                android:letterSpacing="0.08" />
+                android:letterSpacing="0.12" />
 
             <ImageView
                 android:id="@+id/widget_dot_status"
@@ -50,8 +50,8 @@
                 android:id="@+id/widget_btn_toggle_eye"
                 android:layout_width="28dp"
                 android:layout_height="28dp"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:padding="4dp"
+                android:background="@drawable/widget_glass_btn_bg"
+                android:padding="5dp"
                 android:tint="@color/widget_icon_tint"
                 android:src="@drawable/ic_widget_visibility_off"
                 android:contentDescription="Toggle Visibility" />
@@ -60,9 +60,9 @@
                 android:id="@+id/widget_btn_sync"
                 android:layout_width="28dp"
                 android:layout_height="28dp"
-                android:layout_marginStart="4dp"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:padding="4dp"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/widget_glass_btn_bg"
+                android:padding="5dp"
                 android:tint="@color/widget_icon_tint"
                 android:src="@drawable/ic_widget_sync"
                 android:contentDescription="Sync SMS" />
@@ -73,7 +73,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="10dp"
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
@@ -91,29 +91,29 @@
                 android:textColor="@color/widget_text_primary"
                 android:textSize="24sp"
                 android:textStyle="bold"
-                android:letterSpacing="-0.02" />
+                android:letterSpacing="-0.03" />
 
             <TextView
                 android:id="@+id/widget_tv_balance_sub"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="TOTAL LIQUID"
+                android:text="TOTAL LIQUID BALANCE"
                 android:textColor="@color/widget_text_muted"
                 android:textSize="9sp"
                 android:textStyle="bold"
-                android:letterSpacing="0.06" />
+                android:letterSpacing="0.08" />
         </LinearLayout>
 
         <!-- Clean Pacing Pill -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/widget_chip_bg"
+            android:background="@drawable/widget_glass_chip_bg"
             android:orientation="vertical"
             android:gravity="end"
             android:paddingHorizontal="10dp"
-            android:paddingVertical="7dp">
+            android:paddingVertical="6dp">
 
             <TextView
                 android:id="@+id/widget_tv_today_spend"
@@ -129,7 +129,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="1dp"
-                android:text="Safe: ₹0/day"
+                android:text="Safe: ₹0/d"
                 android:textColor="@color/widget_safe_green"
                 android:textSize="9sp"
                 android:textStyle="bold" />
@@ -142,12 +142,12 @@
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
         android:layout_height="4dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="10dp"
         android:max="100"
-        android:progress="40"
+        android:progress="38"
         android:progressDrawable="@drawable/widget_progress_drawable" />
 
-    <!-- Footer Row: SVG Streak Icon + Streak Text + Status / Recent -->
+    <!-- Footer Row: SVG Streak Icon + Streak Text + Status -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -187,9 +187,9 @@
             android:layout_centerVertical="true"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="On Track (60% daily left)"
+            android:text="On Track (62% daily left)"
             android:textColor="@color/widget_text_secondary"
-            android:textSize="9sp"
+            android:textSize="9.5sp"
             android:textStyle="bold" />
     </RelativeLayout>
 

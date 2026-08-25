@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">Expense Manager</string>
-    <string name="widget_description">Live bank balance and monthly expense tracking</string>
+    <string name="widget_description">Live bank balance and daily burn rate pacing</string>
+    <string name="widget_category_description">Monthly category spending distribution and top drains</string>
+    <string name="widget_cash_flow_description">Monthly income vs expenses and net savings rate</string>
+    <string name="widget_upcoming_bills_description">Upcoming credit card bills, SIPs, and recurring dues</string>
 </resources>
