@@ -4,8 +4,14 @@ import android.content.Context
 import android.net.Uri
 import android.provider.Telephony
 import com.expensemanager.app.core.model.SmsMessageItem
+import com.expensemanager.app.core.model.SyncProgressState
+import com.expensemanager.app.core.model.SyncStage
 import com.expensemanager.app.parser.SmsParser
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 
 class SmsRepository(
@@ -76,56 +82,146 @@ class SmsRepository(
         return@withContext messages
     }
 
+    private val _syncState = MutableStateFlow(SyncProgressState())
+    val syncState: StateFlow<SyncProgressState> = _syncState.asStateFlow()
+
+    fun dismissSyncOverlay() {
+        _syncState.value = _syncState.value.copy(isDismissedByUser = true)
+    }
+
     /**
      * Fast incremental sync by default. Only scans new SMS since the last sync.
      * If forceFull is true, scans entire inbox.
+     * Shows loading overlay only on initial sync, full sync, or when >= 5 messages need processing.
      */
     suspend fun syncAllInboxSms(
         forceFull: Boolean = false,
         onProgress: (current: Int, total: Int) -> Unit = { _, _ -> }
     ): Int = withContext(Dispatchers.IO) {
+        val isInitialSync = getLastSyncedTimestamp() == 0L
+        val isFullOrInitial = forceFull || isInitialSync
         val lastSynced = if (forceFull) 0L else getLastSyncedTimestamp()
         val rawMessages = readHistoricalSms(sinceTimestamp = lastSynced)
         val total = rawMessages.size
-        val rules = transactionRepository.getAllRulesSnapshot()
-        var insertedCount = 0
-        var maxTimestamp = lastSynced
 
-        rawMessages.forEachIndexed { index, sms ->
-            if (sms.date > maxTimestamp) {
-                maxTimestamp = sms.date
+        // Only show overlay on initial install sync, explicit full sync, or batch >= 5 messages
+        val showOverlay = isFullOrInitial || total >= 5
+
+        _syncState.value = SyncProgressState(
+            isSyncing = true,
+            showOverlay = showOverlay,
+            stage = SyncStage.SCANNING_INBOX,
+            stageMessage = "Scanning inbox for bank & UPI alerts...",
+            total = total
+        )
+
+        try {
+            if (total == 0) {
+                if (showOverlay) {
+                    _syncState.value = SyncProgressState(
+                        isSyncing = true,
+                        showOverlay = true,
+                        stage = SyncStage.COMPLETED,
+                        stageMessage = "Inbox is up to date! No new messages.",
+                        total = 0,
+                        current = 0
+                    )
+                    delay(500)
+                }
+                _syncState.value = SyncProgressState(isSyncing = false, showOverlay = false)
+                return@withContext 0
             }
 
-            // 1. Process account balance updates (including daily bank balance broadcasts)
-            val balanceUpdate = SmsParser.extractBalanceUpdate(
-                sender = sms.address,
-                body = sms.body,
-                timestamp = sms.date
+            val rules = transactionRepository.getAllRulesSnapshot()
+            var insertedCount = 0
+            var balanceUpdateCount = 0
+            var maxTimestamp = lastSynced
+
+            _syncState.value = _syncState.value.copy(
+                stage = SyncStage.CLASSIFYING,
+                stageMessage = "Analyzing & classifying transactions...",
+                total = total,
+                current = 0
             )
-            if (balanceUpdate != null) {
-                transactionRepository.processBalanceUpdate(balanceUpdate)
+
+            rawMessages.forEachIndexed { index, sms ->
+                if (sms.date > maxTimestamp) {
+                    maxTimestamp = sms.date
+                }
+
+                // 1. Process account balance updates (including daily bank balance broadcasts)
+                val balanceUpdate = SmsParser.extractBalanceUpdate(
+                    sender = sms.address,
+                    body = sms.body,
+                    timestamp = sms.date
+                )
+                if (balanceUpdate != null) {
+                    transactionRepository.processBalanceUpdate(balanceUpdate)
+                    balanceUpdateCount++
+                }
+
+                // 2. Process financial transaction records
+                val parsedResult = SmsParser.parse(
+                    sender = sms.address,
+                    body = sms.body,
+                    timestamp = sms.date,
+                    userRules = rules
+                )
+
+                if (parsedResult != null) {
+                    transactionRepository.processAndSaveSms(parsedResult)
+                    insertedCount++
+                }
+
+                if (showOverlay) {
+                    _syncState.value = _syncState.value.copy(
+                        current = index + 1,
+                        total = total,
+                        latestSender = sms.address,
+                        latestMerchant = parsedResult?.merchant ?: _syncState.value.latestMerchant,
+                        latestCategory = parsedResult?.category ?: _syncState.value.latestCategory,
+                        latestAmount = parsedResult?.amount ?: _syncState.value.latestAmount,
+                        parsedTransactionsCount = insertedCount,
+                        balanceUpdatesCount = balanceUpdateCount
+                    )
+                }
+
+                onProgress(index + 1, total)
             }
 
-            // 2. Process financial transaction records
-            val parsedResult = SmsParser.parse(
-                sender = sms.address,
-                body = sms.body,
-                timestamp = sms.date,
-                userRules = rules
+            if (maxTimestamp > lastSynced) {
+                setLastSyncedTimestamp(maxTimestamp)
+            }
+
+            // Stage 3: Finalize & Refresh Widgets
+            if (showOverlay) {
+                _syncState.value = _syncState.value.copy(
+                    stage = SyncStage.FINALIZING,
+                    stageMessage = "Finalizing account balances & widgets..."
+                )
+            }
+            com.expensemanager.app.widget.WidgetUpdateHelper.updateAllWidgets(context)
+
+            // Stage 4: Completed
+            if (showOverlay) {
+                _syncState.value = _syncState.value.copy(
+                    stage = SyncStage.COMPLETED,
+                    stageMessage = if (insertedCount > 0) "Imported $insertedCount transaction(s)" else "All transactions up to date"
+                )
+                delay(650)
+            }
+            _syncState.value = SyncProgressState(isSyncing = false, showOverlay = false)
+
+            return@withContext insertedCount
+        } catch (e: Exception) {
+            _syncState.value = SyncProgressState(
+                isSyncing = false,
+                showOverlay = false,
+                stage = SyncStage.FAILED,
+                stageMessage = "Sync failed: ${e.localizedMessage}",
+                errorMessage = e.localizedMessage
             )
-
-            if (parsedResult != null) {
-                transactionRepository.processAndSaveSms(parsedResult)
-                insertedCount++
-            }
-
-            onProgress(index + 1, total)
+            throw e
         }
-
-        if (maxTimestamp > lastSynced) {
-            setLastSyncedTimestamp(maxTimestamp)
-        }
-
-        return@withContext insertedCount
     }
 }

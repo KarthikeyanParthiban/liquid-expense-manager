@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Vertical stem -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M38,32 L46,32 L46,76 L38,76 Z" />
+    <!-- Upper diagonal arm with Emerald highlight -->
+    <path
+        android:fillColor="#10B981"
+        android:pathData="M44,52 L66,32 L75,32 L49,56 Z" />
+    <!-- Lower diagonal arm -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M46,50 L75,76 L66,76 L42,55 Z" />
+    <!-- Spark / Coin dot -->
+    <path
+        android:fillColor="#10B981"
+        android:pathData="M73,28m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+</vector>

@@ -1,0 +1,65 @@
+name: Build & Publish Release APK
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Grant Execute Permission for Gradlew
+        run: chmod +x gradlew
+
+      - name: Build Release APK
+        run: ./gradlew assembleRelease --stacktrace
+
+      - name: Rename & Prepare APK
+        run: |
+          mkdir -p release-output
+          cp app/build/outputs/apk/release/app-release.apk release-output/Kaching.apk
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kaching-APK
+          path: release-output/Kaching.apk
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-output/Kaching.apk
+          name: Kaching ${{ github.ref_name }}
+          body: |
+            ## 💸 Kaching ${{ github.ref_name }}
+            
+            ### 📥 Download
+            - **[Download APK (Direct Link)](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/Kaching.apk)**
+            
+            ### ✨ Highlights
+            - Premium Apple Monotone Cash Flow Analytics & 7-Day Trend
+            - Streamlined Transactions Filter & Sorting Sheet
+            - High-performance SMS Parsing & Multi-bank Transaction Reconciliation
+            - Dark / Light Glassmorphism UI
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

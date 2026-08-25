@@ -62,6 +62,7 @@ import com.expensemanager.app.ui.components.DonutChart
 import com.expensemanager.app.ui.components.GamificationCard
 import com.expensemanager.app.ui.components.GlassAccountCard
 import com.expensemanager.app.ui.components.GlassStatCard
+import com.expensemanager.app.ui.components.IncomeSpendBarChartCard
 import com.expensemanager.app.ui.components.TransactionItem
 import com.expensemanager.app.ui.screens.gamification.WealthQuestsSheet
 import com.expensemanager.app.ui.theme.BorderLight
@@ -74,6 +75,7 @@ import com.expensemanager.app.ui.theme.appleCard
 fun DashboardScreen(
     viewModel: DashboardViewModel,
     onNavigateToTransactions: () -> Unit,
+    onNavigateToInsights: () -> Unit = {},
     onTransactionClick: (Transaction) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -83,6 +85,7 @@ fun DashboardScreen(
     val totalBankBalance by viewModel.totalBankBalance.collectAsState()
     val recentTransactions by viewModel.recentTransactions.collectAsState()
     val categorySpending by viewModel.categorySpending.collectAsState()
+    val cashFlowPeriods by viewModel.cashFlowPeriods.collectAsState()
     val isSyncing by viewModel.isSyncing.collectAsState()
     val syncMessage by viewModel.syncMessage.collectAsState()
 
@@ -250,13 +253,11 @@ fun DashboardScreen(
                 )
             }
 
-            // Gamification & Wealth Discipline Card (Liquid Score, Streak & Compounder)
+            // Cash Flow Spectrum: 7-Day Income & Spend Trend Chart
             item {
-                GamificationCard(
-                    liquidScore = liquidScore,
-                    streakInfo = streakInfo,
-                    roundUpSummary = roundUpSummary,
-                    onClick = { showWealthQuestsSheet = true }
+                IncomeSpendBarChartCard(
+                    cashFlowPeriods = cashFlowPeriods,
+                    onNavigateToInsights = onNavigateToInsights
                 )
             }
 

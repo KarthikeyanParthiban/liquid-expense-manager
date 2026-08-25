@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
@@ -25,27 +26,26 @@ class SettingsViewModel(
     val rules: StateFlow<List<MerchantRule>> = transactionRepository.getAllRules()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    private val _isSyncing = MutableStateFlow(false)
-    val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
+    val syncState = smsRepository.syncState
 
-    private val _syncProgress = MutableStateFlow(Pair(0, 0))
-    val syncProgress: StateFlow<Pair<Int, Int>> = _syncProgress.asStateFlow()
+    val isSyncing: StateFlow<Boolean> = smsRepository.syncState
+        .map { it.isSyncing }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    val syncProgress: StateFlow<Pair<Int, Int>> = smsRepository.syncState
+        .map { Pair(it.current, it.total) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Pair(0, 0))
 
     private val _statusMessage = MutableStateFlow<String?>(null)
     val statusMessage: StateFlow<String?> = _statusMessage.asStateFlow()
 
     fun syncAllSms() {
         viewModelScope.launch {
-            _isSyncing.value = true
             try {
-                val count = smsRepository.syncAllInboxSms(forceFull = true) { current, total ->
-                    _syncProgress.value = Pair(current, total)
-                }
+                val count = smsRepository.syncAllInboxSms(forceFull = true)
                 _statusMessage.value = "Successfully imported $count transaction(s)!"
             } catch (e: Exception) {
                 _statusMessage.value = "Sync error: ${e.localizedMessage}"
-            } finally {
-                _isSyncing.value = false
             }
         }
     }

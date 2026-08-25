@@ -1,0 +1,15 @@
+{
+  "name": "web-adb-controller",
+  "version": "1.0.0",
+  "description": "Liquid ADB Web Studio with In-Browser Screen Casting, Scrcpy, SMS Simulator & Logcat",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "ws": "^8.17.0",
+    "cors": "^2.8.5"
+  }
+}

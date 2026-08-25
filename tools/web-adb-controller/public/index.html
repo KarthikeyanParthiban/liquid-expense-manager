@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liquid ADB Studio • In-Browser Scrcpy & SMS Simulator</title>
+    <meta name="description" content="Futuristic Web ADB Controller with real-time in-browser screen mirroring, interactive touch control, SMS simulation, and Logcat streaming for Liquid Expense Manager.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-theme">
+    <div class="app-container">
+        <!-- Top Titanium Navigation Bar -->
+        <header class="studio-header">
+            <div class="brand-section">
+                <div class="brand-badge">
+                    <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                        <polyline points="2 17 12 22 22 17"></polyline>
+                        <polyline points="2 12 12 17 22 12"></polyline>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <h1 class="brand-title">LIQUID STUDIO</h1>
+                    <span class="brand-subtitle">ADB & SCRCPY CASTING CENTER</span>
+                </div>
+            </div>
+
+            <!-- Device Telemetry Status Bar -->
+            <div class="telemetry-bar" id="deviceTelemetry">
+                <div class="status-indicator">
+                    <span class="pulse-dot"></span>
+                    <span class="status-label" id="connectionStatus">Connected</span>
+                </div>
+                <div class="telemetry-chip">
+                    <span class="chip-label">MODEL</span>
+                    <span class="chip-val" id="deviceModel">Detecting...</span>
+                </div>
+                <div class="telemetry-chip">
+                    <span class="chip-label">ANDROID</span>
+                    <span class="chip-val" id="androidVersion">--</span>
+                </div>
+                <div class="telemetry-chip">
+                    <span class="chip-label">BATTERY</span>
+                    <span class="chip-val battery-val" id="batteryLevel">--%</span>
+                </div>
+                <div class="telemetry-chip">
+                    <span class="chip-label">RES</span>
+                    <span class="chip-val" id="deviceResolution">1080×2400</span>
+                </div>
+            </div>
+
+            <!-- Header Quick Actions -->
+            <div class="header-actions">
+                <a href="/preview.html" target="_blank" class="btn" style="background: rgba(48, 209, 88, 0.15); border-color: rgba(48, 209, 88, 0.4); color: var(--accent-emerald); text-decoration: none;" title="Open interactive Income & Spend Bar Chart Preview">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    <span>📊 Chart Preview</span>
+                </a>
+                <button class="btn btn-scrcpy" id="btnLaunchScrcpy" title="Launch high-performance native 120Hz Scrcpy window">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                        <line x1="8" y1="21" x2="16" y2="21"></line>
+                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                    </svg>
+                    <span>Native Scrcpy (120Hz)</span>
+                </button>
+                <button class="btn btn-icon" id="btnRefreshDevice" title="Refresh Device Info">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <polyline points="1 20 1 14 7 14"></polyline>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Studio Workspace -->
+        <main class="studio-workspace">
+            <!-- LEFT PANEL: In-Browser Screen Cast & Touch Controller -->
+            <section class="screen-cast-section">
+                <div class="section-card phone-stage-card">
+                    <div class="card-header">
+                        <div class="header-title-row">
+                            <span class="live-dot"></span>
+                            <h2>Device Cast</h2>
+                            <span class="badge badge-fps" id="fpsCounter">24 FPS</span>
+                        </div>
+                        <div class="screen-toolbar">
+                            <button class="tool-btn" id="btnScreenToggle" title="Pause / Resume Mirroring">
+                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                </svg>
+                            </button>
+                            <button class="tool-btn" id="btnSaveScreenshot" title="Capture & Save High-Res PNG">
+                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                    <circle cx="12" cy="13" r="4"></circle>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Phone Bezel & Screen Surface -->
+                    <div class="phone-wrapper">
+                        <div class="phone-bezel">
+                            <div class="phone-speaker"></div>
+                            <div class="phone-camera"></div>
+                            <div class="screen-container" id="screenContainer">
+                                <canvas id="screenCanvas" width="1080" height="2400"></canvas>
+                                <div class="touch-feedback" id="touchFeedback"></div>
+                                <div class="screen-placeholder" id="screenPlaceholder">
+                                    <div class="loading-spinner"></div>
+                                    <p>Streaming device screen...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Virtual Hardware Navigation Bar -->
+                    <div class="hardware-navbar">
+                        <button class="nav-btn" id="navBack" title="Back (Keycode 4)">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none">
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                            <span>BACK</span>
+                        </button>
+                        <button class="nav-btn" id="navHome" title="Home (Keycode 3)">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none">
+                                <circle cx="12" cy="12" r="7"></circle>
+                            </svg>
+                            <span>HOME</span>
+                        </button>
+                        <button class="nav-btn" id="navRecents" title="Recents / App Switcher (Keycode 187)">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none">
+                                <rect x="5" y="5" width="14" height="14" rx="2"></rect>
+                            </svg>
+                            <span>RECENTS</span>
+                        </button>
+                        <button class="nav-btn" id="navPower" title="Power (Keycode 26)">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none">
+                                <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                                <line x1="12" y1="2" x2="12" y2="12"></line>
+                            </svg>
+                            <span>POWER</span>
+                        </button>
+                        <button class="nav-btn" id="navVolDown" title="Volume Down (Keycode 25)">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                <line x1="15" y1="12" x2="21" y2="12"></line>
+                            </svg>
+                            <span>VOL -</span>
+                        </button>
+                        <button class="nav-btn" id="navVolUp" title="Volume Up (Keycode 24)">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                <line x1="18" y1="9" x2="18" y2="15"></line>
+                                <line x1="15" y1="12" x2="21" y2="12"></line>
+                            </svg>
+                            <span>VOL +</span>
+                        </button>
+                    </div>
+
+                    <!-- Quick Typing Bar -->
+                    <div class="typing-bar">
+                        <input type="text" id="adbTextInput" placeholder="Type text and press Enter to send to device keyboard..." autocomplete="off">
+                        <button class="btn btn-sm btn-primary" id="btnSendText">Send Text</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RIGHT PANEL: Action Center & Tabs -->
+            <section class="control-panel-section">
+                <!-- Navigation Tabs -->
+                <div class="tab-bar">
+                    <button class="tab-btn active" data-tab="tab-app-actions">
+                        <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none">
+                            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                            <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                        </svg>
+                        <span>App Controls</span>
+                    </button>
+                    <button class="tab-btn" data-tab="tab-sms-simulator">
+                        <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        <span>SMS Simulator</span>
+                    </button>
+                    <button class="tab-btn" data-tab="tab-build-deploy">
+                        <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none">
+                            <polyline points="16 18 22 12 16 6"></polyline>
+                            <polyline points="8 6 2 12 8 18"></polyline>
+                        </svg>
+                        <span>Build & Deploy</span>
+                    </button>
+                    <button class="tab-btn" data-tab="tab-logcat">
+                        <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        <span>Live Logcat</span>
+                    </button>
+                    <button class="tab-btn" data-tab="tab-terminal">
+                        <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none">
+                            <polyline points="4 17 10 11 4 5"></polyline>
+                            <line x1="12" y1="19" x2="20" y2="19"></line>
+                        </svg>
+                        <span>Terminal</span>
+                    </button>
+                </div>
+
+                <!-- TAB 1: App Controls -->
+                <div class="tab-content active" id="tab-app-actions">
+                    <div class="section-card">
+                        <h3 class="card-title">Liquid Expense Manager Lifecycle</h3>
+                        <p class="card-desc">Control app execution, permissions, and database state on the connected device.</p>
+                        
+                        <div class="action-grid">
+                            <button class="action-card primary" id="btnLaunchApp">
+                                <div class="action-icon">🚀</div>
+                                <div class="action-meta">
+                                    <h4>Launch App</h4>
+                                    <span>Start MainActivity</span>
+                                </div>
+                            </button>
+
+                            <button class="action-card" id="btnRestartApp">
+                                <div class="action-icon">🔄</div>
+                                <div class="action-meta">
+                                    <h4>Restart App</h4>
+                                    <span>Force-stop & fresh relaunch</span>
+                                </div>
+                            </button>
+
+                            <button class="action-card warning" id="btnStopApp">
+                                <div class="action-icon">🛑</div>
+                                <div class="action-meta">
+                                    <h4>Force Stop</h4>
+                                    <span>Kill app process cleanly</span>
+                                </div>
+                            </button>
+
+                            <button class="action-card success" id="btnGrantPermissions">
+                                <div class="action-icon">🔑</div>
+                                <div class="action-meta">
+                                    <h4>Grant Permissions</h4>
+                                    <span>READ_SMS, RECEIVE_SMS, NOTIFS</span>
+                                </div>
+                            </button>
+
+                            <button class="action-card danger" id="btnClearData">
+                                <div class="action-icon">🧹</div>
+                                <div class="action-meta">
+                                    <h4>Clear App Data</h4>
+                                    <span>Reset database & preferences</span>
+                                </div>
+                            </button>
+
+                            <button class="action-card accent" id="btnLaunchScrcpySide">
+                                <div class="action-icon">🖥️</div>
+                                <div class="action-meta">
+                                    <h4>Launch Scrcpy (120Hz)</h4>
+                                    <span>Ultra-smooth native window</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Toast Notification -->
+                    <div class="action-status-banner" id="actionStatusBanner" style="display: none;">
+                        <span class="status-msg" id="actionStatusMsg">Command executed successfully</span>
+                    </div>
+                </div>
+
+                <!-- TAB 2: SMS Simulator Studio -->
+                <div class="tab-content" id="tab-sms-simulator">
+                    <div class="section-card">
+                        <div class="card-title-row">
+                            <h3 class="card-title">SMS Transaction Injector</h3>
+                            <span class="badge badge-accent">Live Broadcast</span>
+                        </div>
+                        <p class="card-desc">Simulate bank and UPI SMS alerts to test intelligent parsing, merchant classification, and widgets in real-time.</p>
+
+                        <div class="presets-section">
+                            <label class="section-label">1-CLICK TEST PRESETS</label>
+                            <div class="preset-chips">
+                                <button class="preset-chip" data-sender="HDFCBK" data-body="Rs 420.00 spent on your HDFC Bank Card ending 4892 at Swiggy on 25-AUG-26. Bal: INR 34,250.00">
+                                    🍔 Swiggy Food (₹420)
+                                </button>
+                                <button class="preset-chip" data-sender="SBIUPI" data-body="Your A/c ending 1042 debited by Rs 1,499.00 on 25-Aug-26 for UPI/Amazon/UPI-Ref-4829104. Bal: Rs 52,180.00">
+                                    🛒 Amazon Shopping (₹1,499)
+                                </button>
+                                <button class="preset-chip" data-sender="ICICIB" data-body="Salary credited! Rs 85,000.00 deposited to your ICICI Bank A/c ending 9012 on 25-Aug-26. Total Bal: INR 1,24,500.00">
+                                    💰 Monthly Salary (+₹85,000)
+                                </button>
+                                <button class="preset-chip" data-sender="AXISBK" data-body="Rs 2,350.00 debited for BESCOM Electricity Bill payment on Axis Bank Card XX3481. Bal: Rs 18,900.00">
+                                    ⚡ Electricity Bill (₹2,350)
+                                </button>
+                                <button class="preset-chip" data-sender="HDFCBK" data-body="Refund of Rs 580.00 credited to your A/c XX4892 from Zomato for cancelled order. Updated Bal: Rs 34,830.00">
+                                    ↩️ Zomato Refund (+₹580)
+                                </button>
+                                <button class="preset-chip" data-sender="VK-OTP" data-body="Your OTP for login to service is 849201. Valid for 10 minutes. Do not share with anyone.">
+                                    🚫 Spam / OTP Rejection
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Custom SMS Builder -->
+                        <div class="custom-sms-form">
+                            <label class="section-label">CUSTOM SMS BUILDER</label>
+                            <div class="form-row">
+                                <div class="form-group" style="flex: 1;">
+                                    <label for="smsSender">Sender Address / Bank ID</label>
+                                    <input type="text" id="smsSender" value="HDFCBK" placeholder="e.g. HDFCBK, SBIUPI, ICICIB">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="smsBody">SMS Message Body</label>
+                                <textarea id="smsBody" rows="3" placeholder="Enter bank alert text...">Rs 450.00 spent on Swiggy from HDFC Bank A/c XX4892. Available Bal: Rs 34,250.00</textarea>
+                            </div>
+
+                            <button class="btn btn-primary btn-block" id="btnInjectSms">
+                                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                </svg>
+                                <span>Broadcast SMS to App</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: Build & Deploy Console -->
+                <div class="tab-content" id="tab-build-deploy">
+                    <div class="section-card">
+                        <div class="card-title-row">
+                            <h3 class="card-title">Gradle Build & Deploy Studio</h3>
+                            <button class="btn btn-primary" id="btnRunBuild">
+                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                </svg>
+                                <span>Build & Install Debug APK</span>
+                            </button>
+                        </div>
+                        <p class="card-desc">Execute <code>./gradlew installDebug</code> directly and stream compilation logs.</p>
+
+                        <div class="terminal-window" id="buildTerminal">
+                            <div class="terminal-header">
+                                <span class="term-dot red"></span>
+                                <span class="term-dot yellow"></span>
+                                <span class="term-dot green"></span>
+                                <span class="term-title">gradle-build.log</span>
+                            </div>
+                            <pre class="terminal-body" id="buildLogBody">Click "Build & Install Debug APK" to begin compilation...</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: Live Logcat Stream -->
+                <div class="tab-content" id="tab-logcat">
+                    <div class="section-card">
+                        <div class="card-title-row">
+                            <h3 class="card-title">Real-Time Android Logcat</h3>
+                            <div class="logcat-controls">
+                                <input type="text" id="logcatSearch" placeholder="Filter logs (e.g. Sms, Error, Parse)...">
+                                <button class="btn btn-sm" id="btnToggleLogcat">Pause</button>
+                                <button class="btn btn-sm" id="btnClearLogcat">Clear</button>
+                            </div>
+                        </div>
+
+                        <!-- Tag Quick Filters -->
+                        <div class="tag-filters">
+                            <button class="tag-chip active" data-tag="">All</button>
+                            <button class="tag-chip" data-tag="SmsRepository">SmsRepository</button>
+                            <button class="tag-chip" data-tag="SmsParser">SmsParser</button>
+                            <button class="tag-chip" data-tag="DashboardViewModel">DashboardViewModel</button>
+                            <button class="tag-chip" data-tag="AndroidRuntime">Crash / Exceptions</button>
+                        </div>
+
+                        <div class="terminal-window logcat-window">
+                            <div class="terminal-body logcat-body" id="logcatBody">
+                                <div class="log-line info">Connecting to ADB Logcat stream...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 5: Direct ADB Terminal -->
+                <div class="tab-content" id="tab-terminal">
+                    <div class="section-card">
+                        <h3 class="card-title">Direct ADB Shell Terminal</h3>
+                        <p class="card-desc">Execute arbitrary ADB shell commands and inspect responses instantly.</p>
+
+                        <div class="terminal-window">
+                            <div class="terminal-header">
+                                <span class="term-dot red"></span>
+                                <span class="term-dot yellow"></span>
+                                <span class="term-dot green"></span>
+                                <span class="term-title">adb-shell</span>
+                            </div>
+                            <pre class="terminal-body" id="terminalOutput">Type an ADB command below (e.g. "shell pm list packages -3" or "shell dumpsys battery")</pre>
+                            <div class="terminal-input-row">
+                                <span class="prompt">$ adb</span>
+                                <input type="text" id="terminalCmdInput" placeholder="shell dumpsys meminfo com.expensemanager.app" autocomplete="off">
+                                <button class="btn btn-sm btn-primary" id="btnExecTerminal">Run</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

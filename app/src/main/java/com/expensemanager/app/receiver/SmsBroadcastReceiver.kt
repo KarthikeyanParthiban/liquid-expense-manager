@@ -15,13 +15,13 @@ class SmsBroadcastReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
         if (context == null || intent == null) return
 
+        val app = context.applicationContext as? ExpenseApplication ?: return
+
         if (intent.action == Telephony.Sms.Intents.SMS_RECEIVED_ACTION) {
             val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
             if (messages.isNullOrEmpty()) return
 
             val pendingResult = goAsync()
-            val app = context.applicationContext as? ExpenseApplication ?: return
-
             CoroutineScope(Dispatchers.IO).launch {
                 try {
                     val combinedBody = StringBuilder()
@@ -34,21 +34,22 @@ class SmsBroadcastReceiver : BroadcastReceiver() {
                         timestamp = sms.timestampMillis
                     }
 
-                    val fullMessage = combinedBody.toString()
-                    val rules = app.transactionRepository.getAllRulesSnapshot()
+                    processIncomingMessage(app, context, sender, combinedBody.toString(), timestamp)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                } finally {
+                    pendingResult.finish()
+                }
+            }
+        } else if (intent.action == "com.expensemanager.app.ACTION_SIMULATE_SMS") {
+            val sender = intent.getStringExtra("sender") ?: "HDFCBK"
+            val body = intent.getStringExtra("body") ?: ""
+            val timestamp = intent.getLongExtra("timestamp", System.currentTimeMillis())
 
-                    val balanceUpdate = SmsParser.extractBalanceUpdate(sender, fullMessage, timestamp)
-                    if (balanceUpdate != null) {
-                        app.transactionRepository.processBalanceUpdate(balanceUpdate)
-                    }
-
-                    val parsedResult = SmsParser.parse(sender, fullMessage, timestamp, rules)
-                    if (parsedResult != null) {
-                        app.transactionRepository.processAndSaveSms(parsedResult)
-                    }
-
-                    // Update all live homescreen widgets
-                    com.expensemanager.app.widget.WidgetUpdateHelper.updateAllWidgets(context)
+            val pendingResult = goAsync()
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    processIncomingMessage(app, context, sender, body, timestamp)
                 } catch (e: Exception) {
                     e.printStackTrace()
                 } finally {
@@ -56,5 +57,28 @@ class SmsBroadcastReceiver : BroadcastReceiver() {
                 }
             }
         }
+    }
+
+    private suspend fun processIncomingMessage(
+        app: ExpenseApplication,
+        context: Context,
+        sender: String,
+        fullMessage: String,
+        timestamp: Long
+    ) {
+        val rules = app.transactionRepository.getAllRulesSnapshot()
+
+        val balanceUpdate = SmsParser.extractBalanceUpdate(sender, fullMessage, timestamp)
+        if (balanceUpdate != null) {
+            app.transactionRepository.processBalanceUpdate(balanceUpdate)
+        }
+
+        val parsedResult = SmsParser.parse(sender, fullMessage, timestamp, rules)
+        if (parsedResult != null) {
+            app.transactionRepository.processAndSaveSms(parsedResult)
+        }
+
+        // Update all live homescreen widgets
+        com.expensemanager.app.widget.WidgetUpdateHelper.updateAllWidgets(context)
     }
 }

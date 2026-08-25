@@ -29,6 +29,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.expensemanager.app.ui.components.GlassBottomBar
+import com.expensemanager.app.ui.components.SyncOverlay
 import com.expensemanager.app.ui.screens.accounts.AccountsScreen
 import com.expensemanager.app.ui.screens.accounts.AccountsViewModel
 import com.expensemanager.app.ui.screens.analytics.AnalyticsScreen
@@ -62,6 +63,7 @@ fun AppNavigation(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val selectedTxnForEdit by transactionsViewModel.selectedTransactionForEdit.collectAsState()
+    val syncState by dashboardViewModel.syncState.collectAsState()
 
     CleanAppBackground {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -113,6 +115,15 @@ fun AppNavigation(
                         viewModel = dashboardViewModel,
                         onNavigateToTransactions = {
                             navController.navigate(Screen.Transactions.route) {
+                                popUpTo(Screen.Dashboard.route) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        onNavigateToInsights = {
+                            navController.navigate(Screen.Analytics.route) {
                                 popUpTo(Screen.Dashboard.route) {
                                     saveState = true
                                 }
@@ -191,6 +202,9 @@ fun AppNavigation(
                     .align(Alignment.BottomCenter)
                     .navigationBarsPadding()
             )
+
+            // Global Sync & Classification Frosted Glass Loading Overlay
+            SyncOverlay(syncState = syncState)
         }
     }
 }

@@ -123,7 +123,7 @@ class UpcomingBillsWidgetProvider : AppWidgetProvider() {
 
         val totalScheduled = duesList.sumOf { it.amount }
         val billsCountText = "${duesList.count { it.amount > 0 }} Dues"
-        val coverageStatus = if (liquidBalance >= totalScheduled) "Covered by Liquid" else "Attention Needed"
+        val coverageStatus = if (liquidBalance >= totalScheduled) "Covered by Kaching" else "Attention Needed"
 
         val bill1 = duesList[0]
         val bill2 = duesList.getOrNull(1)

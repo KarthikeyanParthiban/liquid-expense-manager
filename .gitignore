@@ -16,3 +16,7 @@ app/build/
 # Sensitive personal test dumps
 device_sms_dump.txt
 app/src/test/resources/device_sms_dump.txt
+
+# Node / Tools
+node_modules/
+tools/web-adb-controller/node_modules/

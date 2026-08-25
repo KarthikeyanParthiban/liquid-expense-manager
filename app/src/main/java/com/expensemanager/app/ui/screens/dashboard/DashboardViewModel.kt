@@ -37,8 +37,10 @@ class DashboardViewModel(
     private val _selectedMonthTimestamp = MutableStateFlow(System.currentTimeMillis())
     val selectedMonthTimestamp: StateFlow<Long> = _selectedMonthTimestamp.asStateFlow()
 
-    private val _isSyncing = MutableStateFlow(false)
-    val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
+    val syncState: StateFlow<com.expensemanager.app.core.model.SyncProgressState> = smsRepository.syncState
+
+    val isSyncing: StateFlow<Boolean> = smsRepository.syncState.map { it.isSyncing }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     private val _syncMessage = MutableStateFlow<String?>(null)
     val syncMessage: StateFlow<String?> = _syncMessage.asStateFlow()
@@ -77,6 +79,56 @@ class DashboardViewModel(
             transactionRepository.getCategorySpending(start, end)
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val monthTransactions: StateFlow<List<Transaction>> = _selectedMonthTimestamp
+        .flatMapLatest { timestamp ->
+            val start = DateTimeUtils.getStartOfMonth(timestamp)
+            val end = DateTimeUtils.getEndOfMonth(timestamp)
+            transactionRepository.getTransactionsInRange(start, end)
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val cashFlowPeriods: StateFlow<List<com.expensemanager.app.ui.components.CashFlowPeriod>> = recentTransactions.map { txns ->
+        val dayFormat = java.text.SimpleDateFormat("EEE", java.util.Locale.getDefault())
+        val dateFormat = java.text.SimpleDateFormat("d MMM", java.util.Locale.getDefault())
+
+        (6 downTo 0).map { daysAgo ->
+            val dayCal = Calendar.getInstance().apply {
+                add(Calendar.DAY_OF_YEAR, -daysAgo)
+            }
+            val startOfDay = (dayCal.clone() as Calendar).apply {
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+
+            val endOfDay = (dayCal.clone() as Calendar).apply {
+                set(Calendar.HOUR_OF_DAY, 23)
+                set(Calendar.MINUTE, 59)
+                set(Calendar.SECOND, 59)
+                set(Calendar.MILLISECOND, 999)
+            }.timeInMillis
+
+            val dayLabel = when (daysAgo) {
+                0 -> "Today"
+                1 -> "Y'day"
+                else -> dayFormat.format(dayCal.time)
+            }
+            val dateRange = dateFormat.format(dayCal.time)
+
+            val periodTxns = txns.filter { it.timestamp in startOfDay..endOfDay }
+            val income = periodTxns.filter { it.type == com.expensemanager.app.core.model.TransactionType.CREDIT }.sumOf { it.amount }
+            val spend = periodTxns.filter { it.type == com.expensemanager.app.core.model.TransactionType.DEBIT && !it.isExcludedFromBudget }.sumOf { it.amount }
+
+            com.expensemanager.app.ui.components.CashFlowPeriod(
+                label = dayLabel,
+                dateRange = dateRange,
+                income = income,
+                spend = spend
+            )
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Gamification & Wealth Building Flows
     val liquidScore: StateFlow<LiquidScore> = combine(recentTransactions, monthlySummary) { txns, summary ->
@@ -138,16 +190,17 @@ class DashboardViewModel(
 
     fun syncSms() {
         viewModelScope.launch {
-            _isSyncing.value = true
             try {
                 val count = smsRepository.syncAllInboxSms()
                 _syncMessage.value = "Synced $count transactions from SMS inbox"
             } catch (e: Exception) {
                 _syncMessage.value = "SMS sync failed: ${e.localizedMessage}"
-            } finally {
-                _isSyncing.value = false
             }
         }
+    }
+
+    fun dismissSyncOverlay() {
+        smsRepository.dismissSyncOverlay()
     }
 
     fun clearSyncMessage() {
