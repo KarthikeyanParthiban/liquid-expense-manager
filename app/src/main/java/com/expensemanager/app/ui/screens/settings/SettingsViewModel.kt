@@ -3,6 +3,7 @@ package com.expensemanager.app.ui.screens.settings
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.expensemanager.app.ExpenseApplication
 import com.expensemanager.app.core.model.MerchantRule
 import com.expensemanager.app.core.model.Transaction
 import com.expensemanager.app.data.repository.SmsRepository
@@ -46,15 +47,9 @@ class SettingsViewModel(
     private val _statusMessage = MutableStateFlow<String?>(null)
     val statusMessage: StateFlow<String?> = _statusMessage.asStateFlow()
 
-    fun syncAllSms() {
-        viewModelScope.launch {
-            try {
-                val count = smsRepository.syncAllInboxSms(forceFull = true)
-                _statusMessage.value = "Successfully imported $count transaction(s)!"
-            } catch (e: Exception) {
-                _statusMessage.value = "Sync error: ${e.localizedMessage}"
-            }
-        }
+    fun syncAllSms(context: Context? = null) {
+        val appContext = context ?: ExpenseApplication.instance
+        com.expensemanager.app.service.SmsSyncService.startSync(appContext, forceFull = true)
     }
 
     fun deleteRule(rule: MerchantRule) {

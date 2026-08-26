@@ -3,6 +3,7 @@ package com.expensemanager.app.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.PowerManager
 import android.provider.Telephony
 import com.expensemanager.app.ExpenseApplication
 import com.expensemanager.app.parser.SmsParser
@@ -17,9 +18,21 @@ class SmsBroadcastReceiver : BroadcastReceiver() {
 
         val app = context.applicationContext as? ExpenseApplication ?: return
 
+        // Acquire WakeLock immediately so CPU doesn't sleep while processing
+        val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
+        val wakeLock = powerManager?.newWakeLock(
+            PowerManager.PARTIAL_WAKE_LOCK,
+            "liquidexpense:sms_broadcast_wakelock"
+        )?.apply {
+            acquire(15000L) // 15 seconds max safety timeout
+        }
+
         if (intent.action == Telephony.Sms.Intents.SMS_RECEIVED_ACTION) {
             val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
-            if (messages.isNullOrEmpty()) return
+            if (messages.isNullOrEmpty()) {
+                releaseWakeLock(wakeLock)
+                return
+            }
 
             val pendingResult = goAsync()
             CoroutineScope(Dispatchers.IO).launch {
@@ -38,6 +51,7 @@ class SmsBroadcastReceiver : BroadcastReceiver() {
                 } catch (e: Exception) {
                     e.printStackTrace()
                 } finally {
+                    releaseWakeLock(wakeLock)
                     pendingResult.finish()
                 }
             }
@@ -53,9 +67,22 @@ class SmsBroadcastReceiver : BroadcastReceiver() {
                 } catch (e: Exception) {
                     e.printStackTrace()
                 } finally {
+                    releaseWakeLock(wakeLock)
                     pendingResult.finish()
                 }
             }
+        } else {
+            releaseWakeLock(wakeLock)
+        }
+    }
+
+    private fun releaseWakeLock(wakeLock: PowerManager.WakeLock?) {
+        try {
+            if (wakeLock?.isHeld == true) {
+                wakeLock.release()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 

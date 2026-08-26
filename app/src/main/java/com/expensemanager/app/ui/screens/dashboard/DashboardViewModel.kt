@@ -1,7 +1,9 @@
 package com.expensemanager.app.ui.screens.dashboard
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.expensemanager.app.ExpenseApplication
 import com.expensemanager.app.core.gamification.FinancialQuest
 import com.expensemanager.app.core.gamification.GamificationEngine
 import com.expensemanager.app.core.gamification.LiquidScore
@@ -188,15 +190,9 @@ class DashboardViewModel(
         _selectedMonthTimestamp.value = cal.timeInMillis
     }
 
-    fun syncSms() {
-        viewModelScope.launch {
-            try {
-                val count = smsRepository.syncAllInboxSms()
-                _syncMessage.value = "Synced $count transactions from SMS inbox"
-            } catch (e: Exception) {
-                _syncMessage.value = "SMS sync failed: ${e.localizedMessage}"
-            }
-        }
+    fun syncSms(context: Context? = null) {
+        val appContext = context ?: ExpenseApplication.instance
+        com.expensemanager.app.service.SmsSyncService.startSync(appContext, forceFull = false)
     }
 
     fun dismissSyncOverlay() {
