@@ -333,6 +333,9 @@ def main():
         for r in rows:
             txn_id, ts, sender, amount, currency, t_type, status, db_cat, merchant, bank, mask, ref_id, balance, body = r
 
+            if is_spam_or_non_financial(body):
+                continue
+
             # Format Date
             dt_str = datetime.fromtimestamp(ts / 1000.0).strftime("%Y-%m-%d %H:%M:%S") if ts else ""
 
