@@ -36,6 +36,13 @@ class SettingsViewModel(
         .map { Pair(it.current, it.total) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Pair(0, 0))
 
+    private val _isNotificationListenerEnabled = MutableStateFlow(false)
+    val isNotificationListenerEnabled: StateFlow<Boolean> = _isNotificationListenerEnabled.asStateFlow()
+
+    fun checkNotificationListenerStatus(context: Context) {
+        _isNotificationListenerEnabled.value = com.expensemanager.app.service.NotificationListenerHelper.isNotificationListenerEnabled(context)
+    }
+
     private val _statusMessage = MutableStateFlow<String?>(null)
     val statusMessage: StateFlow<String?> = _statusMessage.asStateFlow()
 

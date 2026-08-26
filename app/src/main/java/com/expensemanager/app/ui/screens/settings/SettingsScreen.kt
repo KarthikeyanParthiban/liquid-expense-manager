@@ -66,19 +66,44 @@ import com.expensemanager.app.ui.theme.TextSecondary
 import com.expensemanager.app.ui.theme.ThemeManager
 import com.expensemanager.app.ui.theme.appleCard
 
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.expensemanager.app.service.NotificationListenerHelper
+import com.expensemanager.app.ui.theme.AppleBlueLight
+import com.expensemanager.app.ui.theme.AppleGreen
+import com.expensemanager.app.ui.theme.AppleGreenLight
+
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val rules by viewModel.rules.collectAsState()
     val isSyncing by viewModel.isSyncing.collectAsState()
     val syncProgress by viewModel.syncProgress.collectAsState()
+    val isNotifEnabled by viewModel.isNotificationListenerEnabled.collectAsState()
     val statusMessage by viewModel.statusMessage.collectAsState()
 
     var showClearDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
+
+    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.checkNotificationListenerStatus(context)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        viewModel.checkNotificationListenerStatus(context)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     LaunchedEffect(statusMessage) {
         statusMessage?.let {
@@ -198,6 +223,93 @@ fun SettingsScreen(
                                 }
                             }
                         }
+                    }
+                }
+            }
+
+            // Live Notification Listener Card
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                        .appleCard(shape = RoundedCornerShape(20.dp), elevation = 1.dp)
+                        .padding(18.dp)
+                ) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(38.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(if (isNotifEnabled) AppleGreenLight else AppleBlueLight),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.NotificationsActive,
+                                        contentDescription = null,
+                                        tint = if (isNotifEnabled) AppleGreen else AppleBlue,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text(
+                                        text = "Live Notification Sync",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextPrimary
+                                    )
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(8.dp)
+                                                .clip(CircleShape)
+                                                .background(if (isNotifEnabled) AppleGreen else Color(0xFFFF9F0A))
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = if (isNotifEnabled) "Active & Listening" else "Permission Required",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = if (isNotifEnabled) AppleGreen else Color(0xFFFF9F0A)
+                                        )
+                                    }
+                                }
+                            }
+
+                            Button(
+                                onClick = {
+                                    NotificationListenerHelper.openNotificationListenerSettings(context)
+                                },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isNotifEnabled) LightElevatedSurface else AppleBlue,
+                                    contentColor = if (isNotifEnabled) TextPrimary else Color.White
+                                )
+                            ) {
+                                Text(
+                                    text = if (isNotifEnabled) "Settings" else "Enable",
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Instantly tracks payments from Google Pay, PhonePe, Paytm, CRED & Banking apps in real-time, deduplicating with SMS seamlessly.",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary
+                        )
                     }
                 }
             }

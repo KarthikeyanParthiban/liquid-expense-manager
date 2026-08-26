@@ -96,9 +96,13 @@ object DeduplicationEngine {
             val isSameAmount = abs(existing.amount - candidate.amount) < 0.01
             val isWithinWindow = abs(existing.timestamp - candidate.timestamp) <= FUZZY_WINDOW_MILLIS
 
+            val isUpiWrapper = existing.sender in setOf("Google Pay", "PhonePe", "Paytm", "CRED", "BHIM", "Amazon Pay") ||
+                    candidate.rawSender in setOf("Google Pay", "PhonePe", "Paytm", "CRED", "BHIM", "Amazon Pay")
+
             val isSameAccount = existing.accountId == candidate.accountId ||
                     (existing.bankName.equals(candidate.bankName, ignoreCase = true) &&
-                            (existing.accountMask == candidate.accountMask || existing.accountMask == null || candidate.accountMask == null))
+                            (existing.accountMask == candidate.accountMask || existing.accountMask == null || candidate.accountMask == null)) ||
+                    isUpiWrapper
 
             val isCompatibleMerchant = when {
                 existing.merchantName.isNullOrBlank() || candidate.merchant.isNullOrBlank() -> true
@@ -108,31 +112,16 @@ object DeduplicationEngine {
                 else -> false
             }
 
-            val isSameSender = existing.sender.equals(candidate.rawSender, ignoreCase = true)
-
-            isSameType && isSameAmount && isWithinWindow && isSameAccount && (isCompatibleMerchant || isSameSender)
+            isSameType && isSameAmount && isWithinWindow && isSameAccount && isCompatibleMerchant
         }
 
         if (fuzzyMatch != null) {
-            // Check if merchants explicitly contradict each other (e.g. Swiggy vs Uber)
-            val merchantConflict = !fuzzyMatch.merchantName.isNullOrBlank() &&
-                    !candidate.merchant.isNullOrBlank() &&
-                    !fuzzyMatch.merchantName.equals(candidate.merchant, ignoreCase = true) &&
-                    !fuzzyMatch.merchantName.contains(candidate.merchant, ignoreCase = true) &&
-                    !candidate.merchant.contains(fuzzyMatch.merchantName, ignoreCase = true)
-
-            if (merchantConflict) {
-                return DeduplicationResult.Uncertain(
-                    existingTransactionId = fuzzyMatch.id,
-                    reason = "Same amount & account within window, but merchant differs ('${fuzzyMatch.merchantName}' vs '${candidate.merchant}')"
-                )
-            }
-
             val enriched = fuzzyMatch.copy(
                 merchantName = fuzzyMatch.merchantName ?: candidate.merchant,
                 balanceAfter = fuzzyMatch.balanceAfter ?: candidate.balanceAfter,
                 referenceId = fuzzyMatch.referenceId ?: candidate.referenceId,
-                accountMask = fuzzyMatch.accountMask ?: candidate.accountMask
+                accountMask = fuzzyMatch.accountMask ?: candidate.accountMask,
+                category = if (fuzzyMatch.category == Category.OTHERS && candidate.category != Category.OTHERS) candidate.category else fuzzyMatch.category
             )
 
             return DeduplicationResult.FuzzyDuplicate(
