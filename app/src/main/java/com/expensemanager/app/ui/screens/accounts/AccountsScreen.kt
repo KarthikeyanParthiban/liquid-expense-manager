@@ -423,6 +423,9 @@ fun AccountsScreen(
                 onTransactionClick = { txn ->
                     selectedAccountForLedger = null
                     onTransactionClick(txn)
+                },
+                onDeleteAccount = { accountId ->
+                    viewModel.deleteAccount(accountId)
                 }
             )
         }

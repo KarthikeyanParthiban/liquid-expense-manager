@@ -106,12 +106,12 @@ object BankPatterns {
 
     private val VERIFIED_INSTITUTIONS = setOf(
         "hdfc bank", "yes bank", "axis bank", "sbi", "sbi card", "icici bank", "kotak mahindra bank",
-        "paytm", "punjab national bank", "bank of baroda", "indusind bank", "canara bank",
+        "punjab national bank", "bank of baroda", "indusind bank", "canara bank",
         "union bank of india", "idfc first bank", "federal bank", "rbl bank", "citibank",
-        "american express", "cred", "jio", "airtel payments bank", "google pay", "phonepe",
-        "groww wallet", "epfo pf account", "slice", "onecard", "kiwi", "indian bank",
+        "american express", "slice", "onecard", "kiwi", "indian bank",
         "bank of india", "idbi bank", "central bank of india", "ippb", "au small finance bank",
-        "equitas small finance bank", "hsbc", "standard chartered bank"
+        "equitas small finance bank", "hsbc", "standard chartered bank", "paytm payments bank",
+        "airtel payments bank"
     )
 
     fun isVerifiedFinancialInstitution(bankName: String): Boolean {
@@ -205,13 +205,15 @@ object BankPatterns {
         Pattern.compile("""(?:IMPS(?:\s*Ref(?:\s*No)?)?|NEFT|RTGS)[:\s]*([a-zA-Z0-9]{6,24})""", Pattern.CASE_INSENSITIVE)
     )
 
-    // Merchant patterns
+    // Merchant & Payee extraction patterns
     val MERCHANT_PATTERNS = listOf(
+        Pattern.compile("""(?:from\s+VPA|to\s+VPA|VPA)\s+([A-Za-z0-9.\-_]+@[A-Za-z0-9.\-_]+)""", Pattern.CASE_INSENSITIVE),
         Pattern.compile("""@(?:UPI_)?([A-Za-z0-9\s&.\-_]+?)(?:\s+\d{2}-\d{2}-\d{4}|\s+Avl|\s+Lmt|\.|\s+SMS|$)""", Pattern.CASE_INSENSITIVE),
-        Pattern.compile("""(?:PHP\*|PG\*|POS\*|ECOM\*|BIL\*|IN\*|VPA\s+)\s*([A-Za-z0-9\s&.\-_]+?)(?:\s+Avl|\s+Limit|\n|\r|$)""", Pattern.CASE_INSENSITIVE),
+        Pattern.compile("""(?:PHP\*|PG\*|POS\*|ECOM\*|BIL\*|IN\*)\s*([A-Za-z0-9\s&.\-_]+?)(?:\s+Avl|\s+Limit|\n|\r|$)""", Pattern.CASE_INSENSITIVE),
         Pattern.compile("""(?:For|Through)\s+(?:IMPS|NEFT|RTGS)\s*[-:]\s*([A-Za-z0-9\s&.\-_]+?)(?:\s*-\s*[0-9]{6,24}|\n|\r|$)""", Pattern.CASE_INSENSITIVE),
         Pattern.compile("""(?m)^To\s+([A-Za-z0-9\s&.\-_@]+?)(?:\s+On|\s+dated|\s+Ref|\n|\r|$)""", Pattern.CASE_INSENSITIVE),
         Pattern.compile("""(?:For|To)\s+([A-Za-z0-9\s&.\-_]+?)\s+mandate""", Pattern.CASE_INSENSITIVE),
-        Pattern.compile("""(?:paid\s+to|sent\s+to|transferred\s+to|spent\s+at|at|to)\s+([A-Za-z0-9&_\-@]+(?:\s+[A-Za-z0-9&_\-@]+)*)""", Pattern.CASE_INSENSITIVE)
+        Pattern.compile("""(?:paid\s+to|sent\s+to|transferred\s+to|spent\s+at|at|to)\s+([A-Za-z0-9&_\-@.]+(?:\s+[A-Za-z0-9&_\-@.]+)*)""", Pattern.CASE_INSENSITIVE),
+        Pattern.compile("""(?:towards|info:)\s+([A-Za-z0-9&_\-@.]+(?:\s+[A-Za-z0-9&_\-@.]+)*)""", Pattern.CASE_INSENSITIVE)
     )
 }

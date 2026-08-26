@@ -422,7 +422,7 @@ fun SettingsScreen(
                 Button(
                     onClick = {
                         showClearDialog = false
-                        viewModel.clearAllData()
+                        viewModel.clearAllData(context)
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = AppleRed)
                 ) {

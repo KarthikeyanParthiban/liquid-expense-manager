@@ -114,6 +114,17 @@ object SmsParser {
     ): AccountBalanceUpdate? {
         val balance = extractBalance(body) ?: return null
         val bankInfo = BankPatterns.identifyBank(sender, body)
+        if (!BankPatterns.isVerifiedFinancialInstitution(bankInfo.name)) {
+            return null
+        }
+        val lower = body.lowercase()
+        // Ignore promotional loan marketing, telecom data reminders, and pure OTPs
+        if (lower.contains("data quota") || lower.contains("daily data") || lower.contains("100% of daily") ||
+            lower.contains("pre-approved loan") || lower.contains("apply now") ||
+            (lower.contains("otp") && !lower.contains("debited") && !lower.contains("credited") && !lower.contains("available bal"))
+        ) {
+            return null
+        }
         val accountMask = extractAccountMask(body)
         val accountId = "${bankInfo.name.replace(" ", "_")}_${accountMask ?: "PRIMARY"}"
 

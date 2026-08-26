@@ -29,6 +29,10 @@ class SmsRepository(
         prefs.edit().putLong("last_synced_timestamp", timestamp).apply()
     }
 
+    fun resetSyncTimestamp() {
+        prefs.edit().clear().apply()
+    }
+
     suspend fun readHistoricalSms(
         limit: Int = 10000,
         sinceTimestamp: Long = 0L

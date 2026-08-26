@@ -87,9 +87,23 @@ class SettingsViewModel(
         }
     }
 
-    fun clearAllData() {
+    fun clearAllData(context: Context? = null) {
         viewModelScope.launch {
             transactionRepository.clearAll()
+            smsRepository.resetSyncTimestamp()
+            context?.let { ctx ->
+                try {
+                    ctx.getSharedPreferences("expense_widget_prefs", Context.MODE_PRIVATE).edit().clear().apply()
+                    ctx.cacheDir.listFiles()?.forEach { file ->
+                        if (file.name.startsWith("ExpenseManager_Export_")) {
+                            file.delete()
+                        }
+                    }
+                    com.expensemanager.app.widget.WidgetUpdateHelper.updateAllWidgets(ctx)
+                } catch (e: Exception) {
+                    android.util.Log.e("SettingsViewModel", "Error clearing widget/cache data", e)
+                }
+            }
             _statusMessage.value = "All data cleared successfully"
         }
     }

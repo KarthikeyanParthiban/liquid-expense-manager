@@ -57,16 +57,24 @@ import com.expensemanager.app.ui.theme.TextPrimary
 import com.expensemanager.app.ui.theme.TextSecondary
 import com.expensemanager.app.ui.theme.appleCard
 
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccountLedgerSheet(
     account: Account,
     transactions: List<Transaction>,
     onDismiss: () -> Unit,
-    onTransactionClick: (Transaction) -> Unit
+    onTransactionClick: (Transaction) -> Unit,
+    onDeleteAccount: ((String) -> Unit)? = null
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var sortByAmount by remember { mutableStateOf(false) }
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
 
     val accountTxns = transactions.filter {
         it.accountId == account.id ||
@@ -133,19 +141,41 @@ fun AccountLedgerSheet(
                     }
                 }
 
-                IconButton(
-                    onClick = onDismiss,
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFFE5E7EB))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Close",
-                        tint = TextSecondary,
-                        modifier = Modifier.size(18.dp)
-                    )
+                    if (onDeleteAccount != null) {
+                        IconButton(
+                            onClick = { showDeleteConfirmation = true },
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(AppleRedLight)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete Account",
+                                tint = AppleRed,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFE5E7EB))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = TextSecondary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
             }
 
@@ -293,5 +323,38 @@ fun AccountLedgerSheet(
                 }
             }
         }
+    }
+
+    if (showDeleteConfirmation && onDeleteAccount != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = false },
+            title = { Text("Delete Account Card", fontWeight = FontWeight.Bold, color = TextPrimary) },
+            text = {
+                Text(
+                    "Are you sure you want to remove the '${account.bankName} ${account.maskNumber}' account card? Past transactions associated with this account will be preserved.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDeleteConfirmation = false
+                        onDeleteAccount(account.id)
+                        onDismiss()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AppleRed)
+                ) {
+                    Text("Delete Account", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showDeleteConfirmation = false }) {
+                    Text("Cancel", color = TextSecondary)
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(20.dp)
+        )
     }
 }
