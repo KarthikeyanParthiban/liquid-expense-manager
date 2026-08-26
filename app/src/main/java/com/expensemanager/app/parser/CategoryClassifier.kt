@@ -38,12 +38,12 @@ object CategoryClassifier {
             "mithai", "sweets", "mishti", "halwa", "olympic", "buhari", "kaapi",
             // General Food Terms
             "food", "dining", "restaurant", "eatery", "bakery", "cake", "cakes", "dhaba",
-            "tiffin", "mess", "bistro", "pastry", "coffee", "eats", "meal", "breakfast",
+            "tiffin", "mess", "bistro", "pastry", "coffee", "kaapi", "eats", "meal", "breakfast",
             "lunch", "dinner", "snacks", "juice", "kitchen", "canteen", "darshini", "bakes",
             "tandoori", "tea", "dineout", "eazydiner", "magicpin", "veg", "non veg", "thali",
             "south indian", "north indian", "biryani", "pizza", "burger", "momos", "shawarma",
             "waffle", "shakes", "brewery", "pub", "lounge", "barbeque", "pizzeria", "grill",
-            "roastery", "dessert", "desserts", "sweet"
+            "roastery", "dessert", "desserts", "sweet", "hotel", "olympic"
         ),
         Category.GROCERIES to listOf(
             // Quick Commerce & Online Supermarkets
@@ -95,7 +95,8 @@ object CategoryClassifier {
             "crossword", "sapna book house", "archies",
             // General Shopping Terms
             "shopping", "retail", "apparel", "clothing", "garments", "footwear", "boutique",
-            "tailor", "mall", "electronics", "furniture", "books", "stationery"
+            "tailor", "mall", "electronics", "furniture", "books", "stationery", "hardware",
+            "hardwares", "flowers", "olx"
         ),
         Category.TRANSPORT to listOf(
             // Rides & Cabs
@@ -146,9 +147,10 @@ object CategoryClassifier {
             // Housing & Rent
             "nobroker", "nobrokerhood", "mygate", "apnacomplex", "maintenance", "society maintenance",
             "apartment maintenance", "rent", "house rent", "landlord",
-            // Utility Portals
+            // Utility Portals & Cloud Subscriptions
             "google india digital", "bbps", "bill desk", "billdesk", "recharge", "utility",
-            "postpaid", "prepaid", "dth"
+            "postpaid", "prepaid", "dth", "google cloud", "google clou", "deepseek", "anthropic",
+            "openai", "chatgpt", "github", "cursor", "rechar", "prepaid rechar"
         ),
         Category.ENTERTAINMENT to listOf(
             // Video & OTT Streaming
@@ -167,7 +169,7 @@ object CategoryClassifier {
             "bgmi", "krafton", "roblox", "twitch", "discord", "gaming", "arcade", "bowling",
             // Amusement & Recreation
             "smaaash", "timezone", "imagicaa", "wonderla", "water park", "theme park", "club",
-            "concert", "comedy"
+            "concert", "comedy", "ticket 9", "unipex", "sportsbiz"
         ),
         Category.HEALTHCARE to listOf(
             // Pharmacies & Health E-Commerce
@@ -451,20 +453,24 @@ object CategoryClassifier {
             return CategorizationResult(bodyMatch.first, "Body keyword matched: '${bodyMatch.second}'")
         }
 
-        // 9. Peer-to-Peer (P2P) UPI or NEFT/IMPS transfer intent detection
-        if (body.contains("self transfer") || body.contains("own account")) {
-            return CategorizationResult(Category.TRANSFERS, "Self Transfer")
-        }
-
         val isP2pPattern = body.contains("sent via upi to") ||
                 body.contains("transferred to") ||
                 body.contains("upi/p2a/") ||
                 body.contains("sent to vpa") ||
                 (body.contains("sent via upi") && body.contains("to ")) ||
-                (body.contains("debited") && body.contains("by transfer of") && !body.contains("at "))
+                (body.contains("debited") && body.contains("by transfer of") && !body.contains("at ")) ||
+                Regex("""sent\s+(?:rs\.?|inr)\s*[0-9,.]+\s+(?:from\s+.*?a/c.*?)?to\s+""", RegexOption.IGNORE_CASE).containsMatchIn(body)
 
         if (isP2pPattern) {
             return CategorizationResult(Category.TRANSFERS, "Peer-to-Peer Transfer: '${rawMerchant.ifBlank { "Personal Transfer" }}'")
+        }
+
+        // 9b. YES Bank Credit Card @UPI_Name human format detection
+        if (body.contains("@upi_", ignoreCase = true) || merchant.startsWith("upi_", ignoreCase = true)) {
+            val cleanM = rawMerchant.replace(Regex("""(?i)^upi_"""), "").trim()
+            if (cleanM.matches(Regex("""^[A-Za-z\s.]+$""")) && cleanM.split(Regex("""\s+""")).size in 2..3) {
+                return CategorizationResult(Category.TRANSFERS, "Peer-to-Peer Transfer: '$cleanM'")
+            }
         }
 
         // 10. Tier-3 Fallback: Lightweight On-Device Machine Learning (ML) Inference
