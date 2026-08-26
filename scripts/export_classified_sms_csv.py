@@ -190,7 +190,19 @@ KEYWORD_MAP = {
     ]
 }
 
+def is_spam_or_non_financial(body):
+    b = (body or "").lower()
+    spam_patterns = [
+        "otp", "verification code", "personal loan", "loan offer", "instant loan", "pre-qualified", "pre-approved",
+        "pre approved", "pre qualified", "flexi emi", "split your", "into emi", "convert now", "khushkhabri",
+        "win up to", "cashback offer", "congratulations", "scratch card", "link par click", "click here",
+        "business loan", "home loan", "loan activate", "activate ho gaya", "loan against", "disbursement"
+    ]
+    return any(k in b for k in spam_patterns)
+
 def classify_transaction(merchant, body, txn_type, model):
+    if is_spam_or_non_financial(body):
+        return "OTHERS", "Filtered: Loan Offer / Promotional Spam / EMI Proposal", 0.00
     m_lower = (merchant or "").lower().strip()
     b_lower = (body or "").lower().strip()
     combined = f"{m_lower} {b_lower}"

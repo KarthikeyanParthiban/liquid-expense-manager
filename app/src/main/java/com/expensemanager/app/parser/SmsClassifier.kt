@@ -26,19 +26,19 @@ object SmsClassifier {
         Regex("""(?i)\b(?:credit\s*card\s*statement|e-statement|account\s*statement\s*for)\b""")
     )
 
-    // Loan Marketing, Pre-Approved Offers, Jumbo Loan Disbursement Consents
+    // Loan Marketing, Pre-Approved Offers, Jumbo Loan Disbursement Consents, EMI Conversion Offers
     private val REJECT_LOAN_DISBURSEMENT_OFFER_PATTERNS = listOf(
-        Regex("""(?i)\b(?:funds\s+of\s+inr.*require\s+consent|require\s+consent\s+to\s+continue\s+disbursement|disbursement|pre-?approved|apply\s+now|instant\s+loan|loan\s+offer)\b"""),
-        Regex("""(?i)\b(?:loan\s+against|unsecured\s+loan|sanctioned|loan\s+journey|complete\s+the\s+pending\s+steps|personal\s+loan.*is\s+disbursed|business\s+loan)\b"""),
-        Regex("""(?i)\b(?:credit\s+limit\s+increase\s+offer|upgrade\s+your\s+card|overdraft\s+facility|revised\s+credit\s+limit|access\s+to\s+funds|convert.*into\s+emi|converted\s+into\s+emi|has\s+dues\s+of)\b""")
+        Regex("""(?i)\b(?:funds\s+of\s+inr.*require\s+consent|require\s+consent\s+to\s+continue\s+disbursement|disbursement|pre-?approved|pre-?qualified|apply\s+now|instant\s+loan|loan\s+offer|personal\s+loan|business\s+loan|home\s+loan|car\s+loan)\b"""),
+        Regex("""(?i)\b(?:loan\s+against|unsecured\s+loan|sanctioned|loan\s+journey|complete\s+the\s+pending\s+steps|is\s+disbursed|loan.*activate|activate.*loan|loan.*approved)\b"""),
+        Regex("""(?i)\b(?:credit\s+limit\s+increase|upgrade\s+your\s+card|overdraft\s+facility|revised\s+credit\s+limit|access\s+to\s+funds|convert.*into\s+emi|convert.*to\s+emi|split.*spends.*into.*emi|flexi\s*emi|has\s+dues\s+of)\b""")
     )
 
     // Marketing Ads, Discounts, Workshops, Token payments, Clickbaits
     private val REJECT_MARKETING_ADS_PROMO_PATTERNS = listOf(
-        Regex("""(?i)\b(?:grand\s+opening|%\s+off|biggest\s+deals|exciting\s+offers|gift\s+vouchers|token\s+amount\s+of\s+rs|click\s+here\s+to\s+pay)\b"""),
+        Regex("""(?i)\b(?:grand\s+opening|%\s+off|biggest\s+deals|exciting\s+offers|gift\s+vouchers|token\s+amount\s+of\s+rs|click\s+here\s+to\s+pay|link\s+par\s+click|click\s+karein|click\s+here)\b"""),
         Regex("""(?i)\b(?:free\s+craft|complimentary|subscription\s+is\s+now\s+active|stream\s+live|gift\s+card.*expires|cashback\s+offer|win\s+up\s+to|cashback\s+bonanza)\b"""),
         Regex("""(?i)\b(?:use\s+coupon|use\s+promo|hurry|valid\s+only\s+on|limited\s+period|macro\s+class|excel\s+goodies|electoral\s+roll)\b"""),
-        Regex("""(?i)\b(?:congratulations|you\s*have\s*won|claim\s*now|special\s*offer|exclusive\s*deal|discount\s*coupon)\b""")
+        Regex("""(?i)\b(?:congratulations|khushkhabri|you\s*have\s*won|claim\s*now|special\s*offer|exclusive\s*deal|discount\s*coupon|t&c\s*apply|\*t&c)\b""")
     )
 
     // Trading, Demat, Stock Exchanges (NSE, BSE, MCX)

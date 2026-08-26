@@ -93,12 +93,14 @@ object NotificationParser {
         if (fullContent.isBlank()) return null
         val lower = fullContent.lowercase()
 
-        // 1. Filter out pure non-transactional notifications (OTPs, promotional marketing, loan offers)
+        // 1. Filter out pure non-transactional notifications (OTPs, promotional marketing, loan offers, EMI conversions)
         if (lower.contains("otp") || lower.contains("verification code") ||
-            (lower.contains("pre-approved") && !lower.contains("debited") && !lower.contains("spent")) ||
-            lower.contains("win up to") || lower.contains("cashback offer") ||
-            lower.contains("congratulations! you won") || lower.contains("scratch card")
-        ) {
+            lower.contains("pre-approved") || lower.contains("pre-qualified") || lower.contains("pre qualified") || lower.contains("pre approved") ||
+            lower.contains("personal loan") || lower.contains("loan offer") || lower.contains("instant loan") || lower.contains("business loan") ||
+            lower.contains("flexi emi") || lower.contains("into emi") || lower.contains("convert now") || lower.contains("split your") ||
+            lower.contains("khushkhabri") || lower.contains("win up to") || lower.contains("cashback offer") ||
+            lower.contains("congratulations") || lower.contains("scratch card") || lower.contains("t&c apply") ||
+            lower.contains("link par click") || lower.contains("click here") || lower.contains("loan")) {
             return null
         }
 
