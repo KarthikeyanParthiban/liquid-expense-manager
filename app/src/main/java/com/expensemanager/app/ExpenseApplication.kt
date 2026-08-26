@@ -27,6 +27,7 @@ class ExpenseApplication : Application() {
         super.onCreate()
         instance = this
         com.expensemanager.app.ui.theme.ThemeManager.init(this)
+        com.expensemanager.app.ml.OnDeviceMerchantClassifier.initialize(this)
     }
 
     companion object {

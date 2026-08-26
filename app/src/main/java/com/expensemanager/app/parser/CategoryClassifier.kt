@@ -467,6 +467,16 @@ object CategoryClassifier {
             return CategorizationResult(Category.TRANSFERS, "Peer-to-Peer Transfer: '${rawMerchant.ifBlank { "Personal Transfer" }}'")
         }
 
+        // 10. Tier-3 Fallback: Lightweight On-Device Machine Learning (ML) Inference
+        val mlText = if (merchant.isNotBlank()) rawMerchant else messageBody
+        val mlPrediction = com.expensemanager.app.ml.OnDeviceMerchantClassifier.predict(mlText)
+        if (mlPrediction != null && mlPrediction.category != Category.OTHERS && mlPrediction.confidence >= 0.40f) {
+            return CategorizationResult(
+                mlPrediction.category,
+                "On-Device ML Model (${(mlPrediction.confidence * 100).toInt()}% confidence)"
+            )
+        }
+
         return CategorizationResult(Category.OTHERS, "Default Fallback")
     }
 
