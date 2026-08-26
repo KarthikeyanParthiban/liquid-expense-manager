@@ -206,7 +206,7 @@ fun TransactionDetailDialog(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "${if (isCredit) "+" else "-"}${CurrencyFormatter.format(transaction.amount)}",
+                            text = "${if (isCredit) "+" else "-"}${CurrencyFormatter.format(transaction.amount, transaction.currency)}",
                             fontSize = 34.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = amountColor,

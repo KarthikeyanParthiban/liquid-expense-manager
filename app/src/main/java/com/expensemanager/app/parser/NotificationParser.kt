@@ -104,8 +104,10 @@ object NotificationParser {
             return null
         }
 
-        // 2. Extract Amount
-        val amount = extractAmount(fullContent) ?: return null
+        // 2. Extract Amount & Currency
+        val currencyAmountPair = BankPatterns.extractCurrencyAndAmount(fullContent) ?: return null
+        val amount = currencyAmountPair.first
+        val currency = currencyAmountPair.second
 
         // 3. Determine Transaction Type
         val type = extractTransactionType(fullContent, lower)
@@ -149,7 +151,7 @@ object NotificationParser {
 
         return ParsedSmsResult(
             amount = amount,
-            currency = "INR",
+            currency = currency,
             type = type,
             status = TransactionStatus.COMPLETED,
             category = categorization.category,

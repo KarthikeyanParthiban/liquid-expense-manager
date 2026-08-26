@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.expensemanager.app.ExpenseApplication
 import com.expensemanager.app.core.model.MerchantRule
 import com.expensemanager.app.core.model.Transaction
+import com.expensemanager.app.core.update.AppUpdateManager
+import com.expensemanager.app.core.update.UpdateInfo
 import com.expensemanager.app.data.repository.SmsRepository
 import com.expensemanager.app.data.repository.TransactionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,6 +48,64 @@ class SettingsViewModel(
 
     private val _statusMessage = MutableStateFlow<String?>(null)
     val statusMessage: StateFlow<String?> = _statusMessage.asStateFlow()
+
+    // OTA In-App Updates State
+    private val _updateInfo = MutableStateFlow<UpdateInfo?>(null)
+    val updateInfo: StateFlow<UpdateInfo?> = _updateInfo.asStateFlow()
+
+    private val _isCheckingUpdate = MutableStateFlow(false)
+    val isCheckingUpdate: StateFlow<Boolean> = _isCheckingUpdate.asStateFlow()
+
+    private val _isDownloadingUpdate = MutableStateFlow(false)
+    val isDownloadingUpdate: StateFlow<Boolean> = _isDownloadingUpdate.asStateFlow()
+
+    private val _downloadProgress = MutableStateFlow(0f)
+    val downloadProgress: StateFlow<Float> = _downloadProgress.asStateFlow()
+
+    fun checkForUpdates(currentVersion: String = "1.1.1") {
+        viewModelScope.launch {
+            _isCheckingUpdate.value = true
+            _statusMessage.value = null
+            try {
+                val result = AppUpdateManager.checkForUpdates(currentVersion)
+                if (result.isSuccess) {
+                    val info = result.getOrNull()
+                    if (info != null && info.isNewer) {
+                        _updateInfo.value = info
+                    } else {
+                        _statusMessage.value = "You are on the latest version ($currentVersion)!"
+                    }
+                } else {
+                    _statusMessage.value = "Failed to check for updates: ${result.exceptionOrNull()?.message}"
+                }
+            } catch (e: Exception) {
+                _statusMessage.value = "Update check error: ${e.localizedMessage}"
+            } finally {
+                _isCheckingUpdate.value = false
+            }
+        }
+    }
+
+    fun downloadAndInstallUpdate(context: Context) {
+        val info = _updateInfo.value ?: return
+        viewModelScope.launch {
+            _isDownloadingUpdate.value = true
+            _downloadProgress.value = 0f
+            val result = AppUpdateManager.downloadAndInstall(
+                context = context,
+                downloadUrl = info.downloadUrl,
+                onProgress = { p -> _downloadProgress.value = p }
+            )
+            _isDownloadingUpdate.value = false
+            if (result.isFailure) {
+                _statusMessage.value = "Download failed: ${result.exceptionOrNull()?.message}"
+            }
+        }
+    }
+
+    fun dismissUpdateDialog() {
+        _updateInfo.value = null
+    }
 
     fun syncAllSms(context: Context? = null) {
         val appContext = context ?: ExpenseApplication.instance
@@ -93,20 +153,10 @@ class SettingsViewModel(
         viewModelScope.launch {
             transactionRepository.clearAll()
             smsRepository.resetSyncTimestamp()
-            context?.let { ctx ->
-                try {
-                    ctx.getSharedPreferences("expense_widget_prefs", Context.MODE_PRIVATE).edit().clear().apply()
-                    ctx.cacheDir.listFiles()?.forEach { file ->
-                        if (file.name.startsWith("ExpenseManager_Export_")) {
-                            file.delete()
-                        }
-                    }
-                    com.expensemanager.app.widget.WidgetUpdateHelper.updateAllWidgets(ctx)
-                } catch (e: Exception) {
-                    android.util.Log.e("SettingsViewModel", "Error clearing widget/cache data", e)
-                }
+            _statusMessage.value = "All data cleared successfully."
+            if (context != null) {
+                com.expensemanager.app.widget.WidgetUpdateHelper.updateAllWidgets(context)
             }
-            _statusMessage.value = "All data cleared successfully"
         }
     }
 

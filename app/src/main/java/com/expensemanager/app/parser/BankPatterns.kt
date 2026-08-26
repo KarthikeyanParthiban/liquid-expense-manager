@@ -173,12 +173,78 @@ object BankPatterns {
         return BankInfo(name = bankName, defaultType = accountType)
     }
 
-    // Amount extraction regexes
-    val AMOUNT_PATTERNS = listOf(
-        Pattern.compile("""(?:(?:Rs\.?|INR|₹|USD|\$)\s*([\d,]+(?:\.\d{1,2})?))""", Pattern.CASE_INSENSITIVE),
-        Pattern.compile("""(?:(?:debited|credited|spent|paid|withdrawn|transferred|charge|refunded|Sent)\s+(?:by|for|of|with)?\s*(?:Rs\.?|INR|₹)?\s*([\d,]+(?:\.\d{1,2})?))""", Pattern.CASE_INSENSITIVE),
-        Pattern.compile("""(?:amount\s*(?:of)?\s*(?:Rs\.?|INR|₹)?\s*([\d,]+(?:\.\d{1,2})?))""", Pattern.CASE_INSENSITIVE)
+    // Amount and Currency extraction regexes (Supports INR, USD, EUR, GBP, AED, SGD, CAD, AUD, JPY)
+    val CURRENCY_AMOUNT_PATTERNS = listOf(
+        Pattern.compile("""(?i)\b(USD|EUR|GBP|AED|SGD|CAD|AUD|JPY|INR|Rs\.?|₹|\$|€|£|S\$|C\$|A\$|¥)\s*([\d,]+(?:\.\d{1,2})?)"""),
+        Pattern.compile("""(?i)(?:debited|credited|spent|paid|withdrawn|transferred|charge|refunded|Sent)\s+(?:by|for|of|with)?\s*(USD|EUR|GBP|AED|SGD|CAD|AUD|JPY|INR|Rs\.?|₹|\$|€|£)?\s*([\d,]+(?:\.\d{1,2})?)"""),
+        Pattern.compile("""(?i)amount\s*(?:of)?\s*(USD|EUR|GBP|AED|SGD|CAD|AUD|JPY|INR|Rs\.?|₹|\$|€|£)?\s*([\d,]+(?:\.\d{1,2})?)""")
     )
+
+    val AMOUNT_PATTERNS = listOf(
+        Pattern.compile("""(?:(?:Rs\.?|INR|₹|USD|EUR|GBP|AED|SGD|CAD|AUD|JPY|\$|€|£)\s*([\d,]+(?:\.\d{1,2})?))""", Pattern.CASE_INSENSITIVE),
+        Pattern.compile("""(?:(?:debited|credited|spent|paid|withdrawn|transferred|charge|refunded|Sent)\s+(?:by|for|of|with)?\s*(?:Rs\.?|INR|₹|USD|EUR|GBP|AED|SGD|CAD|AUD|JPY|\$|€|£)?\s*([\d,]+(?:\.\d{1,2})?))""", Pattern.CASE_INSENSITIVE),
+        Pattern.compile("""(?:amount\s*(?:of)?\s*(?:Rs\.?|INR|₹|USD|EUR|GBP|AED|SGD|CAD|AUD|JPY|\$|€|£)?\s*([\d,]+(?:\.\d{1,2})?))""", Pattern.CASE_INSENSITIVE)
+    )
+
+    fun normalizeCurrency(rawCurrency: String?): String {
+        if (rawCurrency.isNullOrEmpty()) return "INR"
+        return when (rawCurrency.uppercase().trim()) {
+            "USD", "$" -> "USD"
+            "EUR", "€" -> "EUR"
+            "GBP", "£" -> "GBP"
+            "AED", "DHS" -> "AED"
+            "SGD", "S$" -> "SGD"
+            "CAD", "C$" -> "CAD"
+            "AUD", "A$" -> "AUD"
+            "JPY", "¥" -> "JPY"
+            else -> "INR"
+        }
+    }
+
+    fun extractCurrencyAndAmount(body: String): Pair<Double, String>? {
+        for (pattern in CURRENCY_AMOUNT_PATTERNS) {
+            val matcher = pattern.matcher(body)
+            while (matcher.find()) {
+                val group1 = matcher.group(1)?.trim()
+                val group2 = matcher.group(2)?.trim()
+
+                // Check if group 1 is currency and group 2 is amount
+                val amountStr = group2?.replace(",", "")
+                val amt = amountStr?.toDoubleOrNull()
+                if (amt != null && amt > 0.0) {
+                    val curr = normalizeCurrency(group1)
+                    return Pair(amt, curr)
+                }
+
+                // If only single group matched
+                val singleAmt = group1?.replace(",", "")?.toDoubleOrNull()
+                if (singleAmt != null && singleAmt > 0.0) {
+                    return Pair(singleAmt, "INR")
+                }
+            }
+        }
+
+        // Fallback to AMOUNT_PATTERNS
+        for (pattern in AMOUNT_PATTERNS) {
+            val matcher = pattern.matcher(body)
+            while (matcher.find()) {
+                val matchStr = matcher.group(1)?.replace(",", "")?.trim()
+                val amt = matchStr?.toDoubleOrNull()
+                if (amt != null && amt > 0.0) {
+                    // Check if message mentions USD or EUR anywhere
+                    val curr = when {
+                        Regex("""(?i)\b(?:USD|\$)\b""").containsMatchIn(body) -> "USD"
+                        Regex("""(?i)\b(?:EUR|€|Euros?)\b""").containsMatchIn(body) -> "EUR"
+                        Regex("""(?i)\b(?:GBP|£|Pounds?)\b""").containsMatchIn(body) -> "GBP"
+                        Regex("""(?i)\b(?:AED|Dirhams?)\b""").containsMatchIn(body) -> "AED"
+                        else -> "INR"
+                    }
+                    return Pair(amt, curr)
+                }
+            }
+        }
+        return null
+    }
 
     // Account / Card number patterns
     val ACCOUNT_PATTERNS = listOf(
@@ -208,6 +274,7 @@ object BankPatterns {
     // Merchant & Payee extraction patterns
     val MERCHANT_PATTERNS = listOf(
         Pattern.compile("""(?:from\s+VPA|to\s+VPA|VPA)\s+([A-Za-z0-9.\-_]+@[A-Za-z0-9.\-_]+)""", Pattern.CASE_INSENSITIVE),
+        Pattern.compile("""(?:IST|UTC)\s+([A-Za-z0-9\s*.\-_]+?)(?:\s+Avl|\s+Limit|\s+Not\s+you|\n|\r|$)""", Pattern.CASE_INSENSITIVE),
         Pattern.compile("""@(?:UPI_)?([A-Za-z0-9\s&.\-_]+?)(?:\s+\d{2}-\d{2}-\d{4}|\s+Avl|\s+Lmt|\.|\s+SMS|$)""", Pattern.CASE_INSENSITIVE),
         Pattern.compile("""(?:PHP\*|PG\*|POS\*|ECOM\*|BIL\*|IN\*)\s*([A-Za-z0-9\s&.\-_]+?)(?:\s+Avl|\s+Limit|\n|\r|$)""", Pattern.CASE_INSENSITIVE),
         Pattern.compile("""(?:For|Through)\s+(?:IMPS|NEFT|RTGS)\s*[-:]\s*([A-Za-z0-9\s&.\-_]+?)(?:\s*-\s*[0-9]{6,24}|\n|\r|$)""", Pattern.CASE_INSENSITIVE),

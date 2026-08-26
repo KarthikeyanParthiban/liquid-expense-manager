@@ -129,7 +129,7 @@ fun TransactionItem(
 
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = CurrencyFormatter.formatSigned(transaction.amount, isCredit),
+                    text = CurrencyFormatter.formatSigned(transaction.amount, isCredit, transaction.currency),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
                     color = amountColor,

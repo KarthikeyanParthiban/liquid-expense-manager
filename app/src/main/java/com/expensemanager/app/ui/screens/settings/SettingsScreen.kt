@@ -314,6 +314,76 @@ fun SettingsScreen(
                 }
             }
 
+            // Software Updates Card (OTA)
+            item {
+                val updateInfo by viewModel.updateInfo.collectAsState()
+                val isCheckingUpdate by viewModel.isCheckingUpdate.collectAsState()
+                val isDownloadingUpdate by viewModel.isDownloadingUpdate.collectAsState()
+                val downloadProgress by viewModel.downloadProgress.collectAsState()
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                        .appleCard(shape = RoundedCornerShape(20.dp), elevation = 1.dp)
+                        .padding(18.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "Software Updates",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(AppleBlueLight)
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = "v1.1.1",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = AppleBlue
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "OTA releases delivered seamlessly from GitHub",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextSecondary
+                            )
+                        }
+
+                        Button(
+                            onClick = { viewModel.checkForUpdates("1.1.1") },
+                            enabled = !isCheckingUpdate && !isDownloadingUpdate,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = AppleBlue)
+                        ) {
+                            if (isCheckingUpdate) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    color = Color.White,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Text("Check", fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+
             // SMS Sync Card
             item {
                 Box(
@@ -544,6 +614,74 @@ fun SettingsScreen(
             dismissButton = {
                 OutlinedButton(onClick = { showClearDialog = false }) {
                     Text("Cancel")
+                }
+            }
+        )
+    }
+
+    val updateInfo by viewModel.updateInfo.collectAsState()
+    val isDownloadingUpdate by viewModel.isDownloadingUpdate.collectAsState()
+    val downloadProgress by viewModel.downloadProgress.collectAsState()
+
+    if (updateInfo != null) {
+        val info = updateInfo!!
+        AlertDialog(
+            onDismissRequest = {
+                if (!isDownloadingUpdate) viewModel.dismissUpdateDialog()
+            },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "🚀 New Update Available!",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                }
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Version ${info.versionName} (${String.format(java.util.Locale.US, "%.1f MB", info.apkSizeMb)}) is ready to install.",
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = info.releaseNotes,
+                        fontSize = 12.sp,
+                        color = TextSecondary,
+                        maxLines = 6
+                    )
+                    if (isDownloadingUpdate) {
+                        Spacer(modifier = Modifier.height(14.dp))
+                        androidx.compose.material3.LinearProgressIndicator(
+                            progress = { downloadProgress },
+                            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(4.dp))
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Downloading update: ${(downloadProgress * 100).toInt()}%",
+                            fontSize = 11.sp,
+                            color = AppleBlue,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.downloadAndInstallUpdate(context) },
+                    enabled = !isDownloadingUpdate,
+                    colors = ButtonDefaults.buttonColors(containerColor = AppleBlue)
+                ) {
+                    Text(if (isDownloadingUpdate) "Downloading..." else "Install Update")
+                }
+            },
+            dismissButton = {
+                if (!isDownloadingUpdate) {
+                    OutlinedButton(onClick = { viewModel.dismissUpdateDialog() }) {
+                        Text("Later")
+                    }
                 }
             }
         )

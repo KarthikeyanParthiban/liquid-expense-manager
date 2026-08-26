@@ -42,7 +42,9 @@ object SmsParser {
         val isRecognizedBank = bankInfo.name != "Bank Account" && !bankInfo.name.matches(Regex("""^[A-Z]{4,6}$"""))
 
         val type = IntentDetector.detectIntent(body, bankInfo.defaultType)
-        val amount = extractAmount(body) ?: return null
+        val currencyAmountPair = BankPatterns.extractCurrencyAndAmount(body) ?: return null
+        val amount = currencyAmountPair.first
+        val currency = currencyAmountPair.second
         if (amount <= 0.0) return null
 
         val accountMask = extractAccountMask(body)
@@ -86,7 +88,7 @@ object SmsParser {
 
         return ParsedSmsResult(
             amount = amount,
-            currency = "INR",
+            currency = currency,
             type = type,
             status = TransactionStatus.COMPLETED,
             category = category,
