@@ -283,12 +283,13 @@ object CategoryClassifier {
             transactionType == TransactionType.TRANSFER ||
             merchant.contains("cred") ||
             body.contains("cred club") ||
-            body.contains("received towards your credit card") ||
+            body.contains("towards your credit card") ||
             body.contains("payment towards your credit card") ||
             body.contains("towards your card ending") ||
-            body.contains("towards your credit card")
+            (body.contains("received towards your") && body.contains("card")) ||
+            (body.contains("payment of") && body.contains("received towards"))
         ) {
-            return CategorizationResult(Category.TRANSFERS, "Transfer / Settlement rule")
+            return CategorizationResult(Category.TRANSFERS, "Credit Card Bill Settlement / Transfer")
         }
 
         // 3. Income / Salary detection

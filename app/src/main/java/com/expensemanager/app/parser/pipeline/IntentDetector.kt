@@ -20,8 +20,12 @@ object IntentDetector {
     )
 
     private val CARD_SETTLEMENT_PATTERNS = listOf(
-        Regex("""(?i)\b(?:received\s+towards\s+your\s+credit\s+card|payment\s+received\s+towards\s+your\s+card|payment\s+of\s+rs.*received\s+towards)\b"""),
-        Regex("""(?i)\b(?:credited\s+to\s+your\s+card\s+ending|payment\s+towards\s+credit\s+card|towards\s+card\s+ending)\b""")
+        Regex("""(?i)\b(?:payment\s+of\s+(?:inr|rs\.?|₹|usd)\s*[0-9,.]+\s+(?:has\s+been\s+)?received\s+towards)\b"""),
+        Regex("""(?i)\b(?:received|credited|processed|successful)\s+towards\s+(?:your\s+)?(?:[A-Za-z0-9\s]+\s+)?credit\s+card\b"""),
+        Regex("""(?i)\b(?:payment\s+towards\s+(?:your\s+)?(?:[A-Za-z0-9\s]+\s+)?credit\s+card|thank\s+you\s+for\s+payment\s+towards\s+(?:your\s+)?credit\s+card)\b"""),
+        Regex("""(?i)\b(?:payment\s+of\s+(?:inr|rs\.?|₹)\s*[0-9,.]+\s+towards\s+card|payment\s+received\s+for\s+your\s+card)\b"""),
+        Regex("""(?i)\b(?:credited\s+to\s+your\s+card\s+ending|towards\s+card\s+ending|towards\s+your\s+card\s+ending)\b"""),
+        Regex("""(?i)\b(?:payment\s+for\s+your\s+credit\s+card\s+has\s+been\s+received|bill\s+payment\s+for\s+card\s+ending)\b""")
     )
 
     private val BILL_PAYMENT_PATTERNS = listOf(

@@ -202,26 +202,34 @@ def is_spam_or_non_financial(body):
 
 def classify_transaction(merchant, body, txn_type, model):
     if is_spam_or_non_financial(body):
-        return "OTHERS", "Filtered: Loan Offer / Promotional Spam / EMI Proposal", 0.00
-    m_lower = (merchant or "").lower().strip()
+        return "OTHERS", "Filtered: Loan Offer / Promotional Spam / EMI Proposal", 0.00, txn_type
+
     b_lower = (body or "").lower().strip()
+    m_lower = (merchant or "").lower().strip()
     combined = f"{m_lower} {b_lower}"
+
+    # 0. Credit Card Bill Settlements (Inter-Account Transfers)
+    if ("received towards your" in b_lower and "card" in b_lower) or \
+       "payment towards your credit card" in b_lower or \
+       "towards your card ending" in b_lower or \
+       ("payment of" in b_lower and "received towards" in b_lower):
+        return "TRANSFERS", "Credit Card Bill Settlement / Transfer", 0.99, "CARD_SETTLEMENT"
 
     # 1. Contextual Disambiguation
     if "amazon fresh" in combined or "amazon pantry" in combined or "amzn fresh" in combined:
-        return "GROCERIES", "Contextual: Amazon Fresh/Pantry -> GROCERIES", 0.99
+        return "GROCERIES", "Contextual: Amazon Fresh/Pantry -> GROCERIES", 0.99, txn_type
     if "amazon prime" in combined or "prime video" in combined:
-        return "ENTERTAINMENT", "Contextual: Amazon Prime -> ENTERTAINMENT", 0.99
+        return "ENTERTAINMENT", "Contextual: Amazon Prime -> ENTERTAINMENT", 0.99, txn_type
     if "swiggy instamart" in combined or "instamart" in combined:
-        return "GROCERIES", "Contextual: Swiggy Instamart -> GROCERIES", 0.99
+        return "GROCERIES", "Contextual: Swiggy Instamart -> GROCERIES", 0.99, txn_type
     if "blinkit" in combined or "hyperpure" in combined:
-        return "GROCERIES", "Contextual: Blinkit Grocery -> GROCERIES", 0.99
+        return "GROCERIES", "Contextual: Blinkit Grocery -> GROCERIES", 0.99, txn_type
     if "jio fiber" in combined or "jiofiber" in combined:
-        return "BILLS_UTILITIES", "Contextual: Jio Fiber -> BILLS_UTILITIES", 0.99
+        return "BILLS_UTILITIES", "Contextual: Jio Fiber -> BILLS_UTILITIES", 0.99, txn_type
     if "tata 1mg" in combined:
-        return "HEALTHCARE", "Contextual: Tata 1mg -> HEALTHCARE", 0.99
+        return "HEALTHCARE", "Contextual: Tata 1mg -> HEALTHCARE", 0.99, txn_type
     if "tata play" in combined or "tata power" in combined:
-        return "BILLS_UTILITIES", "Contextual: Tata Play/Power -> BILLS_UTILITIES", 0.99
+        return "BILLS_UTILITIES", "Contextual: Tata Play/Power -> BILLS_UTILITIES", 0.99, txn_type
 
     # 2. UPI VPA Token Matching
     if "@" in m_lower:
@@ -233,37 +241,37 @@ def classify_transaction(merchant, body, txn_type, model):
                 for cat, kws in KEYWORD_MAP.items():
                     for kw in kws:
                         if kw in tok:
-                            return cat, f"Tier 2: VPA token '{tok}' matched '{kw}'", 0.95
+                            return cat, f"Tier 2: VPA token '{tok}' matched '{kw}'", 0.95, txn_type
 
     # 3. Direct Dictionary Keyword Matching
     for cat, kws in KEYWORD_MAP.items():
         for kw in kws:
             escaped = re.escape(kw)
             if re.search(rf"\b{escaped}\b", combined):
-                return cat, f"Tier 2: Dictionary keyword '{kw}'", 0.95
+                return cat, f"Tier 2: Dictionary keyword '{kw}'", 0.95, txn_type
 
     # 4. HDFC Bank UPI / YES Bank P2P Format: "Sent Rs... To [Name]" or "From HDFC Bank A/C ... To [Name]"
     p2p_hdfc = re.search(r'sent\s+(?:rs\.?|inr)\s*[0-9,.]+\s+(?:from\s+[\s\S]*?to\s+|to\s+)([A-Za-z\s.]+?)(?:\s+on|\s+ref|\n|$)', b_lower, re.I)
     if p2p_hdfc or \
        "sent via upi to" in b_lower or "transferred to" in b_lower or "upi/p2a/" in b_lower or "self transfer" in b_lower or "sent to vpa" in b_lower:
         recipient = p2p_hdfc.group(1).strip().title() if p2p_hdfc else (merchant or "Personal Transfer")
-        return "TRANSFERS", f"Tier 2: P2P Transfer to '{recipient}'", 0.92
+        return "TRANSFERS", f"Tier 2: P2P Transfer to '{recipient}'", 0.92, "TRANSFER"
 
     # 5. YES Bank Card spent at @UPI_[Name] with human name format
     if "@upi_" in b_lower or (merchant and merchant.startswith("UPI_")):
         clean_m = (merchant or "").replace("UPI_", "").strip()
         # If it has a space and looks like a name (e.g. KAVITHA P, DIVYA G)
         if re.match(r"^[A-Za-z\s.]+$", clean_m) and len(clean_m.split()) in [2, 3]:
-            return "TRANSFERS", f"Tier 2: P2P Transfer to '{clean_m}'", 0.85
+            return "TRANSFERS", f"Tier 2: P2P Transfer to '{clean_m}'", 0.85, "TRANSFER"
 
     # 6. Tier 3 ML Fallback
     ml_res = predict_ml(merchant if merchant else body, model)
     if ml_res:
         ml_cat, ml_conf = ml_res
         if ml_cat != "OTHERS" and ml_conf >= 0.40:
-            return ml_cat, f"Tier 3: On-Device ML Model ({int(ml_conf*100)}% conf)", ml_conf
+            return ml_cat, f"Tier 3: On-Device ML Model ({int(ml_conf*100)}% conf)", ml_conf, txn_type
 
-    return "OTHERS", "Tier 3: Default Fallback", 0.50
+    return "OTHERS", "Tier 3: Default Fallback", 0.50, txn_type
 
 
 def main():
@@ -329,7 +337,7 @@ def main():
             dt_str = datetime.fromtimestamp(ts / 1000.0).strftime("%Y-%m-%d %H:%M:%S") if ts else ""
 
             # Run 3-Tier Classification
-            cat, reason, conf = classify_transaction(merchant, body, t_type, ml_model)
+            cat, reason, conf, final_type = classify_transaction(merchant, body, t_type, ml_model)
             category_counts[cat] = category_counts.get(cat, 0) + 1
 
             writer.writerow({
@@ -338,7 +346,7 @@ def main():
                 "Sender": sender or "",
                 "Amount": f"{amount:.2f}" if amount is not None else "0.00",
                 "Currency": currency or "INR",
-                "Transaction_Type": t_type or "DEBIT",
+                "Transaction_Type": final_type or "DEBIT",
                 "Status": status or "COMPLETED",
                 "Classified_Category": cat,
                 "Merchant_Name": merchant or "",
