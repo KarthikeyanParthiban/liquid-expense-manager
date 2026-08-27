@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.0.2] - 2026-08-27
+
+### Added
+- **Uncapped SMS Inbox Scanning**: Removed artificial 10,000 SMS scan limit in `SmsRepository`, enabling full historical scanning across 100% of device inbox messages.
+- **Automated Release Notes System**: Build-time validation and Keep-a-Changelog extraction.
+
+---
+
 ## [1.3.0.1] - 2026-08-27
 
 ### Added
