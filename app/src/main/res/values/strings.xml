@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Kaching</string>
+    <string name="app_name">LQD</string>
     <string name="widget_description">Live bank balance and daily burn rate pacing</string>
     <string name="widget_category_description">Monthly category spending distribution and top drains</string>
     <string name="widget_cash_flow_description">Monthly income vs expenses and net savings rate</string>

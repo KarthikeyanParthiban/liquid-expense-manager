@@ -2,6 +2,7 @@ package com.expensemanager.app.core.update
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import androidx.core.content.FileProvider
@@ -20,12 +21,33 @@ data class UpdateInfo(
     val releaseNotes: String,
     val downloadUrl: String,
     val apkSizeMb: Double,
+    val apkSizeBytes: Long,
     val isNewer: Boolean
 )
 
 object AppUpdateManager {
 
     private const val GITHUB_API_URL = "https://api.github.com/repos/KarthikeyanParthiban/liquid-expense-manager/releases/latest"
+
+    /**
+     * Safely retrieves the installed app's versionName at runtime.
+     */
+    fun getAppVersionName(context: Context): String {
+        return try {
+            val packageInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.packageManager.getPackageInfo(
+                    context.packageName,
+                    PackageManager.PackageInfoFlags.of(0)
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                context.packageManager.getPackageInfo(context.packageName, 0)
+            }
+            packageInfo.versionName ?: "1.0.0"
+        } catch (e: Exception) {
+            "1.0.0"
+        }
+    }
 
     /**
      * Checks GitHub Releases API for the latest version.
@@ -37,8 +59,8 @@ object AppUpdateManager {
                 requestMethod = "GET"
                 setRequestProperty("Accept", "application/vnd.github.v3+json")
                 setRequestProperty("User-Agent", "LiquidExpenseManager-App")
-                connectTimeout = 8000
-                readTimeout = 8000
+                connectTimeout = 10000
+                readTimeout = 10000
             }
 
             if (connection.responseCode != 200) {
@@ -49,12 +71,13 @@ object AppUpdateManager {
             val json = JSONObject(responseBody)
 
             val tagName = json.optString("tag_name", "")
-            val title = json.optString("name", "Liquid Expense Manager $tagName")
+            val title = json.optString("name", "LQD $tagName")
             val body = json.optString("body", "Bug fixes and performance enhancements.")
             val assets = json.optJSONArray("assets")
 
             var downloadUrl: String? = null
             var apkSizeMb = 0.0
+            var apkSizeBytes = 0L
 
             if (assets != null) {
                 for (i in 0 until assets.length()) {
@@ -62,8 +85,8 @@ object AppUpdateManager {
                     val name = asset.optString("name", "")
                     if (name.endsWith(".apk", ignoreCase = true)) {
                         downloadUrl = asset.optString("browser_download_url")
-                        val bytes = asset.optLong("size", 0L)
-                        apkSizeMb = bytes / (1024.0 * 1024.0)
+                        apkSizeBytes = asset.optLong("size", 0L)
+                        apkSizeMb = apkSizeBytes / (1024.0 * 1024.0)
                         break
                     }
                 }
@@ -73,8 +96,8 @@ object AppUpdateManager {
                 return@withContext Result.success(null)
             }
 
-            val cleanRemote = tagName.removePrefix("v").trim()
-            val cleanCurrent = currentVersionName.removePrefix("v").trim()
+            val cleanRemote = tagName.removePrefix("v").removePrefix("V").trim()
+            val cleanCurrent = currentVersionName.removePrefix("v").removePrefix("V").trim()
             val isNewer = isVersionNewer(cleanRemote, cleanCurrent)
 
             val updateInfo = UpdateInfo(
@@ -84,6 +107,7 @@ object AppUpdateManager {
                 releaseNotes = body,
                 downloadUrl = downloadUrl,
                 apkSizeMb = apkSizeMb,
+                apkSizeBytes = apkSizeBytes,
                 isNewer = isNewer
             )
 
@@ -95,11 +119,29 @@ object AppUpdateManager {
     }
 
     /**
-     * Compares semver strings e.g. "1.1.2" vs "1.1.1".
+     * Extracts numeric semver components from a version string.
+     */
+    fun parseVersionNumbers(versionStr: String): List<Int> {
+        val sanitized = versionStr.trim().removePrefix("v").removePrefix("V")
+        val mainPart = sanitized.split("+")[0].split("-")[0]
+        return mainPart.split(".")
+            .mapNotNull { segment ->
+                val digits = segment.takeWhile { it.isDigit() }
+                digits.toIntOrNull()
+            }
+    }
+
+    /**
+     * Compares semver strings e.g. "1.2.0" vs "1.1.1".
+     * Returns true ONLY if remote is strictly greater than current.
      */
     fun isVersionNewer(remote: String, current: String): Boolean {
-        val remoteParts = remote.split(".").mapNotNull { it.toIntOrNull() }
-        val currentParts = current.split(".").mapNotNull { it.toIntOrNull() }
+        val remoteParts = parseVersionNumbers(remote)
+        val currentParts = parseVersionNumbers(current)
+
+        if (remoteParts.isEmpty() || currentParts.isEmpty()) {
+            return false
+        }
 
         val length = maxOf(remoteParts.size, currentParts.size)
         for (i in 0 until length) {
@@ -112,13 +154,14 @@ object AppUpdateManager {
     }
 
     /**
-     * Downloads APK file with progress and launches PackageInstaller.
+     * Downloads APK file with redirect following, progress reporting, and launches PackageInstaller.
      */
     suspend fun downloadAndInstall(
         context: Context,
         downloadUrl: String,
         targetFileName: String = "liquid_expense_update.apk",
-        onProgress: (progress: Float) -> Unit = {}
+        expectedSizeBytes: Long = 0L,
+        onProgress: (bytesRead: Long, totalBytes: Long, fraction: Float) -> Unit = { _, _, _ -> }
     ): Result<Unit> = withContext(Dispatchers.IO) {
         return@withContext try {
             val updateDir = File(context.cacheDir, "updates").apply { mkdirs() }
@@ -128,30 +171,72 @@ object AppUpdateManager {
                 apkFile.delete()
             }
 
-            val url = URL(downloadUrl)
-            val connection = (url.openConnection() as HttpURLConnection).apply {
-                instanceFollowRedirects = true
-                connectTimeout = 15000
-                readTimeout = 30000
+            var currentUrl = downloadUrl
+            var connection: HttpURLConnection
+            var redirectCount = 0
+            val maxRedirects = 10
+
+            while (true) {
+                val url = URL(currentUrl)
+                connection = (url.openConnection() as HttpURLConnection).apply {
+                    instanceFollowRedirects = true
+                    connectTimeout = 20000
+                    readTimeout = 30000
+                    setRequestProperty("User-Agent", "LiquidExpenseManager-App")
+                    setRequestProperty("Accept", "*/*")
+                }
+
+                val responseCode = connection.responseCode
+                if (responseCode in 300..399) {
+                    val newUrl = connection.getHeaderField("Location")
+                    connection.disconnect()
+                    if (newUrl.isNullOrEmpty() || ++redirectCount > maxRedirects) {
+                        return@withContext Result.failure(Exception("Too many HTTP redirects ($redirectCount) or invalid location header."))
+                    }
+                    currentUrl = newUrl
+                } else if (responseCode in 200..299) {
+                    break
+                } else {
+                    val errBody = try { connection.errorStream?.bufferedReader()?.readText() } catch (e: Exception) { null }
+                    connection.disconnect()
+                    return@withContext Result.failure(Exception("HTTP $responseCode: ${connection.responseMessage}${if (!errBody.isNullOrBlank()) " - $errBody" else ""}"))
+                }
             }
 
-            val fileLength = connection.contentLengthLong
+            val headerLength = connection.contentLengthLong
+            val totalExpected = if (headerLength > 0) headerLength else expectedSizeBytes
 
             connection.inputStream.use { input ->
                 FileOutputStream(apkFile).use { output ->
-                    val buffer = ByteArray(8192)
+                    val buffer = ByteArray(32768) // 32 KB buffer
                     var bytesRead: Int
                     var totalRead = 0L
+                    var lastProgressEmit = 0L
 
                     while (input.read(buffer).also { bytesRead = it } != -1) {
                         output.write(buffer, 0, bytesRead)
                         totalRead += bytesRead
-                        if (fileLength > 0) {
-                            onProgress(totalRead.toFloat() / fileLength.toFloat())
+
+                        val now = System.currentTimeMillis()
+                        if (now - lastProgressEmit > 50 || (totalExpected > 0 && totalRead == totalExpected)) {
+                            lastProgressEmit = now
+                            val fraction = if (totalExpected > 0) {
+                                (totalRead.toFloat() / totalExpected.toFloat()).coerceIn(0f, 1f)
+                            } else 0f
+                            onProgress(totalRead, totalExpected, fraction)
                         }
                     }
                 }
             }
+            connection.disconnect()
+
+            // Verify downloaded APK file integrity
+            if (!apkFile.exists() || apkFile.length() < 100_000) {
+                return@withContext Result.failure(Exception("Downloaded APK file is incomplete (${apkFile.length()} bytes)."))
+            }
+
+            // Emit final 100% progress
+            onProgress(apkFile.length(), if (totalExpected > 0) totalExpected else apkFile.length(), 1f)
 
             // Launch package installer intent via FileProvider
             val contentUri: Uri = FileProvider.getUriForFile(

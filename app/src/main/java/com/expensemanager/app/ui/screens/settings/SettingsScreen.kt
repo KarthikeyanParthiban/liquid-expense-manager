@@ -71,6 +71,7 @@ import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.expensemanager.app.core.update.AppUpdateManager
 import com.expensemanager.app.service.NotificationListenerHelper
 import com.expensemanager.app.ui.theme.AppleBlueLight
 import com.expensemanager.app.ui.theme.AppleGreen
@@ -83,6 +84,7 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val appVersionName = remember(context) { AppUpdateManager.getAppVersionName(context) }
     val rules by viewModel.rules.collectAsState()
     val isSyncing by viewModel.isSyncing.collectAsState()
     val syncProgress by viewModel.syncProgress.collectAsState()
@@ -316,10 +318,8 @@ fun SettingsScreen(
 
             // Software Updates Card (OTA)
             item {
-                val updateInfo by viewModel.updateInfo.collectAsState()
                 val isCheckingUpdate by viewModel.isCheckingUpdate.collectAsState()
                 val isDownloadingUpdate by viewModel.isDownloadingUpdate.collectAsState()
-                val downloadProgress by viewModel.downloadProgress.collectAsState()
 
                 Box(
                     modifier = Modifier
@@ -349,7 +349,7 @@ fun SettingsScreen(
                                         .padding(horizontal = 6.dp, vertical = 2.dp)
                                 ) {
                                     Text(
-                                        text = "v1.1.1",
+                                        text = "v$appVersionName",
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = AppleBlue
@@ -365,7 +365,7 @@ fun SettingsScreen(
                         }
 
                         Button(
-                            onClick = { viewModel.checkForUpdates("1.1.1") },
+                            onClick = { viewModel.checkForUpdates(appVersionName) },
                             enabled = !isCheckingUpdate && !isDownloadingUpdate,
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = AppleBlue)
@@ -622,68 +622,21 @@ fun SettingsScreen(
     val updateInfo by viewModel.updateInfo.collectAsState()
     val isDownloadingUpdate by viewModel.isDownloadingUpdate.collectAsState()
     val downloadProgress by viewModel.downloadProgress.collectAsState()
+    val bytesDownloaded by viewModel.downloadBytesDownloaded.collectAsState()
+    val totalBytes by viewModel.downloadTotalBytes.collectAsState()
+    val downloadError by viewModel.downloadError.collectAsState()
 
     if (updateInfo != null) {
-        val info = updateInfo!!
-        AlertDialog(
-            onDismissRequest = {
-                if (!isDownloadingUpdate) viewModel.dismissUpdateDialog()
-            },
-            title = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "🚀 New Update Available!",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    )
-                }
-            },
-            text = {
-                Column {
-                    Text(
-                        text = "Version ${info.versionName} (${String.format(java.util.Locale.US, "%.1f MB", info.apkSizeMb)}) is ready to install.",
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextPrimary
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = info.releaseNotes,
-                        fontSize = 12.sp,
-                        color = TextSecondary,
-                        maxLines = 6
-                    )
-                    if (isDownloadingUpdate) {
-                        Spacer(modifier = Modifier.height(14.dp))
-                        androidx.compose.material3.LinearProgressIndicator(
-                            progress = { downloadProgress },
-                            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(4.dp))
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Downloading update: ${(downloadProgress * 100).toInt()}%",
-                            fontSize = 11.sp,
-                            color = AppleBlue,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = { viewModel.downloadAndInstallUpdate(context) },
-                    enabled = !isDownloadingUpdate,
-                    colors = ButtonDefaults.buttonColors(containerColor = AppleBlue)
-                ) {
-                    Text(if (isDownloadingUpdate) "Downloading..." else "Install Update")
-                }
-            },
-            dismissButton = {
-                if (!isDownloadingUpdate) {
-                    OutlinedButton(onClick = { viewModel.dismissUpdateDialog() }) {
-                        Text("Later")
-                    }
-                }
-            }
+        UpdateAvailableDialog(
+            updateInfo = updateInfo!!,
+            currentVersion = appVersionName,
+            isDownloading = isDownloadingUpdate,
+            downloadProgress = downloadProgress,
+            bytesDownloaded = bytesDownloaded,
+            totalBytes = totalBytes,
+            downloadError = downloadError,
+            onInstallClick = { viewModel.downloadAndInstallUpdate(context) },
+            onDismiss = { viewModel.dismissUpdateDialog() }
         )
     }
 }

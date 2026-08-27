@@ -107,7 +107,7 @@
         <!-- Real-time Financial Notification Listener Service (Google Pay, PhonePe, Paytm, CRED, Bank Apps) -->
         <service
             android:name=".service.ExpenseNotificationListenerService"
-            android:label="Liquid Expense Notification Listener"
+            android:label="LQD Notification Listener"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
             android:exported="true">
             <intent-filter>

@@ -1,19 +1,19 @@
-# 💸 Kaching
+# LQD
 
 [![Platform](https://img.shields.io/badge/Platform-Android%208.0%2B%20(API%2026%2B)-3DDC84?style=flat&logo=android&logoColor=white)](https://android.com)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.1.0-7F52FF?style=flat&logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose%20%26%20Material%203-4285F4?style=flat&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
 [![Architecture](https://img.shields.io/badge/Architecture-MVVM%20%2B%20Repository%20%2B%20Flow-blue)](https://developer.android.com)
 [![Storage](https://img.shields.io/badge/Storage-Room%20Database%20(100%25%20On--Device)-00599C?style=flat&logo=sqlite&logoColor=white)](https://developer.android.com/training/data-storage/room)
-[![Release](https://img.shields.io/badge/Release-v1.0.0-emerald.svg)](https://github.com/KarthikeyanParthiban/liquid-expense-manager/releases/latest)
+[![Release](https://img.shields.io/badge/Release-v1.2.0-emerald.svg)](https://github.com/KarthikeyanParthiban/liquid-expense-manager/releases/latest)
 
-An intelligent, privacy-first, on-device money manager for Android that transforms messy transactional SMS messages from Indian banks, credit cards, and UPI apps into actionable financial analytics with a **sleek, fluid dark/light design system**.
+An intelligent, privacy-first, on-device money manager for Android that transforms transactional notifications and SMS messages from Indian banks, credit cards, and UPI apps into actionable financial analytics with a **sleek, fluid dark/light design system**.
 
 ---
 
 ## 📥 Download Latest APK
 
-👉 **[Download Kaching v1.0.0 (Direct APK)](https://github.com/KarthikeyanParthiban/liquid-expense-manager/releases/latest)**
+👉 **[Download LQD Latest APK](https://github.com/KarthikeyanParthiban/liquid-expense-manager/releases/latest)**
 
 ---
 

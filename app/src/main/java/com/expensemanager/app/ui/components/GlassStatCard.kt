@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.expensemanager.app.core.util.CurrencyFormatter
@@ -121,95 +122,133 @@ fun GlassStatCard(
             // Income / Expense Split Pills with Micro-Semantic Accents
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 // Income Badge
+                val incomeText = if (hideBalance) "••••" else CurrencyFormatter.format(totalIncome)
+                val incomeFontSize = when {
+                    incomeText.length > 15 -> 12.5.sp
+                    incomeText.length > 12 -> 13.5.sp
+                    incomeText.length > 9 -> 14.5.sp
+                    else -> 16.sp
+                }
+
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(16.dp))
                         .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .padding(12.dp)
+                        .padding(horizontal = 12.dp, vertical = 10.dp)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(AppleGreen.copy(alpha = 0.15f)),
-                            contentAlignment = Alignment.Center
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowDownward,
-                                contentDescription = "Income",
-                                tint = AppleGreen,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
+                            Box(
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .clip(CircleShape)
+                                    .background(AppleGreen.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowDownward,
+                                    contentDescription = "Income",
+                                    tint = AppleGreen,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                            }
 
-                        Spacer(modifier = Modifier.width(10.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
 
-                        Column {
                             Text(
                                 text = "INCOME",
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = TextSecondary,
-                                letterSpacing = 0.8.sp
-                            )
-                            Text(
-                                text = if (hideBalance) "••••" else CurrencyFormatter.format(totalIncome),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = AppleGreen,
-                                letterSpacing = if (hideBalance) 2.sp else (-0.3).sp
+                                letterSpacing = 0.8.sp,
+                                fontSize = 10.sp
                             )
                         }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Text(
+                            text = incomeText,
+                            fontSize = incomeFontSize,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = AppleGreen,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis,
+                            letterSpacing = if (hideBalance) 2.sp else (-0.4).sp
+                        )
                     }
                 }
 
                 // Expense Badge
+                val expenseText = if (hideBalance) "••••" else CurrencyFormatter.format(totalExpense)
+                val expenseFontSize = when {
+                    expenseText.length > 15 -> 12.5.sp
+                    expenseText.length > 12 -> 13.5.sp
+                    expenseText.length > 9 -> 14.5.sp
+                    else -> 16.sp
+                }
+
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(16.dp))
                         .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .padding(12.dp)
+                        .padding(horizontal = 12.dp, vertical = 10.dp)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(AppleRed.copy(alpha = 0.15f)),
-                            contentAlignment = Alignment.Center
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowUpward,
-                                contentDescription = "Expense",
-                                tint = AppleRed,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
+                            Box(
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .clip(CircleShape)
+                                    .background(AppleRed.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowUpward,
+                                    contentDescription = "Expense",
+                                    tint = AppleRed,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                            }
 
-                        Spacer(modifier = Modifier.width(10.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
 
-                        Column {
                             Text(
                                 text = "SPENT",
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = TextSecondary,
-                                letterSpacing = 0.8.sp
-                            )
-                            Text(
-                                text = if (hideBalance) "••••" else CurrencyFormatter.format(totalExpense),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = AppleRed,
-                                letterSpacing = if (hideBalance) 2.sp else (-0.3).sp
+                                letterSpacing = 0.8.sp,
+                                fontSize = 10.sp
                             )
                         }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Text(
+                            text = expenseText,
+                            fontSize = expenseFontSize,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = AppleRed,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Ellipsis,
+                            letterSpacing = if (hideBalance) 2.sp else (-0.4).sp
+                        )
                     }
                 }
             }

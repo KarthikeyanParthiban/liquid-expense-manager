@@ -87,13 +87,15 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AppNavigation(
-                        dashboardViewModel = dashboardViewModel,
-                        transactionsViewModel = transactionsViewModel,
-                        analyticsViewModel = analyticsViewModel,
-                        accountsViewModel = accountsViewModel,
-                        settingsViewModel = settingsViewModel
-                    )
+                    com.expensemanager.app.ui.components.AppStartupSplashScreen {
+                        AppNavigation(
+                            dashboardViewModel = dashboardViewModel,
+                            transactionsViewModel = transactionsViewModel,
+                            analyticsViewModel = analyticsViewModel,
+                            accountsViewModel = accountsViewModel,
+                            settingsViewModel = settingsViewModel
+                        )
+                    }
                 }
             }
         }

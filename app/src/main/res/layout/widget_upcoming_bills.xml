@@ -212,7 +212,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
-            android:text="Covered by Kaching"
+            android:text="Covered by LQD"
             android:textColor="@color/widget_teal_accent"
             android:textSize="9.5sp"
             android:textStyle="bold" />

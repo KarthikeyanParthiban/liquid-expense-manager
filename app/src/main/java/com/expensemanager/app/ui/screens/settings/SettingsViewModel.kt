@@ -62,10 +62,20 @@ class SettingsViewModel(
     private val _downloadProgress = MutableStateFlow(0f)
     val downloadProgress: StateFlow<Float> = _downloadProgress.asStateFlow()
 
-    fun checkForUpdates(currentVersion: String = "1.1.1") {
+    private val _downloadBytesDownloaded = MutableStateFlow(0L)
+    val downloadBytesDownloaded: StateFlow<Long> = _downloadBytesDownloaded.asStateFlow()
+
+    private val _downloadTotalBytes = MutableStateFlow(0L)
+    val downloadTotalBytes: StateFlow<Long> = _downloadTotalBytes.asStateFlow()
+
+    private val _downloadError = MutableStateFlow<String?>(null)
+    val downloadError: StateFlow<String?> = _downloadError.asStateFlow()
+
+    fun checkForUpdates(currentVersion: String = "1.0.0") {
         viewModelScope.launch {
             _isCheckingUpdate.value = true
             _statusMessage.value = null
+            _downloadError.value = null
             try {
                 val result = AppUpdateManager.checkForUpdates(currentVersion)
                 if (result.isSuccess) {
@@ -73,7 +83,8 @@ class SettingsViewModel(
                     if (info != null && info.isNewer) {
                         _updateInfo.value = info
                     } else {
-                        _statusMessage.value = "You are on the latest version ($currentVersion)!"
+                        _updateInfo.value = null
+                        _statusMessage.value = "You are on the latest version (v$currentVersion)"
                     }
                 } else {
                     _statusMessage.value = "Failed to check for updates: ${result.exceptionOrNull()?.message}"
@@ -91,20 +102,35 @@ class SettingsViewModel(
         viewModelScope.launch {
             _isDownloadingUpdate.value = true
             _downloadProgress.value = 0f
+            _downloadBytesDownloaded.value = 0L
+            _downloadTotalBytes.value = info.apkSizeBytes
+            _downloadError.value = null
+
             val result = AppUpdateManager.downloadAndInstall(
                 context = context,
                 downloadUrl = info.downloadUrl,
-                onProgress = { p -> _downloadProgress.value = p }
+                expectedSizeBytes = info.apkSizeBytes,
+                onProgress = { bytesRead, totalBytes, fraction ->
+                    _downloadBytesDownloaded.value = bytesRead
+                    _downloadTotalBytes.value = totalBytes
+                    _downloadProgress.value = fraction
+                }
             )
             _isDownloadingUpdate.value = false
             if (result.isFailure) {
-                _statusMessage.value = "Download failed: ${result.exceptionOrNull()?.message}"
+                val errorMsg = result.exceptionOrNull()?.localizedMessage ?: "Unknown download error"
+                _downloadError.value = errorMsg
+                _statusMessage.value = "Download failed: $errorMsg"
             }
         }
     }
 
     fun dismissUpdateDialog() {
-        _updateInfo.value = null
+        if (!_isDownloadingUpdate.value) {
+            _updateInfo.value = null
+            _downloadError.value = null
+            _downloadProgress.value = 0f
+        }
     }
 
     fun syncAllSms(context: Context? = null) {

@@ -216,4 +216,84 @@ class SmsParserTest {
         assertEquals("XX7011", result.accountMask)
         assertEquals(88248.00, result.balanceAfter ?: 0.0, 0.01)
     }
+
+    @Test
+    fun `test recipient VPA handle with okhdfcbank is not treated as HDFC Bank account`() {
+        val sender = "AD-SBIINB"
+        val body = "Dear SBI User, your A/c XX9812 has a debit of Rs. 450.00 on 24Aug26 to VPA merchant@okhdfcbank. Ref 123456. Avl Bal Rs 5000.00"
+        val timestamp = 1787657136000L
+
+        val result = SmsParser.parse(sender, body, timestamp)
+        assertNotNull("Result should not be null", result)
+        assertEquals(450.00, result!!.amount, 0.01)
+        assertEquals(TransactionType.DEBIT, result.type)
+        assertEquals("SBI", result.bankName) // NOT HDFC Bank!
+        assertEquals("XX9812", result.accountMask)
+    }
+
+    @Test
+    fun `test recipient VPA handle with icici in generic UPI SMS is not treated as ICICI Bank`() {
+        val sender = "VM-UPIPAY"
+        val body = "Paid Rs. 150.00 from Axis Bank A/c XX8831 to swiggy@icici. UTR 99887766."
+        val timestamp = 1787657136000L
+
+        val result = SmsParser.parse(sender, body, timestamp)
+        assertNotNull("Result should not be null", result)
+        assertEquals(150.00, result!!.amount, 0.01)
+        assertEquals("Axis Bank", result.bankName) // NOT ICICI Bank!
+        assertEquals("XX8831", result.accountMask)
+    }
+
+    @Test
+    fun `test Paytm VPA handle in Google Pay notification is not treated as Paytm Wallet`() {
+        val packageName = "com.google.android.apps.nbu.paisa.user"
+        val title = "Google Pay"
+        val text = "Paid ₹200 to fruitstall@paytm using HDFC Bank A/c ending 7011."
+        val timestamp = 1787657136000L
+
+        val result = NotificationParser.parse(packageName, title, text, timestamp)
+        assertNotNull("Result should not be null", result)
+        assertEquals(200.00, result!!.amount, 0.01)
+        assertEquals("HDFC Bank", result.bankName) // NOT Paytm!
+        assertEquals("7011", result.accountMask)
+    }
+
+    @Test
+    fun `test recipient VPA with axisbank handle in SBI debit SMS is not treated as Axis Bank`() {
+        val sender = "VK-SBIUPI"
+        val body = "Rs. 500 debited from A/c XX4321 to VPA groceries@axisbank ref 998811."
+        val timestamp = 1787657136000L
+
+        val result = SmsParser.parse(sender, body, timestamp)
+        assertNotNull("Result should not be null", result)
+        assertEquals(500.00, result!!.amount, 0.01)
+        assertEquals("SBI", result.bankName) // NOT Axis Bank!
+        assertEquals("XX4321", result.accountMask)
+    }
+
+    @Test
+    fun `test generic VPA @vpa in transaction body`() {
+        val sender = "VK-CANBNK"
+        val body = "INR 350.00 debited from Canara Bank A/c XX5678 to VPA test@vpa on 26-08-2026. Bal INR 12000.00"
+        val timestamp = 1787657136000L
+
+        val result = SmsParser.parse(sender, body, timestamp)
+        assertNotNull("Result should not be null", result)
+        assertEquals(350.00, result!!.amount, 0.01)
+        assertEquals("Canara Bank", result.bankName) // NOT vpa!
+        assertEquals("XX5678", result.accountMask)
+    }
+
+    @Test
+    fun `test recipient VPA handle with yesbank or ybl`() {
+        val sender = "AD-HDFCBK"
+        val body = "Sent Rs. 120 to rent@ybl from HDFC Bank A/c XX7011."
+        val timestamp = 1787657136000L
+
+        val result = SmsParser.parse(sender, body, timestamp)
+        assertNotNull("Result should not be null", result)
+        assertEquals(120.00, result!!.amount, 0.01)
+        assertEquals("HDFC Bank", result.bankName) // NOT Yes Bank!
+        assertEquals("XX7011", result.accountMask)
+    }
 }

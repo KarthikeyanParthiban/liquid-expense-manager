@@ -4,20 +4,26 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Vertical stem -->
+    
+    <!-- L Vertical Stem -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M38,32 L46,32 L46,76 L38,76 Z" />
-    <!-- Upper diagonal arm with Emerald highlight -->
-    <path
-        android:fillColor="#10B981"
-        android:pathData="M44,52 L66,32 L75,32 L49,56 Z" />
-    <!-- Lower diagonal arm -->
+        android:pathData="M27,27 L37,27 L37,81 L27,81 Z" />
+
+    <!-- L Horizontal Base -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M46,50 L75,76 L66,76 L42,55 Z" />
-    <!-- Spark / Coin dot -->
+        android:pathData="M37,71 L79,71 L79,81 L37,81 Z" />
+
+    <!-- Q Circle Ring -->
     <path
-        android:fillColor="#10B981"
-        android:pathData="M73,28m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+        android:fillColor="#FFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M 61, 27 A 20,20 0 1,1 60.9, 27 Z M 61, 37 A 10,10 0 1,0 61.1, 37 Z" />
+
+    <!-- Q 45-degree Diagonal Tail -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M 66,54 L 79,67 L 73,73 L 60,60 Z" />
 </vector>
+
