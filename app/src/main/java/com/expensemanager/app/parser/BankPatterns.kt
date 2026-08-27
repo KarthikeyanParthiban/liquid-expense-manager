@@ -218,9 +218,9 @@ object BankPatterns {
 
         // 1. Direct Sender Lookup (for official bank header codes like HDFCBK, SBIN, AXISBK, etc.)
         for ((key, info) in BANK_SENDER_MAP) {
-            // Ignore generic UPI aggregator app senders in step 1 if the body contains a specific bank account statement
-            if (key in setOf("PAYTM", "GPAY", "PHONPE", "PHONEPE", "JIO", "AIRTEL", "NOBRKR") && cleanSender.contains(key)) {
-                // We'll check body first to see if an underlying bank account (e.g. HDFC, SBI, Axis) is mentioned!
+            // Ignore generic UPI / aggregator / credit card app senders in step 1 if the body contains a specific bank account statement
+            if (key in setOf("PAYTM", "GPAY", "PHONPE", "PHONEPE", "JIO", "AIRTEL", "NOBRKR", "GKIWIP", "KIWI", "CREDIN", "CRED") && cleanSender.contains(key)) {
+                // We'll check body first to see if an underlying bank account (e.g. HDFC, SBI, Axis, Yes Bank) is mentioned!
                 continue
             }
 
@@ -349,12 +349,13 @@ object BankPatterns {
 
     // Account / Card number patterns
     val ACCOUNT_PATTERNS = listOf(
-        Pattern.compile("""(?:A/c|Acct|Account|Acc|A/C)\s*(?:no\.?|number)?\s*[*Xx]*([0-9]{3,4})""", Pattern.CASE_INSENSITIVE),
-        Pattern.compile("""(?:Card|Credit Card|Debit Card)\s*(?:no\.?)?\s*[*Xx]*([0-9]{4})""", Pattern.CASE_INSENSITIVE),
+        Pattern.compile("""(?:A/c|Acct|Account|Acc|A/C)\s*(?:no\.?|number)?\s*[*Xx-]*([0-9]{3,4})""", Pattern.CASE_INSENSITIVE),
+        Pattern.compile("""(?:Card|Credit Card|Debit Card|CC)\s*(?:no\.?)?\s*[*Xx-]*([0-9]{4})""", Pattern.CASE_INSENSITIVE),
         Pattern.compile("""(?:Card\s*X([0-9]{4}))""", Pattern.CASE_INSENSITIVE),
-        Pattern.compile("""(?:ending\s*(?:with)?\s*[*Xx]*([0-9]{3,4}))""", Pattern.CASE_INSENSITIVE),
-        Pattern.compile("""(?:UAN|Member\s*ID|PF\s*A/c)\s*[*Xx]*([0-9]{4})""", Pattern.CASE_INSENSITIVE),
-        Pattern.compile("""(?:[*Xx]{1,}([0-9]{3,4}))""", Pattern.CASE_INSENSITIVE)
+        Pattern.compile("""(?:ending\s*(?:with|in)?\s*[*Xx-]*([0-9]{3,4}))""", Pattern.CASE_INSENSITIVE),
+        Pattern.compile("""(?:UAN|Member\s*ID|PF\s*A/c)\s*[*Xx-]*([0-9]{4})""", Pattern.CASE_INSENSITIVE),
+        Pattern.compile("""(?:[*Xx]{1,}[-]?[*Xx]*([0-9]{3,4}))""", Pattern.CASE_INSENSITIVE),
+        Pattern.compile("""(?:SMS\s+BLKCC|SMS\s+BLOCK\s+CC|SMS\s+BLOCK)\s*([0-9]{4})""", Pattern.CASE_INSENSITIVE)
     )
 
     // Available Balance patterns (Handles "Available Bal in HDFC Bank A/c XX7011 ... is INR 88,148.00" and EPFO)

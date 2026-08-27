@@ -296,4 +296,18 @@ class SmsParserTest {
         assertEquals("HDFC Bank", result.bankName) // NOT Yes Bank!
         assertEquals("XX7011", result.accountMask)
     }
+
+    @Test
+    fun `test Kiwi credit card bill payment with hyphenated card mask`() {
+        val sender = "JK-GKIWIP-S"
+        val body = "Your YES Bank Credit Card XXXX-1006 bill of Rs. 28615.2 has been successfully paid via Kiwi."
+        val timestamp = 1787657136000L
+
+        val result = SmsParser.parse(sender, body, timestamp)
+        assertNotNull("Result should not be null", result)
+        assertEquals(28615.20, result!!.amount, 0.01)
+        assertEquals("Yes Bank", result.bankName)
+        assertEquals("XX1006", result.accountMask)
+        assertTrue("Bill payment should be excluded from monthly expenses", result.isExcludedFromBudget)
+    }
 }
