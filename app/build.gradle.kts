@@ -113,3 +113,14 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
 }
+
+tasks.matching { it.name.startsWith("assembleRelease") || it.name.startsWith("bundleRelease") }.configureEach {
+    doFirst {
+        val verName = android.defaultConfig.versionName
+        println("\n========================================================")
+        println("📦 BUILDING RELEASE: LQD v$verName")
+        println("📝 REMINDER: Ensure CHANGELOG.md is updated for v$verName!")
+        println("========================================================\n")
+    }
+}
+
