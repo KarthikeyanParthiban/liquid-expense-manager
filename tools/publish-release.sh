@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-VERSION="${1:-v1.3.0}"
+VERSION="${1:-v1.3.0.1}"
 APK_PATH="app/build/outputs/apk/release/app-release.apk"
 
 echo "🔨 Building Release APK..."
