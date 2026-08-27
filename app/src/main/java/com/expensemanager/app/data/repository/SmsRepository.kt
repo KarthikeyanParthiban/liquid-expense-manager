@@ -34,7 +34,7 @@ class SmsRepository(
     }
 
     suspend fun readHistoricalSms(
-        limit: Int = 10000,
+        limit: Int = Int.MAX_VALUE,
         sinceTimestamp: Long = 0L
     ): List<SmsMessageItem> = withContext(Dispatchers.IO) {
         val messages = mutableListOf<SmsMessageItem>()
@@ -74,7 +74,7 @@ class SmsRepository(
                     val type = it.getInt(typeIdx)
 
                     messages.add(SmsMessageItem(id, address, body, date, type))
-                    if (messages.size >= limit) {
+                    if (limit < Int.MAX_VALUE && messages.size >= limit) {
                         break
                     }
                 }
