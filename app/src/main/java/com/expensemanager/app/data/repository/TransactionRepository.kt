@@ -122,25 +122,28 @@ class TransactionRepository(
 
                 // Only create/update account cards for verified financial institutions
                 if (BankPatterns.isVerifiedFinancialInstitution(result.bankName)) {
+                    val hasMask = !result.accountMask.isNullOrBlank() && result.accountMask != "PRIMARY"
                     val resolvedAccountId = resolveTargetAccountId(result.bankName, result.accountType.name, result.accountMask, result.accountId)
                     val existingAccount = accountDao.getAccountById(resolvedAccountId)
-                    val updatedAccount = if (existingAccount != null) {
+                    if (existingAccount != null) {
                         val isNewer = result.timestamp >= existingAccount.lastUpdated
-                        existingAccount.copy(
+                        val updatedAccount = existingAccount.copy(
                             lastKnownBalance = if (isNewer && result.balanceAfter != null) result.balanceAfter else (existingAccount.lastKnownBalance ?: result.balanceAfter),
                             lastUpdated = maxOf(existingAccount.lastUpdated, result.timestamp)
                         )
-                    } else {
-                        AccountEntity(
+                        accountDao.insertOrUpdate(updatedAccount)
+                    } else if (hasMask) {
+                        // ONLY create a new bank account card if ending account digits are present
+                        val newAccount = AccountEntity(
                             id = resolvedAccountId,
                             bankName = result.bankName,
                             accountType = result.accountType.name,
-                            maskNumber = result.accountMask ?: "PRIMARY",
+                            maskNumber = result.accountMask!!,
                             lastKnownBalance = result.balanceAfter,
                             lastUpdated = result.timestamp
                         )
+                        accountDao.insertOrUpdate(newAccount)
                     }
-                    accountDao.insertOrUpdate(updatedAccount)
                 }
             }
             is DeduplicationEngine.DeduplicationResult.FuzzyDuplicate -> {
@@ -163,25 +166,28 @@ class TransactionRepository(
             return@withLock
         }
 
+        val hasMask = !update.accountMask.isNullOrBlank() && update.accountMask != "PRIMARY"
         val resolvedAccountId = resolveTargetAccountId(update.bankName, update.accountType.name, update.accountMask, update.accountId)
         val existingAccount = accountDao.getAccountById(resolvedAccountId)
-        val updatedAccount = if (existingAccount != null) {
+        if (existingAccount != null) {
             val shouldUpdateBalance = update.timestamp >= existingAccount.lastUpdated || existingAccount.lastKnownBalance == null
-            existingAccount.copy(
+            val updatedAccount = existingAccount.copy(
                 lastKnownBalance = if (shouldUpdateBalance) update.balance else existingAccount.lastKnownBalance,
                 lastUpdated = maxOf(existingAccount.lastUpdated, update.timestamp)
             )
-        } else {
-            AccountEntity(
+            accountDao.insertOrUpdate(updatedAccount)
+        } else if (hasMask) {
+            // ONLY create a new bank account card if ending account digits are present
+            val newAccount = AccountEntity(
                 id = resolvedAccountId,
                 bankName = update.bankName,
                 accountType = update.accountType.name,
-                maskNumber = update.accountMask ?: "PRIMARY",
+                maskNumber = update.accountMask!!,
                 lastKnownBalance = update.balance,
                 lastUpdated = update.timestamp
             )
+            accountDao.insertOrUpdate(newAccount)
         }
-        accountDao.insertOrUpdate(updatedAccount)
     }
 
     private suspend fun resolveTargetAccountId(

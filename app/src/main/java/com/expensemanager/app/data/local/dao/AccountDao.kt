@@ -18,10 +18,10 @@ interface AccountDao {
         val totalIncome: Double
     )
 
-    @Query("SELECT * FROM accounts ORDER BY lastUpdated DESC")
+    @Query("SELECT * FROM accounts WHERE maskNumber != 'PRIMARY' AND maskNumber != '' AND bankName != 'Bank Account' AND bankName != '' ORDER BY lastUpdated DESC")
     fun getAllAccounts(): Flow<List<AccountEntity>>
 
-    @Query("SELECT * FROM accounts")
+    @Query("SELECT * FROM accounts WHERE maskNumber != 'PRIMARY' AND maskNumber != '' AND bankName != 'Bank Account' AND bankName != ''")
     suspend fun getAllAccountsSnapshot(): List<AccountEntity>
 
     @Query("SELECT * FROM accounts WHERE id = :accountId LIMIT 1")
