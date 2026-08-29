@@ -161,4 +161,18 @@ class SmsClassifierTest {
         assertFalse(SmsClassifier.isFinancialSms(adv1))
         assertFalse(SmsClassifier.isFinancialSms(adv2))
     }
+
+    @Test
+    fun `test telecom mobile recharge confirmations and promotional cashback pitches are rejected`() {
+        val promo1 = "Recharge & earn upto Rs. 200 cashback. Open Airtel app now https://i.airtel.in/upto200back_1"
+        val promo2 = "Ready to recharge? Do it smarter. Get up to Rs. 200 cashback on Airtel app via MobiKwik UPI on a minimum payment of Rs. 150. Recharge now: https://i.airtel.in/Cashback_Offers_1"
+        val promo3 = "Important Update for 8056156721: Your Prepaid bill payment of Rs.349 was successful. You could've paid up to Rs.87 less with Airtel Axis Bank Credit Card. View Details https://i.airtel.in/AxisCard16"
+        val recharge1 = "Hi, recharge of Rs. 399 successfully credited to your Airtel number 8056156721, also the validity has been extended till 26-07-2026."
+
+        assertFalse(SmsClassifier.isFinancialSms(promo1))
+        assertFalse(SmsClassifier.isFinancialSms(promo2))
+        assertFalse(SmsClassifier.isFinancialSms(promo3))
+        assertFalse(SmsClassifier.isFinancialSms(recharge1))
+    }
 }
+

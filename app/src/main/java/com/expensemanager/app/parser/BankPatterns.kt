@@ -60,6 +60,9 @@ object BankPatterns {
         "INDUS" to BankInfo("IndusInd Bank"),
         "RBL" to BankInfo("RBL Bank"),
         // Indian Bank & Bank of India
+        "INDBNK" to BankInfo("Indian Bank"),
+        "INDIBK" to BankInfo("Indian Bank"),
+        "INDBK" to BankInfo("Indian Bank"),
         "IDIBNK" to BankInfo("Indian Bank"),
         "INDIAN" to BankInfo("Indian Bank"),
         "BOITXN" to BankInfo("Bank of India"),
@@ -67,20 +70,25 @@ object BankPatterns {
         "IDBIBK" to BankInfo("IDBI Bank"),
         "IDBI" to BankInfo("IDBI Bank"),
         "CENTRAL" to BankInfo("Central Bank of India"),
+        "CBIN" to BankInfo("Central Bank of India"),
         "IPPB" to BankInfo("IPPB"),
         // Small Finance & Foreign Banks
         "AUBANK" to BankInfo("AU Small Finance Bank"),
         "AUFIN" to BankInfo("AU Small Finance Bank"),
         "EQUITAS" to BankInfo("Equitas Small Finance Bank"),
+        "EQSFB" to BankInfo("Equitas Small Finance Bank"),
         "CITI" to BankInfo("CitiBank"),
         "AMEX" to BankInfo("American Express", AccountType.CREDIT_CARD),
         "HSBC" to BankInfo("HSBC"),
         "SCBL" to BankInfo("Standard Chartered Bank"),
+        "SCB" to BankInfo("Standard Chartered Bank"),
         // Credit Cards & Neo Cards
         "CREDIN" to BankInfo("CRED", AccountType.CREDIT_CARD),
         "CRED" to BankInfo("CRED", AccountType.CREDIT_CARD),
         "SLIC" to BankInfo("Slice", AccountType.CREDIT_CARD),
+        "SLICE" to BankInfo("Slice", AccountType.CREDIT_CARD),
         "ONECARD" to BankInfo("OneCard", AccountType.CREDIT_CARD),
+        "1CARD" to BankInfo("OneCard", AccountType.CREDIT_CARD),
         "GKIWIP" to BankInfo("Kiwi", AccountType.CREDIT_CARD),
         "KIWI" to BankInfo("Kiwi", AccountType.CREDIT_CARD),
         // Wallets & UPI
@@ -93,11 +101,12 @@ object BankPatterns {
         "NOBRKR" to BankInfo("NoBroker", AccountType.BANK_ACCOUNT),
         "GROWWO" to BankInfo("Groww Wallet", AccountType.WALLET),
         "GROWW" to BankInfo("Groww Wallet", AccountType.WALLET),
-        // EPFO
+        // EPFO & Loans
         "EPFO" to BankInfo("EPFO PF Account", AccountType.SAVINGS),
         "EPFOHO" to BankInfo("EPFO PF Account", AccountType.SAVINGS),
         "PFOHOS" to BankInfo("EPFO PF Account", AccountType.SAVINGS),
-        "PFOHOG" to BankInfo("EPFO PF Account", AccountType.SAVINGS)
+        "PFOHOG" to BankInfo("EPFO PF Account", AccountType.SAVINGS),
+        "MUTFCL" to BankInfo("Muthoot Fincorp", AccountType.BANK_ACCOUNT)
     )
 
     private val NON_BANK_NOISE_SENDERS = setOf(
@@ -111,7 +120,7 @@ object BankPatterns {
         "american express", "slice", "onecard", "kiwi", "indian bank",
         "bank of india", "idbi bank", "central bank of india", "ippb", "au small finance bank",
         "equitas small finance bank", "hsbc", "standard chartered bank", "paytm payments bank",
-        "airtel payments bank"
+        "airtel payments bank", "muthoot fincorp"
     )
 
     fun isVerifiedFinancialInstitution(bankName: String): Boolean {
@@ -133,12 +142,12 @@ object BankPatterns {
             .replace(Regex("""(?i)\b(?:info:\s*)?UPI/[A-Za-z0-9._\-]+/[A-Za-z0-9._\-]+/[A-Za-z0-9._\-@]+""", RegexOption.DOT_MATCHES_ALL), " ")
             // Remove full email-like VPA handles (e.g. swiggy@okhdfcbank, user@icici, name.123@axisbank, xyz@paytm)
             .replace(Regex("""\b[A-Za-z0-9._\-]+@[A-Za-z0-9._\-]+\b"""), " ")
-            // Remove VPA phrases with handles
-            .replace(Regex("""(?i)\b(?:to\s+vpa|from\s+vpa|towards\s+vpa|via\s+vpa|vpa\s*:?|upi\s*[/:]\s*vpa|upi\s+id\s*:?)\s*[:\s]*[A-Za-z0-9._\-@]+"""), " ")
+            // Remove VPA phrases with handles, including "linked to VPA"
+            .replace(Regex("""(?i)\b(?:linked\s+to\s+vpa|to\s+vpa|from\s+vpa|towards\s+vpa|via\s+vpa|vpa\s*:?|upi\s*[/:]\s*vpa|upi\s+id\s*:?)\s*[:\s]*[A-Za-z0-9._\-@]+"""), " ")
             // Remove recipient transfer clauses
             .replace(Regex("""(?i)\b(?:transfer\s+to\s+upi|paid\s+to\s+upi|sent\s+to\s+upi|transferred\s+to\s+vpa)\s*[:\s]*[A-Za-z0-9._\-@]+"""), " ")
-            // Remove UPI reference numbers and UTRs
-            .replace(Regex("""(?i)\b(?:upi\s*ref|rrn|utr|txn\s*id|reference\s*no|ref\s*no|ref)\s*[:\s]*[A-Za-z0-9]+"""), " ")
+            // Remove UPI reference numbers, RRNs and UTRs
+            .replace(Regex("""(?i)\b(?:upi\s*ref(?:\s*no)?|rrn|utr|txn\s*id|reference\s*no|ref\s*no|ref)\s*[:\s]*[A-Za-z0-9]+"""), " ")
             // Remove URLs
             .replace(Regex("""https?://\S+"""), " ")
             // Remove merchant prefixes like @UPI_BLINKIT or PHP*Zepto

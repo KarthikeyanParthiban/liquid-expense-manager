@@ -36,11 +36,14 @@ interface AccountDao {
     @Update
     suspend fun update(account: AccountEntity)
 
+    @Query("SELECT * FROM accounts")
+    suspend fun getAllRawAccounts(): List<AccountEntity>
+
     @Query("DELETE FROM accounts WHERE id = :accountId")
     suspend fun deleteAccount(accountId: String)
 
-    @Query("DELETE FROM accounts WHERE maskNumber = 'PRIMARY' AND bankName IN (SELECT bankName FROM accounts WHERE maskNumber != 'PRIMARY')")
-    suspend fun cleanDuplicatePrimaryAccounts()
+    @Query("DELETE FROM accounts WHERE maskNumber = 'PRIMARY'")
+    suspend fun deleteAllPrimaryAccounts()
 
     @Query("DELETE FROM accounts")
     suspend fun clearAll()

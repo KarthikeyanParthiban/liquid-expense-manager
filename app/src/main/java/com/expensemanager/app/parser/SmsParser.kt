@@ -158,7 +158,7 @@ object SmsParser {
         return null
     }
 
-    private fun extractAccountMask(body: String): String? {
+    fun extractAccountMask(body: String): String? {
         for (pattern in BankPatterns.ACCOUNT_PATTERNS) {
             val matcher = pattern.matcher(body)
             if (matcher.find()) {

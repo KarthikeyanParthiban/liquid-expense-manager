@@ -237,9 +237,96 @@ class TransactionRepository(
         merchantRuleDao.delete(MerchantRuleEntity.fromDomain(rule))
     }
 
+    suspend fun reclassifyAndHealDatabase(): Int = processingMutex.withLock {
+        android.util.Log.d("HealDB", "Starting fast reclassifyAndHealDatabase...")
+        val entities = transactionDao.getAllTransactionsList()
+        android.util.Log.d("HealDB", "Found ${entities.size} entities to evaluate")
+        var fixedCount = 0
+
+        for (entity in entities) {
+            val body = entity.rawBody ?: continue
+
+            // 1. Purge non-financial noise, promotional cashback ads, telecom validity confirmations, and rogue chat app notification leaks
+            if (entity.sender == "WhatsApp Pay" || entity.sender.contains("WhatsApp", ignoreCase = true) || !com.expensemanager.app.parser.SmsClassifier.isFinancialSms(body)) {
+                android.util.Log.d("HealDB", "Purging non-financial noise / chat leak: id=${entity.id} sender='${entity.sender}' body='${body.take(50)}'")
+                transactionDao.deleteById(entity.id)
+                fixedCount++
+                continue
+            }
+
+            val bankInfo = BankPatterns.identifyBank(entity.sender, body)
+            val mask = com.expensemanager.app.parser.SmsParser.extractAccountMask(body) ?: entity.accountMask
+            val targetAccountId = "${bankInfo.name.replace(" ", "_")}_${mask ?: "PRIMARY"}"
+            android.util.Log.d("HealDB", "Row: id=${entity.id} sender='${entity.sender}' currBank='${entity.bankName}' identBank='${bankInfo.name}'")
+
+            // If bankName, accountId, or accountMask changed
+            if (bankInfo.name != entity.bankName ||
+                targetAccountId != entity.accountId ||
+                (mask != null && mask != entity.accountMask)
+            ) {
+                android.util.Log.d("HealDB", "Fixing ${entity.id}: Old bank='${entity.bankName}' -> New bank='${bankInfo.name}', Old account='${entity.accountId}' -> New account='$targetAccountId'")
+                val updated = entity.copy(
+                    bankName = bankInfo.name,
+                    accountId = targetAccountId,
+                    accountMask = mask ?: entity.accountMask,
+                    accountType = bankInfo.defaultType.name
+                )
+                transactionDao.update(updated)
+                fixedCount++
+            }
+        }
+
+        android.util.Log.d("HealDB", "Finished fast reclassifyAndHealDatabase, fixedCount=$fixedCount")
+        syncAccountsTable()
+
+        return@withLock fixedCount
+    }
+
+    private suspend fun syncAccountsTable() {
+        // 1. Purge all legacy PRIMARY accounts
+        accountDao.deleteAllPrimaryAccounts()
+
+        val allTxns = transactionDao.getAllTransactionsList()
+        val existingAccounts = accountDao.getAllRawAccounts()
+
+        // Find active account IDs that have transactions
+        val activeAccountIds = allTxns.map { it.accountId }.toSet()
+
+        // Delete accounts that no longer have any transactions (e.g. misclassified accounts)
+        for (account in existingAccounts) {
+            if (account.id !in activeAccountIds) {
+                accountDao.deleteAccount(account.id)
+            }
+        }
+
+        // Create/update accounts for all valid transactions
+        val groupedByAccount = allTxns.groupBy { it.accountId }
+        for ((accId, txns) in groupedByAccount) {
+            val sample = txns.first()
+            if (!BankPatterns.isVerifiedFinancialInstitution(sample.bankName)) continue
+            val hasMask = !sample.accountMask.isNullOrBlank() && sample.accountMask != "PRIMARY"
+            if (!hasMask) continue
+
+            val latestTxnWithBalance = txns.filter { it.balanceAfter != null }.maxByOrNull { it.timestamp }
+            val latestTxn = txns.maxByOrNull { it.timestamp } ?: sample
+
+            val existing = accountDao.getAccountById(accId)
+            val newAccount = AccountEntity(
+                id = accId,
+                bankName = sample.bankName,
+                accountType = sample.accountType,
+                maskNumber = sample.accountMask!!,
+                lastKnownBalance = latestTxnWithBalance?.balanceAfter ?: existing?.lastKnownBalance,
+                lastUpdated = latestTxn.timestamp
+            )
+            accountDao.insertOrUpdate(newAccount)
+        }
+    }
+
     suspend fun clearAll() = processingMutex.withLock {
         transactionDao.clearAll()
         accountDao.clearAll()
         merchantRuleDao.clearAll()
     }
 }
+

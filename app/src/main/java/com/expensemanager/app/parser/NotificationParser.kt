@@ -19,7 +19,6 @@ object NotificationParser {
         "com.dreamplug.androidapp",               // CRED
         "in.org.npci.upiapp",                     // BHIM
         "com.amazon.mShop.android.shopping",      // Amazon Pay
-        "com.whatsapp",                           // WhatsApp Pay
         "com.navi.mutualfunds",                   // Navi UPI
         "money.jupiter",                          // Jupiter
         "co.epifi.app",                           // Fi Money
@@ -50,7 +49,6 @@ object NotificationParser {
         "com.dreamplug.androidapp" to "CRED",
         "in.org.npci.upiapp" to "BHIM",
         "com.amazon.mShop.android.shopping" to "Amazon Pay",
-        "com.whatsapp" to "WhatsApp Pay",
         "money.jupiter" to "Jupiter",
         "co.epifi.app" to "Fi Money",
         "indwin.c3.sharekar" to "Slice",

@@ -310,4 +310,37 @@ class SmsParserTest {
         assertEquals("XX1006", result.accountMask)
         assertTrue("Bill payment should be excluded from monthly expenses", result.isExcludedFromBudget)
     }
+
+    @Test
+    fun `test Indian Bank credit SMS with okaxis VPA handle`() {
+        val sender = "BZ-INDBNK-S"
+        val body = "Rs.2000.00 credited to a/c *2813 on 11/07/2026 by a/c linked to VPA adhithyavel11-1@okaxis (UPI Ref no 619262846741).Indian Bank"
+        val timestamp = 1783765136000L
+
+        val result = SmsParser.parse(sender, body, timestamp)
+        assertNotNull("Result should not be null", result)
+        assertEquals(2000.00, result!!.amount, 0.01)
+        assertEquals(TransactionType.CREDIT, result.type)
+        assertEquals("Indian Bank", result.bankName) // NOT Axis Bank!
+        assertEquals("XX2813", result.accountMask)
+        assertEquals("Indian_Bank_XX2813", result.accountId)
+        assertEquals("619262846741", result.referenceId)
+    }
+
+    @Test
+    fun `test Indian Bank credit SMS with okicici VPA handle`() {
+        val sender = "BT-INDBNK-S"
+        val body = "Rs.1000.00 credited to a/c *2813 on 18/06/2026 by a/c linked to VPA adhithyavel11-2@okicici (UPI Ref no 653525900686).Indian Bank"
+        val timestamp = 1781765136000L
+
+        val result = SmsParser.parse(sender, body, timestamp)
+        assertNotNull("Result should not be null", result)
+        assertEquals(1000.00, result!!.amount, 0.01)
+        assertEquals(TransactionType.CREDIT, result.type)
+        assertEquals("Indian Bank", result.bankName) // NOT ICICI Bank!
+        assertEquals("XX2813", result.accountMask)
+        assertEquals("Indian_Bank_XX2813", result.accountId)
+        assertEquals("653525900686", result.referenceId)
+    }
 }
+

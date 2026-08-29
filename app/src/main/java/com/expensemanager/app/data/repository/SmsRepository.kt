@@ -120,6 +120,10 @@ class SmsRepository(
         )
 
         try {
+            if (forceFull) {
+                transactionRepository.reclassifyAndHealDatabase()
+            }
+
             if (total == 0) {
                 if (showOverlay) {
                     _syncState.value = SyncProgressState(

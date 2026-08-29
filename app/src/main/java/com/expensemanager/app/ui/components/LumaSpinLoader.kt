@@ -32,17 +32,21 @@ fun LumaSpinLoader(
     modifier: Modifier = Modifier,
     size: Dp = 65.dp,
     strokeWidth: Dp = 3.dp,
-    color: Color = TextPrimary
+    color: Color = TextPrimary,
+    progress: Float? = null,
+    cycleDurationMillis: Int = 2500
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "lumaSpinTransition")
-    val rawProgress by infiniteTransition.animateFloat(
+    val infiniteProgress by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2500, easing = LinearEasing)
+            animation = tween(durationMillis = cycleDurationMillis, easing = LinearEasing)
         ),
         label = "lumaProgress"
     )
+
+    val rawProgress = progress ?: infiniteProgress
 
     Box(
         modifier = modifier.size(size),

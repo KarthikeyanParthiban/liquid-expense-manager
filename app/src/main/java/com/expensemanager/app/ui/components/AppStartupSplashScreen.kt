@@ -36,39 +36,73 @@ import com.expensemanager.app.ui.theme.TextPrimaryConstant
 import com.expensemanager.app.ui.theme.TextSecondaryConstant
 import kotlinx.coroutines.delay
 
-private val AppleSpringEase = CubicBezierEasing(0.32f, 0.72f, 0f, 1f)
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.graphics.Brush
+
+private val AppleSpringEase = CubicBezierEasing(0.22f, 1f, 0.36f, 1f)
 
 /**
- * App Startup Screen featuring the Luma Spin loader with a liquid smooth swipe-up reveal transition.
+ * App Startup Screen featuring the Luma Spin loader with a liquid smooth gradient swipe-up reveal transition.
  * Automatically adapts background, loader, and typography colors to Dark, Light, or System settings.
  */
 @Composable
 fun AppStartupSplashScreen(
-    durationMillis: Long = 1600L,
+    loopDurationMillis: Int = 2200,
     content: @Composable () -> Unit
 ) {
     var showSplash by remember { mutableStateOf(true) }
     val isDark = LocalIsDarkTheme.current
 
-    val splashBg = if (isDark) DarkBg else LightBgConstant
+    val splashGradient = if (isDark) {
+        Brush.verticalGradient(
+            colors = listOf(
+                DarkBg,
+                Color(0xFF0A0A0A),
+                Color(0xFF121212),
+                Color(0xFF080808)
+            )
+        )
+    } else {
+        Brush.verticalGradient(
+            colors = listOf(
+                LightBgConstant,
+                Color(0xFFF7F8FA),
+                Color(0xFFFFFFFF),
+                Color(0xFFF2F4F7)
+            )
+        )
+    }
+
     val loaderColor = if (isDark) Color.White else TextPrimaryConstant
     val titleColor = if (isDark) Color.White else TextPrimaryConstant
     val subtitleColor = if (isDark) Color(0xFFA3A3A3) else TextSecondaryConstant
 
     val contentScale by animateFloatAsState(
-        targetValue = if (showSplash) 0.94f else 1f,
-        animationSpec = tween(durationMillis = 750, easing = AppleSpringEase),
+        targetValue = if (showSplash) 0.92f else 1f,
+        animationSpec = tween(durationMillis = 850, easing = AppleSpringEase),
         label = "contentScale"
     )
 
     val contentAlpha by animateFloatAsState(
-        targetValue = if (showSplash) 0.75f else 1f,
-        animationSpec = tween(durationMillis = 700, easing = AppleSpringEase),
+        targetValue = if (showSplash) 0.5f else 1f,
+        animationSpec = tween(durationMillis = 800, easing = AppleSpringEase),
         label = "contentAlpha"
     )
 
+    val progressAnim = remember { androidx.compose.animation.core.Animatable(0f) }
+
     LaunchedEffect(Unit) {
-        delay(durationMillis)
+        // Complete the exact full 360 degree orbital loop before transitioning to homescreen
+        progressAnim.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(
+                durationMillis = loopDurationMillis,
+                easing = LinearEasing
+            )
+        )
+        // Smoothly dismiss splash only after the full loop has reached 100% completion
         showSplash = false
     }
 
@@ -83,30 +117,36 @@ fun AppStartupSplashScreen(
             content()
         }
 
-        // Startup Screen Overlay with Liquid Smooth Swipe-Up Reveal
+        // Startup Screen Overlay with Liquid Smooth Gradient Swipe-Up Reveal
         AnimatedVisibility(
             visible = showSplash,
-            enter = fadeIn(),
+            enter = fadeIn(animationSpec = tween(350)),
             exit = slideOutVertically(
                 targetOffsetY = { -it },
-                animationSpec = tween(durationMillis = 750, easing = AppleSpringEase)
+                animationSpec = tween(durationMillis = 850, easing = AppleSpringEase)
+            ) + fadeOut(
+                animationSpec = tween(durationMillis = 800, easing = LinearEasing),
+                targetAlpha = 0.05f
             )
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .shadow(elevation = 24.dp)
-                    .background(splashBg),
-                contentAlignment = Alignment.Center
+                    .shadow(elevation = 32.dp)
+                    .background(splashGradient)
             ) {
+                // Centered Loader & Branding
                 Column(
+                    modifier = Modifier.align(Alignment.Center),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
                     LumaSpinLoader(
                         size = 72.dp,
                         strokeWidth = 3.5.dp,
-                        color = loaderColor
+                        color = loaderColor,
+                        progress = progressAnim.value,
+                        cycleDurationMillis = loopDurationMillis
                     )
 
                     Spacer(modifier = Modifier.height(28.dp))
@@ -118,6 +158,22 @@ fun AppStartupSplashScreen(
                         fontSize = 38.sp
                     )
                 }
+
+                // Bottom trailing gradient feather for the swipe-up reveal edge
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                        .align(Alignment.BottomCenter)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    if (isDark) Color(0x33333333) else Color(0x15000000)
+                                )
+                            )
+                        )
+                )
             }
         }
     }

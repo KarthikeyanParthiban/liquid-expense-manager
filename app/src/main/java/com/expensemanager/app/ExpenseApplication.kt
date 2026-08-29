@@ -9,6 +9,7 @@ import com.expensemanager.app.worker.SmsSyncWorker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class ExpenseApplication : Application() {
 
@@ -37,6 +38,15 @@ class ExpenseApplication : Application() {
         
         // Schedule 15-minute background periodic sync
         SmsSyncWorker.schedulePeriodicSync(this)
+
+        // Asynchronously heal & reclassify any legacy transactions on startup
+        applicationScope.launch(Dispatchers.IO) {
+            try {
+                transactionRepository.reclassifyAndHealDatabase()
+            } catch (e: Exception) {
+                android.util.Log.e("ExpenseApplication", "Error auto-healing database", e)
+            }
+        }
     }
 
     companion object {

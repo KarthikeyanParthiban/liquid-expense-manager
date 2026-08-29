@@ -33,12 +33,15 @@ object SmsClassifier {
         Regex("""(?i)\b(?:credit\s+limit\s+increase|upgrade\s+your\s+card|overdraft\s+facility|revised\s+credit\s+limit|access\s+to\s+funds|convert.*into\s+emi|convert.*to\s+emi|split.*spends.*into.*emi|flexi\s*emi|has\s+dues\s+of)\b""")
     )
 
-    // Marketing Ads, Discounts, Workshops, Token payments, Clickbaits
+    // Marketing Ads, Discounts, Cashback Offers, Workshops, Token payments, Clickbaits
     private val REJECT_MARKETING_ADS_PROMO_PATTERNS = listOf(
         Regex("""(?i)\b(?:grand\s+opening|%\s+off|biggest\s+deals|exciting\s+offers|gift\s+vouchers|token\s+amount\s+of\s+rs|click\s+here\s+to\s+pay|link\s+par\s+click|click\s+karein|click\s+here)\b"""),
         Regex("""(?i)\b(?:free\s+craft|complimentary|subscription\s+is\s+now\s+active|stream\s+live|gift\s+card.*expires|cashback\s+offer|win\s+up\s+to|cashback\s+bonanza)\b"""),
         Regex("""(?i)\b(?:use\s+coupon|use\s+promo|hurry|valid\s+only\s+on|limited\s+period|macro\s+class|excel\s+goodies|electoral\s+roll)\b"""),
-        Regex("""(?i)\b(?:congratulations|khushkhabri|you\s*have\s*won|claim\s*now|special\s*offer|exclusive\s*deal|discount\s*coupon|t&c\s*apply|\*t&c)\b""")
+        Regex("""(?i)\b(?:congratulations|khushkhabri|you\s*have\s*won|claim\s*now|special\s+offer|exclusive\s+deal|discount\s+coupon|t&c\s+apply|\*t&c)\b"""),
+        Regex("""(?i)\b(?:recharge\s*&\s*earn|earn\s+up\s*to\s+rs|get\s+up\s*to\s+rs.*cashback|upto\s+rs.*cashback|ready\s+to\s+recharge|do\s+it\s+smarter)\b"""),
+        Regex("""(?i)\b(?:you\s+could(?:'ve|\s+have)\s+paid\s+up\s+to\s+rs.*less\s+with)\b"""),
+        Regex("""(?i)\b(?:on\s+a\s+minimum\s+payment\s+of\s+rs|recharge\s+now\s*:|open\s+airtel\s+app\s+now)\b""")
     )
 
     // Trading, Demat, Stock Exchanges (NSE, BSE, MCX)
@@ -57,14 +60,19 @@ object SmsClassifier {
         Regex("""(?i)\b(?:scheduled\s+for|mandate\s+created|mandate\s+registration|mandate\s+successful|autopay\s+activation|autopay\s+request)\b""")
     )
 
+    // Failed / Declined transactions
     private val REJECT_FAILED_PATTERNS = listOf(
         Regex("""(?i)\b(?:unsuccessful|failed|declined|could\s+not\s+be\s+processed|transaction\s+failure|txn\s+failed|payment\s+declined|was\s+not\s+completed)\b"""),
         Regex("""(?i)\b(?:insufficient\s+funds|limit\s+exceeded|incorrect\s+pin)\b""")
     )
 
+    // Telecom mobile recharge confirmations, data quotas, and validity extensions (Not Bank Account transactions)
     private val REJECT_TELECOM_DATA_PATTERNS = listOf(
         Regex("""(?i)\b(?:recharge\s+plan\s+expir|plan\s+expired|data\s+quota|data\s+used|validity\s+expir|quota\s+as\s+per\s+plan|100%\s+of\s+daily\s+data|50%\s+data|90%\s+of\s+available\s+data)\b"""),
-        Regex("""(?i)\b(?:pack\s+validity|recharge\s+now\s+to\s+continue|talktime\s+balance)\b""")
+        Regex("""(?i)\b(?:pack\s+validity|recharge\s+now\s+to\s+continue|talktime\s+balance)\b"""),
+        Regex("""(?i)\b(?:recharge\s+of\s+rs.*(?:credited\s+to|successful)|credited\s+to\s+your\s+(?:airtel|jio|vi|vodafone|idea|bsnl)?\s*number|validity\s+has\s+been\s+extended)\b"""),
+        Regex("""(?i)\b(?:prepaid\s+bill\s+payment\s+of\s+rs.*(?:successful|completed))\b"""),
+        Regex("""(?i)\b(?:recharge\s+successful|recharge\s+credited\s+to\s+your|talktime\s+credited|validity\s+extended)\b""")
     )
 
     private val REJECT_EPFO_PATTERNS = listOf(

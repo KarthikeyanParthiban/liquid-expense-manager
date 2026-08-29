@@ -5,6 +5,16 @@ All notable changes to **LQD (Liquid Expense Manager)** are documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0.3] - 2026-08-29
+
+### Added
+- **Dynamic VPA vs Beneficiary Bank Parser**: Accurately strips third-party handle VPAs (`@okicici`, `@okaxis`, `@oksbi`, `@paytm`, `@ybl`, etc.) before identifying the underlying user account, eliminating misclassification of transfer beneficiary banks.
+- **Telecom & Promo Noise Rejection**: Filters out mobile recharge confirmations, data pack validity notices, and promotional cashback pitches.
+- **Strict Device Data Isolation**: Excluded chat notification listener to guarantee personal WhatsApp/chat messages never leak or get parsed across devices.
+- **Muthoot Fincorp (`MUTFCL`) Support**: Added transaction parsing and loan classification for Muthoot Fincorp alerts.
+- **Database Self-Healing & Orphan Pruning**: Automatic startup purge of legacy unmasked/primary accounts and noise records.
+- **Liquid Full-Loop Startup Reveal**: Synchronized Luma Spin orbital animation with full 360° loop completion and smooth neutral dark-mode gradient swipe-up reveal.
+
 ---
 
 ## [1.3.0.2] - 2026-08-27
