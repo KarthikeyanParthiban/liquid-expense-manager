@@ -48,8 +48,18 @@ fi
 
 # 3. Run Unit Tests
 echo "🧪 [3/5] Running Unit Tests..."
-export JAVA_HOME=${JAVA_HOME:-/home/karthikeyan/android-dev/jdk-17}
-export PATH=$JAVA_HOME/bin:$PATH
+if [ -z "$JAVA_HOME" ] || [ ! -d "$JAVA_HOME" ]; then
+    if [ -d "/home/karthikeyan/android-dev/jdk-17" ]; then
+        export JAVA_HOME="/home/karthikeyan/android-dev/jdk-17"
+    elif [ -d "/usr/lib/jvm/java-25-openjdk" ]; then
+        export JAVA_HOME="/usr/lib/jvm/java-25-openjdk"
+    elif command -v java >/dev/null 2>&1; then
+        export JAVA_HOME="$(dirname $(dirname $(readlink -f $(which java))))"
+    fi
+fi
+if [ -n "$JAVA_HOME" ]; then
+    export PATH="$JAVA_HOME/bin:$PATH"
+fi
 ./gradlew testDebugUnitTest --quiet
 
 # 4. Build Signed Release APK
