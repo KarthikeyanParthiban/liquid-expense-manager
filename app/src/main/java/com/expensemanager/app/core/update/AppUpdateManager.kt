@@ -112,8 +112,11 @@ object AppUpdateManager {
             )
 
             Result.success(updateInfo)
+        } catch (e: java.net.UnknownHostException) {
+            Result.failure(Exception("Unable to connect to GitHub (No internet connection or DNS error). Please check your Wi-Fi or mobile data."))
+        } catch (e: java.net.SocketTimeoutException) {
+            Result.failure(Exception("Connection timed out while checking for updates. Please check your network and try again."))
         } catch (e: Exception) {
-            e.printStackTrace()
             Result.failure(e)
         }
     }
@@ -252,8 +255,11 @@ object AppUpdateManager {
 
             context.startActivity(installIntent)
             Result.success(Unit)
+        } catch (e: java.net.UnknownHostException) {
+            Result.failure(Exception("Download failed: No internet connection or DNS error. Please check your Wi-Fi or mobile data."))
+        } catch (e: java.net.SocketTimeoutException) {
+            Result.failure(Exception("Download timed out while fetching update. Please check your connection."))
         } catch (e: Exception) {
-            e.printStackTrace()
             Result.failure(e)
         }
     }
