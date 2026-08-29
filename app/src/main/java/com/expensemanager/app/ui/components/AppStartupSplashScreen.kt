@@ -38,8 +38,13 @@ import kotlinx.coroutines.delay
 
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.expensemanager.app.R
 
 private val AppleSpringEase = CubicBezierEasing(0.22f, 1f, 0.36f, 1f)
 
@@ -76,8 +81,6 @@ fun AppStartupSplashScreen(
     }
 
     val loaderColor = if (isDark) Color.White else TextPrimaryConstant
-    val titleColor = if (isDark) Color.White else TextPrimaryConstant
-    val subtitleColor = if (isDark) Color(0xFFA3A3A3) else TextSecondaryConstant
 
     val contentScale by animateFloatAsState(
         targetValue = if (showSplash) 0.92f else 1f,
@@ -135,7 +138,7 @@ fun AppStartupSplashScreen(
                     .shadow(elevation = 32.dp)
                     .background(splashGradient)
             ) {
-                // Centered Loader & Branding
+                // Centered Loader & Official Logo
                 Column(
                     modifier = Modifier.align(Alignment.Center),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -151,11 +154,10 @@ fun AppStartupSplashScreen(
 
                     Spacer(modifier = Modifier.height(28.dp))
 
-                    // Component 1: LQD Branding (L & D primary, Q Royal Electric Blue)
-                    LqdBrandWordmark(
-                        textColor = titleColor,
-                        accentColor = Color(0xFF0055FF),
-                        fontSize = 38.sp
+                    // Official LQD Geometric Brand Logo
+                    LqdLogo(
+                        isDark = isDark,
+                        modifier = Modifier.height(46.dp)
                     )
                 }
 
@@ -180,43 +182,36 @@ fun AppStartupSplashScreen(
 }
 
 /**
- * Component 1: Official LQD Brand Wordmark
- * Renders L and D in primary adaptive color and Q in Royal Electric Blue (#0055FF).
+ * Official LQD Geometric Vector Brand Logo.
+ * Renders L and D in adaptive brand color (white on dark / #18181A on light) and Q in brand grey (#8C9198).
+ * Preserves the exact 1187:536 aspect ratio.
+ */
+@Composable
+fun LqdLogo(
+    modifier: Modifier = Modifier,
+    isDark: Boolean = LocalIsDarkTheme.current
+) {
+    val drawableRes = if (isDark) R.drawable.ic_lqd_logo_reversed else R.drawable.ic_lqd_logo
+    Image(
+        painter = painterResource(id = drawableRes),
+        contentDescription = "LQD Logo",
+        modifier = modifier
+            .width((46 * (1187f / 536f)).dp),
+        contentScale = ContentScale.Fit
+    )
+}
+
+/**
+ * Compatibility alias for LqdLogo
  */
 @Composable
 fun LqdBrandWordmark(
     modifier: Modifier = Modifier,
-    textColor: Color,
-    accentColor: Color = Color(0xFF0055FF),
+    textColor: Color = Color.Unspecified,
+    accentColor: Color = Color(0xFF8C9198),
     fontSize: androidx.compose.ui.unit.TextUnit = 38.sp
 ) {
-    androidx.compose.foundation.layout.Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "L",
-            fontSize = fontSize,
-            fontWeight = FontWeight.ExtraBold,
-            color = textColor,
-            letterSpacing = 0.sp
-        )
-        Text(
-            text = "Q",
-            fontSize = fontSize,
-            fontWeight = FontWeight.ExtraBold,
-            color = accentColor,
-            letterSpacing = 0.sp
-        )
-        Text(
-            text = "D",
-            fontSize = fontSize,
-            fontWeight = FontWeight.ExtraBold,
-            color = textColor,
-            letterSpacing = 0.sp
-        )
-    }
+    LqdLogo(modifier = modifier)
 }
 
 

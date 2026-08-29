@@ -216,7 +216,7 @@ class SmsRepository(
                     stage = SyncStage.COMPLETED,
                     stageMessage = if (insertedCount > 0) "Imported $insertedCount transaction(s)" else "All transactions up to date"
                 )
-                delay(650)
+                delay(750)
             }
             _syncState.value = SyncProgressState(isSyncing = false, showOverlay = false)
 

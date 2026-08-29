@@ -66,12 +66,24 @@ export const StartupScreen: React.FC<StartupScreenProps> = ({
               colorClassName="shadow-neutral-900 dark:shadow-white"
             />
 
-            {/* Component 1: Brand Wordmark (LQD with royal blue Q) */}
-            <div className="flex items-center text-4xl font-extrabold tracking-tight">
-              <span className="text-neutral-900 dark:text-white">L</span>
-              <span className="text-[#0055FF]">Q</span>
-              <span className="text-neutral-900 dark:text-white">D</span>
-            </div>
+            {/* Official LQD Geometric Brand Logo */}
+            <svg
+              className="h-11 w-auto"
+              viewBox="0 0 1187 536"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              role="img"
+              aria-label="LQD"
+            >
+              <g className="fill-[#18181A] dark:fill-white">
+                <path d="M0 2H86v446h195l86 86H0Z"/>
+                <path d="M730 2H921A266 266 0 0 1 1187 268A266 266 0 0 1 921 534H912L826 448H921A180 180 0 0 0 1101 268A180 180 0 0 0 921 88H816Z"/>
+              </g>
+              <g fill="#8C9198">
+                <path d="M775.9 398.9A268 268 0 1 0 720.2 468.2L659.2 407.2A182 182 0 1 1 711.5 334.5Z"/>
+                <path d="M497 304h118l230 230H727Z"/>
+              </g>
+            </svg>
           </div>
         </div>
       )}

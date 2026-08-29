@@ -5,6 +5,15 @@ All notable changes to **LQD (Liquid Expense Manager)** are documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0.4] - 2026-08-30
+
+### Added
+- **Official Geometric Vector Logo**: Replaced text wordmark on the startup animation and across UI components with the official rebuilt geometric LQD vector logo (`1187×536` true geometry).
+- **Minimalist Sync & Classification Redesign**: Completely overhauled the transaction classification & SMS sync overlay to eliminate neon and rainbow gradients in favor of an understated monochromatic, OLED-aligned design matching the LQD design system.
+- **Unified Brand Loader**: Integrated the signature `LumaSpinLoader` and clean completion states across the sync pipeline.
+
+---
+
 ## [1.3.0.3] - 2026-08-29
 
 ### Added

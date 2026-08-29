@@ -420,25 +420,33 @@
     .splash-brand {
       margin-top: 26px;
       text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
-    .splash-title {
-      font-size: 24px;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      color: #ffffff;
+    .splash-logo-svg {
+      height: 38px;
+      width: auto;
+      display: block;
+      margin: 0 auto;
     }
 
-    .device.light-mode .splash-title {
-      color: #111827;
+    .splash-logo-svg .lqd-ld {
+      fill: #ffffff;
+      transition: fill 0.3s ease;
+    }
+
+    .device.light-mode .splash-logo-svg .lqd-ld {
+      fill: #18181A;
     }
 
     .splash-sub {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
       letter-spacing: 2px;
-      color: #a3a3a3;
-      margin-top: 4px;
+      color: #8C9198;
+      margin-top: 8px;
     }
 
     .device.light-mode .splash-sub {
@@ -819,7 +827,16 @@
           </div>
 
           <div class="splash-brand" id="splashBrand">
-            <div class="splash-title">LQD</div>
+            <svg class="splash-logo-svg" viewBox="0 0 1187 536" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="LQD">
+              <g class="lqd-ld">
+                <path d="M0 2H86v446h195l86 86H0Z"/>
+                <path d="M730 2H921A266 266 0 0 1 1187 268A266 266 0 0 1 921 534H912L826 448H921A180 180 0 0 0 1101 268A180 180 0 0 0 921 88H816Z"/>
+              </g>
+              <g fill="#8C9198">
+                <path d="M775.9 398.9A268 268 0 1 0 720.2 468.2L659.2 407.2A182 182 0 1 1 711.5 334.5Z"/>
+                <path d="M497 304h118l230 230H727Z"/>
+              </g>
+            </svg>
             <div class="splash-sub">EXPENSE MANAGER</div>
           </div>
         </div>

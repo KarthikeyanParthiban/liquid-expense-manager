@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="118.7dp"
+    android:height="53.6dp"
+    android:viewportWidth="1187"
+    android:viewportHeight="536">
+    <!-- L & D Letters (White for dark theme) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M0,2 H86 v446 h195 l86,86 H0 Z M730,2 H921 A266,266 0 0,1 1187,268 A266,266 0 0,1 921,534 H912 L826,448 H921 A180,180 0 0,0 1101,268 A180,180 0 0,0 921,88 H816 Z" />
+    <!-- Q Ring & Diagonal Tail -->
+    <path
+        android:fillColor="#8C9198"
+        android:pathData="M775.9,398.9 A268,268 0 1,0 720.2,468.2 L659.2,407.2 A182,182 0 1,1 711.5,334.5 Z M497,304 h118 l230,230 H727 Z" />
+</vector>

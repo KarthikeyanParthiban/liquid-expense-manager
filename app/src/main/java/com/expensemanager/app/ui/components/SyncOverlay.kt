@@ -2,12 +2,7 @@ package com.expensemanager.app.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -33,10 +28,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.ElectricBolt
-import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -47,26 +41,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.expensemanager.app.core.model.SyncProgressState
 import com.expensemanager.app.core.model.SyncStage
-import com.expensemanager.app.ui.theme.AppleBlue
-import com.expensemanager.app.ui.theme.AppleGreen
-import com.expensemanager.app.ui.theme.AppleTeal
-import com.expensemanager.app.ui.theme.DarkBorderHighlight
-import com.expensemanager.app.ui.theme.DarkCardSurface
+import com.expensemanager.app.ui.theme.BorderLight
 import com.expensemanager.app.ui.theme.LocalIsDarkTheme
+import com.expensemanager.app.ui.theme.TextPrimary
+import com.expensemanager.app.ui.theme.TextSecondary
 
 @Composable
 fun SyncOverlay(
@@ -78,31 +64,30 @@ fun SyncOverlay(
 
     AnimatedVisibility(
         visible = isVisible,
-        enter = fadeIn(animationSpec = tween(240, easing = FastOutSlowInEasing)),
-        exit = fadeOut(animationSpec = tween(200, easing = FastOutSlowInEasing)),
+        enter = fadeIn(animationSpec = tween(200, easing = FastOutSlowInEasing)),
+        exit = fadeOut(animationSpec = tween(180, easing = FastOutSlowInEasing)),
         modifier = modifier
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.72f))
+                .background(Color.Black.copy(alpha = if (isDark) 0.72f else 0.45f))
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
                 ) { /* block outside touches */ },
             contentAlignment = Alignment.Center
         ) {
-            // Animated scaling card
             AnimatedVisibility(
                 visible = isVisible,
                 enter = scaleIn(
-                    initialScale = 0.88f,
-                    animationSpec = spring(dampingRatio = 0.75f, stiffness = 380f)
+                    initialScale = 0.92f,
+                    animationSpec = spring(dampingRatio = 0.82f, stiffness = 420f)
                 ) + fadeIn(tween(180)),
                 exit = scaleOut(
-                    targetScale = 0.92f,
-                    animationSpec = tween(160)
-                ) + fadeOut(tween(160))
+                    targetScale = 0.94f,
+                    animationSpec = tween(150)
+                ) + fadeOut(tween(150))
             ) {
                 SyncCardContent(
                     syncState = syncState,
@@ -118,148 +103,73 @@ private fun SyncCardContent(
     syncState: SyncProgressState,
     isDark: Boolean
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "sync_radar")
-    
-    // Rotating radar / pulse animations
-    val rotationAngle by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2200, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "rotation"
-    )
-
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 0.95f,
-        targetValue = 1.15f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1400, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulse"
-    )
-
-    val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.45f,
-        targetValue = 0.15f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1400, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "alpha"
-    )
-
     val animatedProgress by animateFloatAsState(
         targetValue = syncState.progressFraction,
-        animationSpec = spring(dampingRatio = 0.85f, stiffness = 300f),
-        label = "progress"
+        animationSpec = spring(dampingRatio = 0.85f, stiffness = 320f),
+        label = "syncProgress"
     )
 
-    val cardBg = if (isDark) Color(0xFF141416) else Color(0xFFFFFFFF)
-    val cardBorder = if (isDark) DarkBorderHighlight else Color(0xFFE2E8F0)
-    val titleColor = if (isDark) Color.White else Color(0xFF0F172A)
-    val subtextColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF64748B)
-
     Surface(
-        shape = RoundedCornerShape(28.dp),
-        color = cardBg,
-        shadowElevation = 24.dp,
+        shape = RoundedCornerShape(24.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = if (isDark) 0.dp else 12.dp,
         modifier = Modifier
             .padding(horizontal = 28.dp)
             .fillMaxWidth()
-            .border(1.dp, cardBorder, RoundedCornerShape(28.dp))
+            .border(1.dp, BorderLight, RoundedCornerShape(24.dp))
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 28.dp),
+                .padding(horizontal = 24.dp, vertical = 26.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Top Glowing Radar Badge
+            // Top Status Indicator: Clean LumaSpinLoader matching startup & brand aesthetic
             Box(
-                modifier = Modifier.size(80.dp),
+                modifier = Modifier.size(56.dp),
                 contentAlignment = Alignment.Center
             ) {
-                if (syncState.stage == SyncStage.COMPLETED) {
-                    // Success Checkmark Badge
-                    Box(
-                        modifier = Modifier
-                            .size(68.dp)
-                            .clip(CircleShape)
-                            .background(AppleGreen.copy(alpha = 0.16f))
-                            .border(1.5.dp, AppleGreen.copy(alpha = 0.5f), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = "Done",
-                            tint = AppleGreen,
-                            modifier = Modifier.size(38.dp)
-                        )
-                    }
-                } else {
-                    // Ambient Pulsing Wave Ring
-                    Box(
-                        modifier = Modifier
-                            .size(76.dp)
-                            .scale(pulseScale)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.radialGradient(
-                                    listOf(
-                                        AppleBlue.copy(alpha = pulseAlpha),
-                                        AppleTeal.copy(alpha = pulseAlpha * 0.4f),
-                                        Color.Transparent
-                                    )
-                                )
-                            )
-                    )
-
-                    // Rotating Neon Gradient Ring
-                    Box(
-                        modifier = Modifier
-                            .size(64.dp)
-                            .rotate(rotationAngle)
-                            .clip(CircleShape)
-                            .border(
-                                2.dp,
-                                Brush.sweepGradient(
-                                    listOf(
-                                        AppleBlue,
-                                        AppleTeal,
-                                        AppleGreen,
-                                        Color.Transparent,
-                                        AppleBlue
-                                    )
-                                ),
-                                CircleShape
-                            )
-                    )
-
-                    // Central Glowing Core Icon
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.linearGradient(
-                                    listOf(
-                                        AppleBlue.copy(alpha = 0.25f),
-                                        AppleTeal.copy(alpha = 0.15f)
-                                    )
-                                )
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = if (syncState.stage == SyncStage.CLASSIFYING) Icons.Default.AutoAwesome else Icons.Default.Sync,
-                            contentDescription = null,
-                            tint = if (isDark) Color.White else AppleBlue,
+                when (syncState.stage) {
+                    SyncStage.COMPLETED -> {
+                        Box(
                             modifier = Modifier
-                                .size(24.dp)
-                                .rotate(if (syncState.stage == SyncStage.SCANNING_INBOX) rotationAngle else 0f)
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(if (isDark) Color(0xFF1E1E1E) else Color(0xFFF3F4F6))
+                                .border(1.dp, BorderLight, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "Done",
+                                tint = TextPrimary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+                    SyncStage.FAILED -> {
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(if (isDark) Color(0xFF1E1E1E) else Color(0xFFF3F4F6))
+                                .border(1.dp, BorderLight, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.WarningAmber,
+                                contentDescription = "Failed",
+                                tint = TextPrimary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+                    else -> {
+                        LumaSpinLoader(
+                            size = 48.dp,
+                            strokeWidth = 2.6.dp,
+                            color = TextPrimary,
+                            cycleDurationMillis = 2000
                         )
                     }
                 }
@@ -267,74 +177,68 @@ private fun SyncCardContent(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Main Title
+            // Stage Title
+            val titleText = when (syncState.stage) {
+                SyncStage.SCANNING_INBOX -> "Reading SMS Inbox"
+                SyncStage.CLASSIFYING -> "Classifying Transactions"
+                SyncStage.FINALIZING -> "Updating Balances"
+                SyncStage.COMPLETED -> "Sync Complete"
+                SyncStage.FAILED -> "Sync Failed"
+                SyncStage.IDLE -> "Syncing..."
+            }
+
             Text(
-                text = when (syncState.stage) {
-                    SyncStage.SCANNING_INBOX -> "Reading SMS Inbox"
-                    SyncStage.CLASSIFYING -> "Classifying Transactions"
-                    SyncStage.FINALIZING -> "Syncing Balances & Widgets"
-                    SyncStage.COMPLETED -> "Import Complete!"
-                    SyncStage.FAILED -> "Sync Failed"
-                    SyncStage.IDLE -> "Syncing..."
-                },
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = titleColor,
+                text = titleText,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = TextPrimary,
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             // Dynamic Subtitle
             Text(
-                text = syncState.stageMessage.ifBlank { "Processing financial messages..." },
-                style = MaterialTheme.typography.bodyMedium,
-                color = subtextColor,
+                text = syncState.stageMessage.ifBlank { "Processing transactions..." },
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary,
                 textAlign = TextAlign.Center,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
 
-            Spacer(modifier = Modifier.height(22.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            // Precision Gradient Progress Track
+            // Precision Monochromatic Progress Track
             Column(modifier = Modifier.fillMaxWidth()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(if (isDark) Color(0xFF222228) else Color(0xFFE2E8F0))
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(if (isDark) Color(0xFF262626) else Color(0xFFE5E7EB))
                 ) {
                     if (syncState.stage == SyncStage.COMPLETED) {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .background(AppleGreen)
+                                .background(TextPrimary)
                         )
                     } else if (syncState.total > 0) {
                         Box(
                             modifier = Modifier
                                 .fillMaxHeight()
                                 .fillMaxWidth(animatedProgress)
-                                .background(
-                                    Brush.horizontalGradient(
-                                        listOf(AppleBlue, AppleTeal, AppleGreen)
-                                    )
-                                )
+                                .background(TextPrimary)
                         )
                     } else {
-                        // Indeterminate pulse
+                        // Subtle indeterminate pulse
                         Box(
                             modifier = Modifier
                                 .fillMaxHeight()
-                                .fillMaxWidth(0.35f)
+                                .fillMaxWidth(0.3f)
                                 .align(Alignment.Center)
-                                .background(
-                                    Brush.horizontalGradient(
-                                        listOf(Color.Transparent, AppleBlue, Color.Transparent)
-                                    )
-                                )
+                                .background(TextSecondary.copy(alpha = 0.35f))
                         )
                     }
                 }
@@ -354,8 +258,8 @@ private fun SyncCardContent(
                             "Scanning inbox..."
                         },
                         style = MaterialTheme.typography.labelSmall,
-                        color = subtextColor,
-                        fontWeight = FontWeight.Medium
+                        color = TextSecondary,
+                        fontWeight = FontWeight.Normal
                     )
 
                     Text(
@@ -366,76 +270,78 @@ private fun SyncCardContent(
                         } else {
                             "..."
                         },
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = if (syncState.stage == SyncStage.COMPLETED) AppleGreen else AppleBlue
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // Real-Time Live Classification Chip / Ticker
+            // Real-Time Live Classification Pill
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(if (isDark) Color(0xFF1E1E24) else Color(0xFFF1F5F9))
-                    .border(
-                        1.dp,
-                        if (isDark) Color(0xFF2C2C35) else Color(0xFFE2E8F0),
-                        RoundedCornerShape(16.dp)
-                    )
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(if (isDark) Color(0xFF191919) else Color(0xFFF9FAFB))
+                    .border(1.dp, BorderLight, RoundedCornerShape(14.dp))
                     .padding(horizontal = 14.dp, vertical = 10.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(if (isDark) Color(0xFF262626) else Color(0xFFE5E7EB)),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(28.dp)
-                                .clip(CircleShape)
-                                .background(AppleBlue.copy(alpha = 0.15f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ElectricBolt,
-                                contentDescription = null,
-                                tint = AppleBlue,
-                                modifier = Modifier.size(16.dp)
-                            )
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
+                            contentDescription = null,
+                            tint = TextPrimary,
+                            modifier = Modifier.size(15.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(10.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        val mainLabel = when {
+                            syncState.latestMerchant.isNotBlank() -> syncState.latestMerchant
+                            syncState.latestSender.isNotBlank() -> "SMS from ${syncState.latestSender}"
+                            else -> "Smart Categorization"
                         }
 
-                        Spacer(modifier = Modifier.width(10.dp))
-
-                        Column {
-                            val liveText = when {
-                                syncState.latestMerchant.isNotBlank() -> "Found: ${syncState.latestMerchant}"
-                                syncState.latestCategory != null -> "Detected: ${syncState.latestCategory.displayName}"
-                                syncState.latestSender.isNotBlank() -> "Scanning: ${syncState.latestSender}"
-                                else -> "AI Classification Engine Active"
-                            }
-                            Text(
-                                text = liveText,
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = titleColor,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Text(
-                                text = "${syncState.parsedTransactionsCount} transactions identified",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = AppleGreen,
-                                fontWeight = FontWeight.Medium
-                            )
+                        val subLabel = when {
+                            syncState.latestCategory != null && syncState.parsedTransactionsCount > 0 ->
+                                "${syncState.latestCategory.displayName} • ${syncState.parsedTransactionsCount} found"
+                            syncState.latestCategory != null ->
+                                syncState.latestCategory.displayName
+                            syncState.parsedTransactionsCount > 0 ->
+                                "${syncState.parsedTransactionsCount} transaction(s) identified"
+                            else -> "Analyzing financial alerts"
                         }
+
+                        Text(
+                            text = mainLabel,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = subLabel,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary,
+                            fontWeight = FontWeight.Normal,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
                 }
             }

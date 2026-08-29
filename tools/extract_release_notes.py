@@ -30,6 +30,7 @@ def extract_notes(version_tag, changelog_path="CHANGELOG.md"):
         sys.exit(1)
         
     raw_notes = match.group(2).strip()
+    raw_notes = re.sub(r"\n*---\s*$", "", raw_notes).strip()
     
     if not raw_notes:
         print(f"❌ Error: Release notes for version '{clean_ver}' in {changelog_path} are empty!", file=sys.stderr)
