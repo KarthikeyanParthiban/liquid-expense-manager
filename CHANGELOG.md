@@ -5,6 +5,13 @@ All notable changes to **LQD (Liquid Expense Manager)** are documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0.5] - 2026-08-30
+
+### Fixed
+- **Q Letter Vector Geometry**: Corrected geometric vector paths for the letter **Q** across the app startup splash screen, Android vector drawables, React/HTML components, and brand logo exports. Fixed mismatched cutlines, eliminated open voids, and aligned the 45° diagonal tail with symmetrical 47px negative space gaps and 86px uniform stroke weight.
+
+---
+
 ## [1.3.0.4] - 2026-08-30
 
 ### Added
