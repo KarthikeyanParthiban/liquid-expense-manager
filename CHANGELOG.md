@@ -5,6 +5,16 @@ All notable changes to **LQD (Liquid Expense Manager)** are documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0.6] - 2026-08-31
+
+### Added
+- **Hierarchical Bank Identification Engine**: Explicit in-body user account ownership (`your HDFC Bank A/c...`, `Dear SBI User, your A/c...`, `spent on ICICI Card...`) now strictly overrides third-party PSP gateways (`YESBNK`, `AXISBK`, `ICICIB`, `SBIUPI`, `PAYTM`, `GPAY`, `CREDIN`), eliminating multi-bank account fragmentation.
+- **Prioritized Owning Account Extractor**: Added 2-pass regex parsing to prioritize user source/owning accounts and suppress counterparty/beneficiary accounts in inter-account transfers and UPI payment notifications.
+- **Cross-Bank Account Disambiguation & Self-Healing**: Dynamic resolution reconciles ambiguous gateway transactions to known verified issuing bank accounts. Database self-healing automatically consolidates multi-bank duplicate accounts and purges ghost cards.
+- **TRAI Header Normalization**: Added comprehensive support for TRAI DLT headers (`XX-ENTITY-T` / `XX-ENTITY`) with expanded Indian banking codes (Bandhan Bank, DBS Bank, etc.).
+
+---
+
 ## [1.3.0.5] - 2026-08-30
 
 ### Fixed

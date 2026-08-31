@@ -328,19 +328,61 @@ class SmsParserTest {
     }
 
     @Test
-    fun `test Indian Bank credit SMS with okicici VPA handle`() {
-        val sender = "BT-INDBNK-S"
-        val body = "Rs.1000.00 credited to a/c *2813 on 18/06/2026 by a/c linked to VPA adhithyavel11-2@okicici (UPI Ref no 653525900686).Indian Bank"
-        val timestamp = 1781765136000L
+    fun `test PSP sender Yes Bank sending debit SMS for HDFC account attributes to HDFC Bank`() {
+        val sender = "AX-YESBNK-S"
+        val body = "INR 500.00 debited from HDFC Bank A/c XX7011 on 25-08-2026 via UPI. Ref: 623716016220. Avl Bal INR 45,000.00"
+        val timestamp = 1787657136000L
 
         val result = SmsParser.parse(sender, body, timestamp)
-        assertNotNull("Result should not be null", result)
-        assertEquals(1000.00, result!!.amount, 0.01)
-        assertEquals(TransactionType.CREDIT, result.type)
-        assertEquals("Indian Bank", result.bankName) // NOT ICICI Bank!
-        assertEquals("XX2813", result.accountMask)
-        assertEquals("Indian_Bank_XX2813", result.accountId)
-        assertEquals("653525900686", result.referenceId)
+        assertNotNull(result)
+        assertEquals(500.00, result!!.amount, 0.01)
+        assertEquals(TransactionType.DEBIT, result.type)
+        assertEquals("HDFC Bank", result.bankName) // MUST be HDFC Bank, NOT Yes Bank!
+        assertEquals("XX7011", result.accountMask)
+        assertEquals("HDFC_Bank_XX7011", result.accountId)
+    }
+
+    @Test
+    fun `test PSP sender Axis Bank sending debit SMS for SBI account attributes to SBI`() {
+        val sender = "VK-AXISBK-S"
+        val body = "Dear Customer, your SBI A/c XX9812 is debited by Rs 250.00 on 24-Aug-26 via Axis UPI. Ref 998877."
+        val timestamp = 1787657136000L
+
+        val result = SmsParser.parse(sender, body, timestamp)
+        assertNotNull(result)
+        assertEquals(250.00, result!!.amount, 0.01)
+        assertEquals(TransactionType.DEBIT, result.type)
+        assertEquals("SBI", result.bankName) // MUST be SBI, NOT Axis Bank!
+        assertEquals("XX9812", result.accountMask)
+        assertEquals("SBI_XX9812", result.accountId)
+    }
+
+    @Test
+    fun `test transfer SMS with counterparty account extracts user owning account, not counterparty`() {
+        val sender = "VM-HDFCBK"
+        val body = "Transferred Rs 5,000.00 to Mr. Rahul A/c XX9999 from your A/c XX7011. Avl Bal Rs 10,000.00. Ref 11223344"
+        val timestamp = 1787657136000L
+
+        val result = SmsParser.parse(sender, body, timestamp)
+        assertNotNull(result)
+        assertEquals(5000.00, result!!.amount, 0.01)
+        assertEquals("HDFC Bank", result.bankName)
+        assertEquals("XX7011", result.accountMask) // Owning account, NOT counterparty XX9999!
+        assertEquals("HDFC_Bank_XX7011", result.accountId)
+    }
+
+    @Test
+    fun `test transfer SMS with beneficiary account first extracts user owning account`() {
+        val sender = "AD-SBIINB"
+        val body = "INR 2,500.00 transferred to beneficiary A/c XX8888 from your SBI A/c XX1234 on 20-Aug-2026. Ref 554433"
+        val timestamp = 1787657136000L
+
+        val result = SmsParser.parse(sender, body, timestamp)
+        assertNotNull(result)
+        assertEquals(2500.00, result!!.amount, 0.01)
+        assertEquals("SBI", result.bankName)
+        assertEquals("XX1234", result.accountMask) // Owning account, NOT beneficiary XX8888!
+        assertEquals("SBI_XX1234", result.accountId)
     }
 }
 

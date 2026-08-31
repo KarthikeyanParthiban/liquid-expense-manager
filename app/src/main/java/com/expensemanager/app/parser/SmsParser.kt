@@ -11,6 +11,7 @@ import com.expensemanager.app.core.model.TransactionType
 import com.expensemanager.app.parser.pipeline.ConfidenceScorer
 import com.expensemanager.app.parser.pipeline.IntentDetector
 import java.util.Locale
+import java.util.regex.Pattern
 
 object SmsParser {
 
@@ -158,7 +159,36 @@ object SmsParser {
         return null
     }
 
+    private val OWNING_ACCOUNT_PATTERNS = listOf(
+        // "debited from / credited to / spent on / from / in your HDFC Bank A/c XX7011"
+        Pattern.compile("""(?:from|in|into|debited\s+from|credited\s+to|spent\s+on|charged\s+to)\s+(?:your\s+)?(?:[A-Za-z\s]+?)?(?:A/c|Account|Acct|Card|Credit Card|Savings)\s*(?:no\.?)?\s*[*Xx-]*([0-9]{3,4})""", Pattern.CASE_INSENSITIVE),
+        // "your HDFC Bank A/c XX7011 is debited/credited/spent"
+        Pattern.compile("""(?:your\s+)?(?:[A-Za-z\s]+?)?(?:A/c|Account|Acct|Card|Credit Card)\s*(?:no\.?)?\s*[*Xx-]*([0-9]{3,4})\s+(?:is|has\s+been|was)?\s*(?:debited|credited|spent|charged|linked)""", Pattern.CASE_INSENSITIVE),
+        // "Available Bal in HDFC Bank A/c XX7011"
+        Pattern.compile("""(?:bal|balance|limit|avl\s+bal|avail\s+bal)\s+in\s+(?:[A-Za-z\s]+?)?(?:A/c|Account|Acct|Card)\s*(?:no\.?)?\s*[*Xx-]*([0-9]{3,4})""", Pattern.CASE_INSENSITIVE),
+        // "Dear SBI User, your A/c XX1234"
+        Pattern.compile("""Dear\s+[A-Za-z\s]+?(?:User|Customer|Cardmember)[,\s]+(?:your\s+)?(?:A/c|Account|Acct|Card)\s*(?:no\.?)?\s*[*Xx-]*([0-9]{3,4})""", Pattern.CASE_INSENSITIVE),
+        // "from A/c XX1234" / "from your A/c XX1234"
+        Pattern.compile("""\b(?:from\s+A/c|from\s+Account|from\s+your\s+A/c)\s*(?:no\.?)?\s*[*Xx-]*([0-9]{3,4})""", Pattern.CASE_INSENSITIVE),
+        // "Card X1006" / "Card no. XX9117"
+        Pattern.compile("""\b(?:Card\s*X([0-9]{4}))""", Pattern.CASE_INSENSITIVE),
+        Pattern.compile("""\b(?:Card\s+no\.?\s*XX([0-9]{4}))""", Pattern.CASE_INSENSITIVE),
+        Pattern.compile("""\b(?:Card\s+ending\s+(?:with\s+|in\s+)?)[*Xx-]*([0-9]{4})""", Pattern.CASE_INSENSITIVE)
+    )
+
     fun extractAccountMask(body: String): String? {
+        // 1. First Pass: Check prioritized Owning Account Patterns (avoids matching beneficiary accounts in transfers)
+        for (pattern in OWNING_ACCOUNT_PATTERNS) {
+            val matcher = pattern.matcher(body)
+            if (matcher.find()) {
+                val digits = matcher.group(1)?.trim()
+                if (!digits.isNullOrEmpty()) {
+                    return "XX$digits"
+                }
+            }
+        }
+
+        // 2. Second Pass: Fallback to General Account Patterns
         for (pattern in BankPatterns.ACCOUNT_PATTERNS) {
             val matcher = pattern.matcher(body)
             if (matcher.find()) {

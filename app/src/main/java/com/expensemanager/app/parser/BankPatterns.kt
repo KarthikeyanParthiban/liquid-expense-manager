@@ -10,32 +10,39 @@ object BankPatterns {
         val defaultType: AccountType = AccountType.BANK_ACCOUNT
     )
 
+    // Dedicated issuing bank & fintech registry
     private val BANK_SENDER_MAP = mapOf(
-        // HDFC
+        // HDFC Bank
         "HDFCBK" to BankInfo("HDFC Bank"),
         "HDFCBN" to BankInfo("HDFC Bank"),
+        "HDFCCC" to BankInfo("HDFC Bank", AccountType.CREDIT_CARD),
         "HDFC" to BankInfo("HDFC Bank"),
         // State Bank of India
         "SBIUPI" to BankInfo("SBI"),
         "SBMSMS" to BankInfo("SBI"),
+        "SBIINB" to BankInfo("SBI"),
         "SBIN" to BankInfo("SBI"),
         "SBICRD" to BankInfo("SBI Card", AccountType.CREDIT_CARD),
         "SBI" to BankInfo("SBI"),
-        // ICICI
+        // ICICI Bank
         "ICICIB" to BankInfo("ICICI Bank"),
         "ICICIN" to BankInfo("ICICI Bank"),
+        "ICICIC" to BankInfo("ICICI Bank", AccountType.CREDIT_CARD),
         "ICICI" to BankInfo("ICICI Bank"),
         // Axis Bank
         "AXISBK" to BankInfo("Axis Bank"),
         "AXISMR" to BankInfo("Axis Bank"),
         "AXISMF" to BankInfo("Axis Bank"),
         "AXIS" to BankInfo("Axis Bank"),
-        // Kotak
+        // Kotak Mahindra Bank
         "KOTAKB" to BankInfo("Kotak Mahindra Bank"),
+        "KOTAKC" to BankInfo("Kotak Mahindra Bank", AccountType.CREDIT_CARD),
+        "KOTAKN" to BankInfo("Kotak Mahindra Bank"),
         "KOTAK" to BankInfo("Kotak Mahindra Bank"),
         // Yes Bank
         "YESBNK" to BankInfo("Yes Bank"),
         "YESBAK" to BankInfo("Yes Bank"),
+        "YESCRD" to BankInfo("Yes Bank", AccountType.CREDIT_CARD),
         "YES" to BankInfo("Yes Bank"),
         // Federal Bank & Neo banks
         "FEDBNK" to BankInfo("Federal Bank"),
@@ -45,56 +52,77 @@ object BankPatterns {
         "JUPITER" to BankInfo("Federal Bank"),
         // IDFC FIRST Bank
         "IDFCFB" to BankInfo("IDFC FIRST Bank"),
+        "IDFCBN" to BankInfo("IDFC FIRST Bank"),
         "IDFC" to BankInfo("IDFC FIRST Bank"),
         // Punjab National Bank & BOB
         "PNBSMS" to BankInfo("Punjab National Bank"),
+        "PNBBNK" to BankInfo("Punjab National Bank"),
         "PNB" to BankInfo("Punjab National Bank"),
         "BOBTXN" to BankInfo("Bank of Baroda"),
+        "BOBSMS" to BankInfo("Bank of Baroda"),
         "BOB" to BankInfo("Bank of Baroda"),
         // Canara & Union Bank
         "CANBNK" to BankInfo("Canara Bank"),
         "CANARA" to BankInfo("Canara Bank"),
         "UBIN" to BankInfo("Union Bank of India"),
+        "UNIONB" to BankInfo("Union Bank of India"),
         "UNION" to BankInfo("Union Bank of India"),
         // IndusInd & RBL
         "INDUS" to BankInfo("IndusInd Bank"),
+        "RBLBNK" to BankInfo("RBL Bank"),
+        "RBLCRD" to BankInfo("RBL Bank", AccountType.CREDIT_CARD),
         "RBL" to BankInfo("RBL Bank"),
         // Indian Bank & Bank of India
-        "INDBNK" to BankInfo("Indian Bank"),
-        "INDIBK" to BankInfo("Indian Bank"),
-        "INDBK" to BankInfo("Indian Bank"),
         "IDIBNK" to BankInfo("Indian Bank"),
+        "INDIBK" to BankInfo("Indian Bank"),
+        "INDBNK" to BankInfo("Indian Bank"),
+        "INDBK" to BankInfo("Indian Bank"),
         "INDIAN" to BankInfo("Indian Bank"),
         "BOITXN" to BankInfo("Bank of India"),
+        "BOISMS" to BankInfo("Bank of India"),
         "BOI" to BankInfo("Bank of India"),
         "IDBIBK" to BankInfo("IDBI Bank"),
+        "IDBISM" to BankInfo("IDBI Bank"),
         "IDBI" to BankInfo("IDBI Bank"),
-        "CENTRAL" to BankInfo("Central Bank of India"),
         "CBIN" to BankInfo("Central Bank of India"),
+        "CENTBK" to BankInfo("Central Bank of India"),
+        "CENTRAL" to BankInfo("Central Bank of India"),
         "IPPB" to BankInfo("IPPB"),
+        "IPPBMS" to BankInfo("IPPB"),
         // Small Finance & Foreign Banks
         "AUBANK" to BankInfo("AU Small Finance Bank"),
         "AUFIN" to BankInfo("AU Small Finance Bank"),
         "EQUITAS" to BankInfo("Equitas Small Finance Bank"),
         "EQSFB" to BankInfo("Equitas Small Finance Bank"),
+        "CITIBK" to BankInfo("CitiBank"),
         "CITI" to BankInfo("CitiBank"),
         "AMEX" to BankInfo("American Express", AccountType.CREDIT_CARD),
+        "AMEXIN" to BankInfo("American Express", AccountType.CREDIT_CARD),
+        "HSBCBK" to BankInfo("HSBC"),
         "HSBC" to BankInfo("HSBC"),
         "SCBL" to BankInfo("Standard Chartered Bank"),
         "SCB" to BankInfo("Standard Chartered Bank"),
+        "BNDHN" to BankInfo("Bandhan Bank"),
+        "BANDHAN" to BankInfo("Bandhan Bank"),
+        "DBSBNK" to BankInfo("DBS Bank"),
+        "DBS" to BankInfo("DBS Bank"),
         // Credit Cards & Neo Cards
         "CREDIN" to BankInfo("CRED", AccountType.CREDIT_CARD),
         "CRED" to BankInfo("CRED", AccountType.CREDIT_CARD),
         "SLIC" to BankInfo("Slice", AccountType.CREDIT_CARD),
         "SLICE" to BankInfo("Slice", AccountType.CREDIT_CARD),
+        "ONECRD" to BankInfo("OneCard", AccountType.CREDIT_CARD),
         "ONECARD" to BankInfo("OneCard", AccountType.CREDIT_CARD),
         "1CARD" to BankInfo("OneCard", AccountType.CREDIT_CARD),
         "GKIWIP" to BankInfo("Kiwi", AccountType.CREDIT_CARD),
         "KIWI" to BankInfo("Kiwi", AccountType.CREDIT_CARD),
         // Wallets & UPI
         "PAYTM" to BankInfo("Paytm", AccountType.WALLET),
+        "PYTM" to BankInfo("Paytm", AccountType.WALLET),
         "JIO" to BankInfo("Jio", AccountType.WALLET),
+        "JIOPAY" to BankInfo("Jio", AccountType.WALLET),
         "AIRTEL" to BankInfo("Airtel Payments Bank", AccountType.WALLET),
+        "AIRBNK" to BankInfo("Airtel Payments Bank", AccountType.WALLET),
         "GPAY" to BankInfo("Google Pay", AccountType.UPI),
         "PHONPE" to BankInfo("PhonePe", AccountType.UPI),
         "PHONEPE" to BankInfo("PhonePe", AccountType.UPI),
@@ -109,8 +137,20 @@ object BankPatterns {
         "MUTFCL" to BankInfo("Muthoot Fincorp", AccountType.BANK_ACCOUNT)
     )
 
+    // Known PSP / TPAP gateways where transactions often originate for other underlying bank accounts
+    private val PSP_OR_AGGREGATOR_SENDERS = setOf(
+        "YESBNK", "YESBAK", "YES", "YESCRD",
+        "AXISBK", "AXISMR", "AXISMF", "AXIS",
+        "ICICIB", "ICICIN", "ICICI",
+        "SBIUPI", "SBMSMS", "SBIN", "SBI",
+        "PAYTM", "PYTM", "GPAY", "PHONPE", "PHONEPE", "JIO", "AIRTEL",
+        "NOBRKR", "GKIWIP", "KIWI", "CREDIN", "CRED", "SLICE", "ONECARD", "1CARD"
+    )
+
     private val NON_BANK_NOISE_SENDERS = setOf(
-        "SESMSS", "TTHPLS", "EDBUSS", "CAMZNS", "LNKITS", "EPTONS", "WIGGYS", "SELTDS", "DSLTXS", "SWIGGY", "ZEPTO", "BLINKIT"
+        "SESMSS", "TTHPLS", "EDBUSS", "CAMZNS", "LNKITS", "EPTONS", "WIGGYS",
+        "SELTDS", "DSLTXS", "SWIGGY", "ZEPTO", "BLINKIT", "ZOMATO", "MYNTRA",
+        "FLIPKT", "AMAZON"
     )
 
     private val VERIFIED_INSTITUTIONS = setOf(
@@ -120,7 +160,7 @@ object BankPatterns {
         "american express", "slice", "onecard", "kiwi", "indian bank",
         "bank of india", "idbi bank", "central bank of india", "ippb", "au small finance bank",
         "equitas small finance bank", "hsbc", "standard chartered bank", "paytm payments bank",
-        "airtel payments bank", "muthoot fincorp"
+        "airtel payments bank", "bandhan bank", "dbs bank", "muthoot fincorp"
     )
 
     fun isVerifiedFinancialInstitution(bankName: String): Boolean {
@@ -159,14 +199,18 @@ object BankPatterns {
 
     // Explicit User Account Regexes (Matches user's own bank account mention in body)
     private val USER_ACCOUNT_BANK_PATTERNS = listOf(
-        // "in/from/to/into your HDFC Bank A/c XX7011"
-        Regex("""(?i)\b(?:in|from|to|into)\s+(?:your\s+)?([A-Za-z\s]+?)\s+(?:Bank\s+)?(?:A/c|Account|Acct|Card|Credit Card|Savings)\s*(?:no\.?)?\s*(?:[X\*]+\d+|\b\d{3,4}\b)"""),
-        // "HDFC Bank A/c XX7011 is debited/credited"
-        Regex("""(?i)\b([A-Za-z\s]+?)\s+(?:Bank\s+)?(?:A/c|Account|Acct|Card|Credit Card)\s*(?:no\.?)?\s*(?:[X\*]+\d+|\b\d{3,4}\b)\s+(?:is\s+)?(?:debited|credited|spent|charged)"""),
+        // "in/from/into your HDFC Bank A/c XX7011"
+        Regex("""(?i)\b(?:in|from|into)\s+(?:your\s+)?([A-Za-z\s]+?)\s+(?:Bank\s+)?(?:A/c|Account|Acct|Card|Credit Card|Savings)\s*(?:no\.?)?\s*(?:[X\*]+\d+|\b\d{3,4}\b)"""),
+        // "debited from / credited to your HDFC Bank A/c XX7011"
+        Regex("""(?i)\b(?:debited\s+from|credited\s+to|spent\s+on|charged\s+to)\s+(?:your\s+)?([A-Za-z\s]+?)\s+(?:Bank\s+)?(?:A/c|Account|Acct|Card|Credit Card|Savings)\s*(?:no\.?)?\s*(?:[X\*]+\d+|\b\d{3,4}\b)"""),
+        // "HDFC Bank A/c XX7011 is debited/credited/spent"
+        Regex("""(?i)\b([A-Za-z\s]+?)\s+(?:Bank\s+)?(?:A/c|Account|Acct|Card|Credit Card)\s*(?:no\.?)?\s*(?:[X\*]+\d+|\b\d{3,4}\b)\s+(?:is|has\s+been|was)?\s*(?:debited|credited|spent|charged)"""),
         // "Available Bal in HDFC Bank A/c XX7011"
-        Regex("""(?i)\b(?:bal|balance|limit)\s+in\s+([A-Za-z\s]+?)\s+(?:Bank\s+)?(?:A/c|Account|Acct|Card)\s*(?:no\.?)?\s*(?:[X\*]+\d+|\b\d{3,4}\b)"""),
+        Regex("""(?i)\b(?:bal|balance|limit|avl\s+bal|avail\s+bal)\s+in\s+([A-Za-z\s]+?)\s+(?:Bank\s+)?(?:A/c|Account|Acct|Card)\s*(?:no\.?)?\s*(?:[X\*]+\d+|\b\d{3,4}\b)"""),
         // "Dear SBI User" / "Dear HDFC Bank Customer"
-        Regex("""(?i)\bDear\s+([A-Za-z\s]+?)\s+(?:Bank\s+)?(?:Customer|User|Cardmember)"""),
+        Regex("""(?i)\bDear\s+([A-Za-z\s]+?)\s+(?:Bank\s+)?(?:Customer|User|Cardmember|Member)"""),
+        // "your HDFC Bank A/c XX7011"
+        Regex("""(?i)\byour\s+([A-Za-z\s]+?)\s+(?:Bank\s+)?(?:A/c|Account|Acct|Card|Credit Card)\s*(?:no\.?)?\s*(?:[X\*]+\d+|\b\d{3,4}\b)"""),
         // "debited from your HDFC Bank A/c"
         Regex("""(?i)\b(?:debited\s+from|credited\s+to)\s+(?:your\s+)?([A-Za-z\s]+?)\s+(?:Bank\s+)?(?:A/c|Account|Acct|Card)""")
     )
@@ -201,6 +245,8 @@ object BankPatterns {
         Pair(Regex("""(?i)\bAMERICAN\s+EXPRESS\b|\bAMEX\b"""), BankInfo("American Express", AccountType.CREDIT_CARD)),
         Pair(Regex("""(?i)\bHSBC\s+BANK\b|\bHSBC\b"""), BankInfo("HSBC")),
         Pair(Regex("""(?i)\bSTANDARD\s+CHARTERED\b"""), BankInfo("Standard Chartered Bank")),
+        Pair(Regex("""(?i)\bBANDHAN\s+BANK\b|\bBANDHAN\b"""), BankInfo("Bandhan Bank")),
+        Pair(Regex("""(?i)\bDBS\s+BANK\b|\bDBS\b"""), BankInfo("DBS Bank")),
         Pair(Regex("""(?i)\bCRED\b"""), BankInfo("CRED", AccountType.CREDIT_CARD)),
         Pair(Regex("""(?i)\bSLICE\b"""), BankInfo("Slice", AccountType.CREDIT_CARD)),
         Pair(Regex("""(?i)\bONECARD\b"""), BankInfo("OneCard", AccountType.CREDIT_CARD)),
@@ -211,8 +257,29 @@ object BankPatterns {
         Pair(Regex("""(?i)\bEPFO\b|\bPROVIDENT\s+FUND\b|\bPASSBOOK\s+BALANCE\b"""), BankInfo("EPFO PF Account", AccountType.SAVINGS))
     )
 
+    private fun extractSenderEntity(sender: String): String {
+        val upper = sender.uppercase().trim()
+        if (upper.contains("-")) {
+            val parts = upper.split("-")
+            // In TRAI format XX-ENTITY-T or XX-ENTITY, entity is typically at index 1
+            if (parts.size >= 2 && parts[1].length >= 3) {
+                return parts[1].replace(Regex("[^A-Z0-9]"), "")
+            }
+        }
+        return upper.replace(Regex("[^A-Z0-9]"), "")
+    }
+
+    /**
+     * Hierarchical Bank Identification Engine:
+     * 1. Sanitize body to strip beneficiary VPAs and UTRs.
+     * 2. Highest Priority: Explicit User Account Bank Mention in Body (always overrides PSP routing senders).
+     * 3. Second Priority: Dedicated Issuing Bank TRAI Sender Header (when sender is not a PSP gateway).
+     * 4. Third Priority: PSP / Gateway Deep-Scan in Sanitized Body.
+     * 5. Fourth Priority: Direct PSP / Aggregator Sender Lookup.
+     * 6. Final Fallback: Generic Bank Account.
+     */
     fun identifyBank(sender: String, messageBody: String): BankInfo {
-        val cleanSender = sender.uppercase().replace(Regex("[^A-Z]"), "")
+        val cleanSender = extractSenderEntity(sender)
 
         // Filter known non-bank noise senders
         if (NON_BANK_NOISE_SENDERS.any { cleanSender.contains(it) }) {
@@ -225,25 +292,11 @@ object BankPatterns {
                 messageBody.contains("Avl Lmt", ignoreCase = true) ||
                 messageBody.contains("Credit Limit", ignoreCase = true)
 
-        // 1. Direct Sender Lookup (for official bank header codes like HDFCBK, SBIN, AXISBK, etc.)
-        for ((key, info) in BANK_SENDER_MAP) {
-            // Ignore generic UPI / aggregator / credit card app senders in step 1 if the body contains a specific bank account statement
-            if (key in setOf("PAYTM", "GPAY", "PHONPE", "PHONEPE", "JIO", "AIRTEL", "NOBRKR", "GKIWIP", "KIWI", "CREDIN", "CRED") && cleanSender.contains(key)) {
-                // We'll check body first to see if an underlying bank account (e.g. HDFC, SBI, Axis, Yes Bank) is mentioned!
-                continue
-            }
-
-            if (cleanSender.contains(key)) {
-                return if (isCard && info.defaultType == AccountType.BANK_ACCOUNT) {
-                    info.copy(defaultType = AccountType.CREDIT_CARD)
-                } else info
-            }
-        }
-
-        // 2. Sanitize Body: Strip all VPA handles, recipient emails, and UPI reference IDs
+        // 1. Sanitize Body: Strip all VPA handles, recipient emails, and UPI reference IDs
         val sanitizedBody = sanitizeBodyForBankIdentification(messageBody)
 
-        // 3. User Account Context Pattern Matching in Sanitized Body
+        // 2. HIGHEST PRIORITY: Explicit User Account Bank Mention in Sanitized Body
+        // E.g. "your HDFC Bank A/c XX7011", "Dear SBI User, your A/c XX1234", "spent on ICICI Bank Card XX1044"
         for (pattern in USER_ACCOUNT_BANK_PATTERNS) {
             val match = pattern.find(sanitizedBody)
             if (match != null) {
@@ -258,7 +311,19 @@ object BankPatterns {
             }
         }
 
-        // 4. General Sanitized Body Lookup with Word-Boundary Patterns
+        // 3. SECOND PRIORITY: Dedicated Issuing Bank TRAI Sender Header (Non-PSP)
+        val isPspSender = PSP_OR_AGGREGATOR_SENDERS.any { cleanSender.contains(it) }
+        if (!isPspSender) {
+            for ((key, info) in BANK_SENDER_MAP) {
+                if (cleanSender.contains(key)) {
+                    return if (isCard && info.defaultType == AccountType.BANK_ACCOUNT) {
+                        info.copy(defaultType = AccountType.CREDIT_CARD)
+                    } else info
+                }
+            }
+        }
+
+        // 4. THIRD PRIORITY: PSP / Aggregator Deep-Scan in Sanitized Body
         for ((bankPattern, info) in VERIFIED_BODY_BANK_PATTERNS) {
             if (bankPattern.containsMatchIn(sanitizedBody)) {
                 return if (isCard && info.defaultType == AccountType.BANK_ACCOUNT) {
@@ -267,7 +332,7 @@ object BankPatterns {
             }
         }
 
-        // 5. Fallback for aggregator senders (Paytm, GPay, PhonePe, etc.) if no underlying bank found
+        // 5. FOURTH PRIORITY: Direct PSP / Aggregator Sender Lookup
         for ((key, info) in BANK_SENDER_MAP) {
             if (cleanSender.contains(key)) {
                 return if (isCard && info.defaultType == AccountType.BANK_ACCOUNT) {
@@ -276,8 +341,8 @@ object BankPatterns {
             }
         }
 
-        // 6. Final Fallback: Only return generic Bank Account if not recognized
-        val bankName = if (cleanSender.length >= 4 && cleanSender !in NON_BANK_NOISE_SENDERS && !cleanSender.matches(Regex("""^[A-Z]{6}$"""))) cleanSender.takeLast(6) else "Bank Account"
+        // 6. FINAL FALLBACK: Return generic Bank Account
+        val bankName = if (cleanSender.length >= 4 && cleanSender !in NON_BANK_NOISE_SENDERS && !cleanSender.matches(Regex("""^[A-Z0-9]{6}$"""))) cleanSender.takeLast(6) else "Bank Account"
         val accountType = if (isCard) AccountType.CREDIT_CARD else AccountType.BANK_ACCOUNT
 
         return BankInfo(name = bankName, defaultType = accountType)

@@ -196,16 +196,37 @@ class TransactionRepository(
         accountMask: String?,
         rawAccountId: String
     ): String {
-        if (accountMask != null && accountMask != "PRIMARY") {
-            return rawAccountId
-        }
         val existingAccounts = accountDao.getAllAccountsSnapshot()
-        val match = existingAccounts.firstOrNull {
-            it.bankName.equals(bankName, ignoreCase = true) &&
-                    it.accountType.equals(accountTypeName, ignoreCase = true) &&
-                    it.maskNumber != "PRIMARY"
+
+        if (accountMask.isNullOrBlank() || accountMask == "PRIMARY") {
+            val match = existingAccounts.firstOrNull {
+                it.bankName.equals(bankName, ignoreCase = true) &&
+                        it.accountType.equals(accountTypeName, ignoreCase = true) &&
+                        it.maskNumber != "PRIMARY"
+            }
+            return match?.id ?: rawAccountId
         }
-        return match?.id ?: rawAccountId
+
+        // 1. Direct exact match (bankName + mask)
+        val exactMatch = existingAccounts.firstOrNull {
+            it.bankName.equals(bankName, ignoreCase = true) &&
+                    it.maskNumber == accountMask
+        }
+        if (exactMatch != null) return exactMatch.id
+
+        // 2. Cross-Bank Disambiguation: If incoming bank is a PSP / aggregator gateway,
+        // resolve to the known unique issuing bank account for this mask number
+        val pspOrAggregatorBanks = setOf("yes bank", "axis bank", "google pay", "phonepe", "paytm", "bank account", "cred", "slice")
+        if (bankName.lowercase() in pspOrAggregatorBanks) {
+            val candidateIssuingAccounts = existingAccounts.filter {
+                it.maskNumber == accountMask && it.bankName.lowercase() !in pspOrAggregatorBanks
+            }
+            if (candidateIssuingAccounts.size == 1) {
+                return candidateIssuingAccounts.first().id
+            }
+        }
+
+        return rawAccountId
     }
 
     suspend fun updateTransaction(transaction: Transaction) = processingMutex.withLock {
@@ -243,6 +264,25 @@ class TransactionRepository(
         android.util.Log.d("HealDB", "Found ${entities.size} entities to evaluate")
         var fixedCount = 0
 
+        // Pass 1: Discover high-confidence issuing bank associations for each account mask
+        val pspOrAggregatorBanks = setOf("yes bank", "axis bank", "google pay", "phonepe", "paytm", "bank account", "cred", "slice")
+        val maskToVerifiedBankCounts = mutableMapOf<String, MutableMap<String, Int>>()
+
+        for (entity in entities) {
+            val body = entity.rawBody ?: continue
+            if (!com.expensemanager.app.parser.SmsClassifier.isFinancialSms(body)) continue
+
+            val bankInfo = BankPatterns.identifyBank(entity.sender, body)
+            val mask = com.expensemanager.app.parser.SmsParser.extractAccountMask(body) ?: entity.accountMask
+            if (!mask.isNullOrBlank() && mask != "PRIMARY" && BankPatterns.isVerifiedFinancialInstitution(bankInfo.name)) {
+                if (bankInfo.name.lowercase() !in pspOrAggregatorBanks) {
+                    val counts = maskToVerifiedBankCounts.getOrPut(mask) { mutableMapOf() }
+                    counts[bankInfo.name] = (counts[bankInfo.name] ?: 0) + 1
+                }
+            }
+        }
+
+        // Pass 2: Re-classify and heal all records
         for (entity in entities) {
             val body = entity.rawBody ?: continue
 
@@ -254,8 +294,18 @@ class TransactionRepository(
                 continue
             }
 
-            val bankInfo = BankPatterns.identifyBank(entity.sender, body)
+            var bankInfo = BankPatterns.identifyBank(entity.sender, body)
             val mask = com.expensemanager.app.parser.SmsParser.extractAccountMask(body) ?: entity.accountMask
+
+            // Cross-Bank Disambiguation: If identified bank is a PSP gateway and a verified issuing bank is known for this mask
+            if (mask != null && bankInfo.name.lowercase() in pspOrAggregatorBanks) {
+                val dominantBanks = maskToVerifiedBankCounts[mask]
+                if (dominantBanks != null && dominantBanks.size == 1) {
+                    val verifiedBankName = dominantBanks.keys.first()
+                    bankInfo = bankInfo.copy(name = verifiedBankName)
+                }
+            }
+
             val targetAccountId = "${bankInfo.name.replace(" ", "_")}_${mask ?: "PRIMARY"}"
             android.util.Log.d("HealDB", "Row: id=${entity.id} sender='${entity.sender}' currBank='${entity.bankName}' identBank='${bankInfo.name}'")
 
