@@ -5,6 +5,15 @@ All notable changes to **LQD (Liquid Expense Manager)** are documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0.7] - 2026-08-31
+
+### Added
+- **Inactive / Dormant Account Detection**: Accounts and credit cards with no SMS activity for > 1 year (365 days) are automatically marked dormant with visual `INACTIVE` status tags.
+- **Balance & Spend Calculation Exclusions**: Inactive accounts are excluded from total active bank balance and spending calculations so outdated balance snapshots do not distort liquid wealth metrics.
+- **Last Received SMS Timestamp Display**: Denotes explicit `as of <date>` indicators on all card and list views, as well as full last received SMS timestamps (`as of DD MMM YYYY, hh:mm a`) and dormancy explanation callouts inside expanded account ledger sheets.
+
+---
+
 ## [1.3.0.6] - 2026-08-31
 
 ### Added

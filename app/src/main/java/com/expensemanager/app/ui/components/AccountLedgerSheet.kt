@@ -63,6 +63,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
 
+import androidx.compose.foundation.border
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.WarningAmber
+import com.expensemanager.app.core.util.DateTimeUtils
+import com.expensemanager.app.ui.theme.TextTertiary
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccountLedgerSheet(
@@ -75,6 +81,7 @@ fun AccountLedgerSheet(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var sortByAmount by remember { mutableStateOf(false) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
+    val isInactive = account.isInactive
 
     val accountTxns = transactions.filter {
         it.accountId == account.id ||
@@ -86,7 +93,11 @@ fun AccountLedgerSheet(
     val totalCredits = accountTxns.filter { it.type == TransactionType.CREDIT }.sumOf { it.amount }
 
     val isCreditCard = account.accountType == AccountType.CREDIT_CARD
-    val balanceLabel = if (isCreditCard) "AVAILABLE LIMIT" else "AVAILABLE BALANCE"
+    val balanceLabel = if (isInactive) {
+        if (isCreditCard) "LAST RECORDED LIMIT (INACTIVE)" else "LAST RECORDED BALANCE (INACTIVE)"
+    } else {
+        if (isCreditCard) "AVAILABLE LIMIT" else "AVAILABLE BALANCE"
+    }
 
     val sortedTxns = remember(accountTxns, sortByAmount) {
         if (sortByAmount) accountTxns.sortedByDescending { it.amount }
@@ -115,24 +126,46 @@ fun AccountLedgerSheet(
                         modifier = Modifier
                             .size(46.dp)
                             .clip(RoundedCornerShape(14.dp))
-                            .background(if (isCreditCard) Color(0xFF5856D6).copy(alpha = 0.12f) else AppleBlueLight),
+                            .background(
+                                if (isInactive) Color(0xFFFEF3C7)
+                                else if (isCreditCard) Color(0xFF5856D6).copy(alpha = 0.12f)
+                                else AppleBlueLight
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = if (isCreditCard) Icons.Default.CreditCard else Icons.Default.AccountBalance,
                             contentDescription = null,
-                            tint = if (isCreditCard) Color(0xFF5856D6) else AppleBlue,
+                            tint = if (isInactive) Color(0xFFD97706) else if (isCreditCard) Color(0xFF5856D6) else AppleBlue,
                             modifier = Modifier.size(24.dp)
                         )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
-                        Text(
-                            text = account.bankName,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = TextPrimary
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = account.bankName,
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = TextPrimary
+                            )
+                            if (isInactive) {
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(Color(0xFFFEF3C7))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = "INACTIVE",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = Color(0xFFD97706)
+                                    )
+                                }
+                            }
+                        }
                         Text(
                             text = "${account.accountType.name.replace("_", " ")} • ${account.maskNumber}",
                             fontSize = 13.sp,
@@ -179,7 +212,66 @@ fun AccountLedgerSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Inactive Warning or Last SMS Timestamp Note
+            if (isInactive) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Color(0xFFFFFBEB))
+                        .border(1.dp, Color(0xFFFDE68A), RoundedCornerShape(14.dp))
+                        .padding(12.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.Top) {
+                        Icon(
+                            imageVector = Icons.Default.WarningAmber,
+                            contentDescription = null,
+                            tint = Color(0xFFD97706),
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text(
+                                text = "Inactive Account (> 1 Year Dormant)",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF92400E)
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Last SMS received on ${DateTimeUtils.formatFullDateTime(account.lastUpdated)}. Excluded from total active balance & budget calculations.",
+                                fontSize = 11.sp,
+                                lineHeight = 15.sp,
+                                color = Color(0xFFB45309)
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            } else if (account.lastUpdated > 0L) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Schedule,
+                        contentDescription = null,
+                        tint = TextTertiary,
+                        modifier = Modifier.size(13.dp)
+                    )
+                    Spacer(modifier = Modifier.width(5.dp))
+                    Text(
+                        text = "Last SMS received: ${DateTimeUtils.formatFullDateTime(account.lastUpdated)}",
+                        fontSize = 11.sp,
+                        color = TextSecondary
+                    )
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+            }
 
             // Current Balance Box
             Box(
@@ -193,15 +285,24 @@ fun AccountLedgerSheet(
                         text = balanceLabel,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color = TextSecondary,
+                        color = if (isInactive) Color(0xFFD97706) else TextSecondary,
                         letterSpacing = 1.sp
                     )
                     Text(
                         text = account.lastKnownBalance?.let { CurrencyFormatter.format(it) } ?: "Not available",
                         fontSize = 26.sp,
                         fontWeight = FontWeight.ExtraBold,
-                        color = TextPrimary
+                        color = if (isInactive) TextSecondary else TextPrimary
                     )
+
+                    if (account.lastUpdated > 0L) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "as of ${DateTimeUtils.formatFullDateTime(account.lastUpdated)}",
+                            fontSize = 11.sp,
+                            color = TextTertiary
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(12.dp))
 

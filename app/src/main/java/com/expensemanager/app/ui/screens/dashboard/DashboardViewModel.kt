@@ -57,7 +57,8 @@ class DashboardViewModel(
             !it.bankName.contains("Groww", ignoreCase = true) &&
             !it.bankName.contains("EPFO", ignoreCase = true) &&
             !it.bankName.contains("PF Account", ignoreCase = true) &&
-            it.bankName != "Bank Account"
+            it.bankName != "Bank Account" &&
+            !it.isInactive
         }
             .mapNotNull { it.lastKnownBalance }
             .sum()

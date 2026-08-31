@@ -27,6 +27,11 @@ object DateTimeUtils {
 
     fun formatTime(timestamp: Long): String = timeFormat.format(Date(timestamp))
 
+    fun formatFullDateTime(timestamp: Long): String {
+        if (timestamp <= 0L) return "Unknown"
+        return "${dateFormat.format(Date(timestamp))}, ${timeFormat.format(Date(timestamp))}"
+    }
+
     fun formatMonthYear(timestamp: Long): String = monthYearFormat.format(Date(timestamp))
 
     fun formatShortMonth(timestamp: Long): String = shortMonthFormat.format(Date(timestamp))

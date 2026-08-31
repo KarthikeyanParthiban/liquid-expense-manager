@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import com.expensemanager.app.core.model.Account
 import com.expensemanager.app.core.model.AccountType
 import com.expensemanager.app.core.util.CurrencyFormatter
+import com.expensemanager.app.core.util.DateTimeUtils
 
 @Composable
 fun AccountCard(
@@ -101,6 +102,16 @@ fun AccountCard(
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.primary
             )
+
+            if (account.lastUpdated > 0L) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "as of ${DateTimeUtils.formatDate(account.lastUpdated)}",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontSize = 10.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
+            }
         }
     }
 }

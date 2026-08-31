@@ -36,6 +36,8 @@ import com.expensemanager.app.ui.theme.TextPrimary
 import com.expensemanager.app.ui.theme.TextSecondary
 import com.expensemanager.app.ui.theme.TextTertiary
 import com.expensemanager.app.ui.theme.appleCard
+import androidx.compose.ui.graphics.Color
+import com.expensemanager.app.core.util.DateTimeUtils
 
 @Composable
 fun GlassAccountCard(
@@ -46,6 +48,7 @@ fun GlassAccountCard(
 ) {
     val isCreditCard = account.accountType == AccountType.CREDIT_CARD
     val isWallet = account.accountType == AccountType.WALLET
+    val isInactive = account.isInactive
 
     val clickableModifier = modifier
         .width(215.dp)
@@ -66,7 +69,7 @@ fun GlassAccountCard(
                     modifier = Modifier
                         .size(38.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                        .background(if (isInactive) Color(0xFFFEF3C7) else MaterialTheme.colorScheme.surfaceVariant),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -76,23 +79,41 @@ fun GlassAccountCard(
                             else -> Icons.Default.AccountBalance
                         },
                         contentDescription = null,
-                        tint = TextPrimary,
+                        tint = if (isInactive) Color(0xFFD97706) else TextPrimary,
                         modifier = Modifier.size(20.dp)
                     )
                 }
 
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                ) {
-                    Text(
-                        text = if (isCreditCard) "CARD • ${account.maskNumber}" else account.maskNumber,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (isInactive) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0xFFFEF3C7))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "INACTIVE",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color(0xFFD97706)
+                            )
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = if (isCreditCard) "CARD • ${account.maskNumber}" else account.maskNumber,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                    }
                 }
             }
 
@@ -102,26 +123,35 @@ fun GlassAccountCard(
                 text = account.bankName,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary
+                color = if (isInactive) TextSecondary else TextPrimary
             )
 
             Spacer(modifier = Modifier.height(2.dp))
 
             Text(
-                text = if (isCreditCard) "Available Limit" else if (isWallet) "Wallet Balance" else "Available Balance",
+                text = if (isInactive) "Last active > 1 yr ago" else if (isCreditCard) "Available Limit" else if (isWallet) "Wallet Balance" else "Available Balance",
                 style = MaterialTheme.typography.labelSmall,
-                color = TextTertiary
+                color = if (isInactive) Color(0xFFD97706) else TextTertiary
             )
 
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = if (hideBalance) "••••••" else account.lastKnownBalance?.let { CurrencyFormatter.format(it) } ?: "Active",
+                text = if (hideBalance) "••••••" else account.lastKnownBalance?.let { CurrencyFormatter.format(it) } ?: if (isInactive) "Dormant" else "Active",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.ExtraBold,
-                color = if (account.lastKnownBalance != null) TextPrimary else TextSecondary,
+                color = if (isInactive) TextSecondary else if (account.lastKnownBalance != null) TextPrimary else TextSecondary,
                 letterSpacing = if (hideBalance) 2.sp else (-0.3).sp
             )
+
+            if (account.lastUpdated > 0L) {
+                Spacer(modifier = Modifier.height(3.dp))
+                Text(
+                    text = "as of ${DateTimeUtils.formatDate(account.lastUpdated)}",
+                    fontSize = 10.sp,
+                    color = TextTertiary
+                )
+            }
         }
     }
 }

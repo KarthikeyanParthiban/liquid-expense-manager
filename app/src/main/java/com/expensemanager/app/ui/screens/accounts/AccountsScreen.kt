@@ -55,6 +55,7 @@ import com.expensemanager.app.core.model.Account
 import com.expensemanager.app.core.model.AccountType
 import com.expensemanager.app.core.model.Transaction
 import com.expensemanager.app.core.util.CurrencyFormatter
+import com.expensemanager.app.core.util.DateTimeUtils
 import com.expensemanager.app.ui.components.AccountLedgerSheet
 import com.expensemanager.app.ui.theme.AppleBlue
 import com.expensemanager.app.ui.theme.AppleBlueLight
@@ -440,14 +441,17 @@ private fun AccountListItem(
 ) {
     val isCreditCard = account.accountType == AccountType.CREDIT_CARD
     val isWallet = account.accountType == AccountType.WALLET
+    val isInactive = account.isInactive
 
     val themeColor = when {
+        isInactive -> Color(0xFFD97706)
         isCreditCard -> Color(0xFF6366F1)
         isWallet -> Color(0xFF10B981)
         else -> AppleBlue
     }
 
     val themeBgLight = when {
+        isInactive -> Color(0xFFFEF3C7)
         isCreditCard -> Color(0xFFEEF2FF)
         isWallet -> Color(0xFFECFDF5)
         else -> AppleBlueLight
@@ -487,16 +491,40 @@ private fun AccountListItem(
                 }
 
                 Column(modifier = Modifier.padding(start = 14.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = account.bankName,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isInactive) TextSecondary else TextPrimary
+                        )
+                        if (isInactive) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color(0xFFFEF3C7))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "INACTIVE",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color(0xFFD97706)
+                                )
+                            }
+                        }
+                    }
                     Text(
-                        text = account.bankName,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
-                    Text(
-                        text = if (isCreditCard) "Credit Card • ${account.maskNumber}" else "${account.accountType.name.replace("_", " ")} • ${account.maskNumber}",
+                        text = if (isInactive && account.lastUpdated > 0L) {
+                            "Last SMS: ${DateTimeUtils.formatDate(account.lastUpdated)} • ${account.maskNumber}"
+                        } else if (isCreditCard) {
+                            "Credit Card • ${account.maskNumber}"
+                        } else {
+                            "${account.accountType.name.replace("_", " ")} • ${account.maskNumber}"
+                        },
                         style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary
+                        color = if (isInactive) Color(0xFFD97706) else TextSecondary
                     )
                 }
             }
@@ -507,19 +535,19 @@ private fun AccountListItem(
                         text = if (isBalanceHidden) "₹ ••••••" else CurrencyFormatter.format(bal),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.ExtraBold,
-                        color = TextPrimary,
+                        color = if (isInactive) TextSecondary else TextPrimary,
                         letterSpacing = if (isBalanceHidden) 2.sp else 0.sp
                     )
                     Text(
-                        text = if (isCreditCard) "Available Limit" else if (isWallet) "Wallet Balance" else "Available Balance",
+                        text = if (isInactive) "Dormant (Excluded)" else if (isCreditCard) "Available Limit" else if (isWallet) "Wallet Balance" else "Available Balance",
                         style = MaterialTheme.typography.labelSmall,
-                        color = TextTertiary
+                        color = if (isInactive) Color(0xFFD97706) else TextTertiary
                     )
                 } ?: run {
                     Text(
-                        text = "Active",
+                        text = if (isInactive) "Dormant" else "Active",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = AppleGreen,
+                        color = if (isInactive) Color(0xFFD97706) else AppleGreen,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
