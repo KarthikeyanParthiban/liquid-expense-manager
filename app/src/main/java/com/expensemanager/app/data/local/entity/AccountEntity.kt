@@ -12,7 +12,10 @@ data class AccountEntity(
     val accountType: String,
     val maskNumber: String,
     val lastKnownBalance: Double?,
-    val lastUpdated: Long
+    val lastUpdated: Long,
+    val availableLimit: Double? = null,
+    val outstandingAmount: Double? = null,
+    val balanceTimestamp: Long = 0L
 ) {
     fun toDomain(): Account {
         return Account(
@@ -21,7 +24,10 @@ data class AccountEntity(
             accountType = try { AccountType.valueOf(accountType) } catch (e: Exception) { AccountType.BANK_ACCOUNT },
             maskNumber = maskNumber,
             lastKnownBalance = lastKnownBalance,
-            lastUpdated = lastUpdated
+            lastUpdated = lastUpdated,
+            availableLimit = availableLimit,
+            outstandingAmount = outstandingAmount,
+            balanceTimestamp = balanceTimestamp
         )
     }
 
@@ -33,7 +39,10 @@ data class AccountEntity(
                 accountType = account.accountType.name,
                 maskNumber = account.maskNumber,
                 lastKnownBalance = account.lastKnownBalance,
-                lastUpdated = account.lastUpdated
+                lastUpdated = account.lastUpdated,
+                availableLimit = account.availableLimit,
+                outstandingAmount = account.outstandingAmount,
+                balanceTimestamp = account.balanceTimestamp
             )
         }
     }

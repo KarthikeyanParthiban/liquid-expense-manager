@@ -116,7 +116,8 @@ class ComprehensiveFinancialInvariantsTest {
         // But must successfully produce balance update
         val balUpdate = SmsParser.extractBalanceUpdate("VD-HDFCBK", balanceOnlyBody, 1724490000000L)
         assertNotNull("Balance update must be extracted", balUpdate)
-        assertEquals(88148.00, balUpdate!!.balance, 0.01)
+        assertNotNull("Bank balance must be non-null", balUpdate!!.balance)
+        assertEquals(88148.00, balUpdate.balance!!, 0.01)
     }
 
     // INVARIANT 7: User categorization rules override generic classification

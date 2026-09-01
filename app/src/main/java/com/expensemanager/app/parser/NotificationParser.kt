@@ -194,12 +194,20 @@ object NotificationParser {
         val accountMask = extractAccountMask(fullContent)
         val accountId = "${identifiedBank.name.replace(" ", "_")}_${accountMask ?: "PRIMARY"}"
 
+        // extractBalanceAfter only matches deposit "balance" keywords (not "limit"). For a
+        // credit card such a value is meaningless as a balance, so skip the update entirely.
+        if (identifiedBank.defaultType == AccountType.CREDIT_CARD) {
+            return null
+        }
+
         return AccountBalanceUpdate(
             accountId = accountId,
             bankName = identifiedBank.name,
             accountType = identifiedBank.defaultType,
             accountMask = accountMask,
             balance = balance,
+            availableLimit = null,
+            outstandingAmount = null,
             timestamp = timestamp,
             rawSender = appName,
             rawBody = fullContent

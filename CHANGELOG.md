@@ -5,6 +5,29 @@ All notable changes to **LQD (Liquid Expense Manager)** are documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0.8] - 2026-09-01
+
+### Fixed
+- **Credit-Card Limit No Longer Counted as Balance**: A credit card's "Available Limit" (`Avl Lmt` / `Available Limit`) was being extracted and stored as if it were a bank balance, inflating account balances and the total. Bank balance, card available limit, and card outstanding/due are now parsed and stored as three distinct quantities.
+- **Stale Balance Overwrite Bug**: Account balances are now tracked against the timestamp of the last balance-bearing SMS (`balanceTimestamp`) rather than the last activity time, so a newer balance-less transaction can no longer freeze an out-of-date balance. Same-second ties are resolved deterministically.
+- **Account Identity by Type**: A bank account and a credit card sharing the same last-4 digits at the same bank are no longer merged into a single record (which previously mixed an owned balance with a credit limit).
+- **Total Balance Accuracy**: The dashboard "total bank balance" now sums only deposit-type accounts (Savings / Current / Bank), de-duplicated by account, excluding credit-card limits, wallets, UPI handles, and investment/PF accounts.
+- **Credit-Card Bill Payment Exclusion**: Restored correct budget-exclusion of credit-card bill payments (e.g. paid via CRED / Kiwi) that a stricter keyword match had regressed.
+- **Insurance Premium Categorisation**: Insurance premium debits are correctly classified as Investments rather than Fees & Charges.
+
+### Added
+- **Merchant Normalizer**: Strips payment-gateway prefixes (`RAZORPAY*`, `PAYU*`, `POS*`, `ECOM*`), order IDs, and numeric suffixes before classification so merchants like `ECOM*SWIGGY_ORDER_4829173` resolve correctly.
+- **MCC (Merchant Category Code) Parsing**: Credit-card SMS carrying a 4-digit MCC are categorised directly from the card-network ground-truth code (120+ codes mapped) before falling back to keyword/ML classification.
+- **Amount & Time Contextual Priors**: A lightweight last-resort tiebreaker uses transaction amount, time-of-day, and direction to suggest a category when all other signals are exhausted.
+- **Auto-Learning Category Corrections**: Manually re-categorising a transaction now automatically creates a merchant rule so future SMS from the same merchant are classified correctly, without needing to tick a checkbox.
+- **On-Device Credit-Card Outstanding Display**: Credit cards now show available limit and, when known, a separate outstanding "Due" amount.
+- **Retrained On-Device Classifier**: The merchant classification model was retrained on real device SMS with an expanded India-focused vocabulary.
+
+### Changed
+- Credit-card available limit / outstanding are surfaced with correct labels on the Accounts screen instead of being shown as a generic balance.
+
+---
+
 ## [1.3.0.7] - 2026-08-31
 
 ### Added

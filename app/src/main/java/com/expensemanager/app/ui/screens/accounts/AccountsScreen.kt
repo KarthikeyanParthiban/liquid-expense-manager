@@ -530,20 +530,45 @@ private fun AccountListItem(
             }
 
             Column(horizontalAlignment = Alignment.End) {
-                account.lastKnownBalance?.let { bal ->
+                // Choose the figure to display based on account type:
+                //  - Credit card: available limit (or outstanding if no limit captured)
+                //  - Bank / wallet: available balance
+                val primaryFigure: Double? = if (isCreditCard) {
+                    account.availableLimit ?: account.lastKnownBalance
+                } else {
+                    account.lastKnownBalance
+                }
+                val primaryLabel: String = when {
+                    isInactive -> "Dormant (Excluded)"
+                    isCreditCard -> "Available Limit"
+                    isWallet -> "Wallet Balance"
+                    else -> "Available Balance"
+                }
+
+                if (primaryFigure != null) {
                     Text(
-                        text = if (isBalanceHidden) "₹ ••••••" else CurrencyFormatter.format(bal),
+                        text = if (isBalanceHidden) "₹ ••••••" else CurrencyFormatter.format(primaryFigure),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.ExtraBold,
                         color = if (isInactive) TextSecondary else TextPrimary,
                         letterSpacing = if (isBalanceHidden) 2.sp else 0.sp
                     )
                     Text(
-                        text = if (isInactive) "Dormant (Excluded)" else if (isCreditCard) "Available Limit" else if (isWallet) "Wallet Balance" else "Available Balance",
+                        text = primaryLabel,
                         style = MaterialTheme.typography.labelSmall,
                         color = if (isInactive) Color(0xFFD97706) else TextTertiary
                     )
-                } ?: run {
+                    // For credit cards, also surface the outstanding amount owed, if known
+                    if (isCreditCard && !isInactive && account.outstandingAmount != null) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = if (isBalanceHidden) "Due ₹ ••••" else "Due ${CurrencyFormatter.format(account.outstandingAmount)}",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = AppleRed
+                        )
+                    }
+                } else {
                     Text(
                         text = if (isInactive) "Dormant" else "Active",
                         style = MaterialTheme.typography.bodyMedium,

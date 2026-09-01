@@ -105,13 +105,25 @@ class TransactionsViewModel(
 
     fun updateTransaction(transaction: Transaction, applyRuleToMerchant: Boolean = false) {
         viewModelScope.launch {
-            transactionRepository.updateTransaction(transaction)
-            if (applyRuleToMerchant && !transaction.merchantName.isNullOrBlank()) {
+            // Always persist the isUserEdited flag on manual edits
+            val editedTransaction = transaction.copy(isUserEdited = true)
+            transactionRepository.updateTransaction(editedTransaction)
+
+            // Auto-promote every category correction to a MerchantRule so future SMS
+            // from the same merchant are classified correctly without user intervention.
+            // The checkbox in the UI is kept for UX transparency but is no longer the gate —
+            // we always create the rule when a merchant name is present and the user saved.
+            val merchantKey = editedTransaction.merchantName
+                ?.trim()
+                ?.takeIf { it.isNotBlank() && it.length >= 3 }
+
+            if (merchantKey != null) {
                 transactionRepository.updateCategoryAndCreateRule(
-                    merchantKeyword = transaction.merchantName,
-                    newCategory = transaction.category
+                    merchantKeyword = merchantKey,
+                    newCategory = editedTransaction.category
                 )
             }
+
             closeTransactionDetail()
         }
     }

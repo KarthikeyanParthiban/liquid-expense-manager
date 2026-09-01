@@ -134,7 +134,28 @@ object BankPatterns {
         "EPFOHO" to BankInfo("EPFO PF Account", AccountType.SAVINGS),
         "PFOHOS" to BankInfo("EPFO PF Account", AccountType.SAVINGS),
         "PFOHOG" to BankInfo("EPFO PF Account", AccountType.SAVINGS),
-        "MUTFCL" to BankInfo("Muthoot Fincorp", AccountType.BANK_ACCOUNT)
+        "MUTFCL" to BankInfo("Muthoot Fincorp", AccountType.BANK_ACCOUNT),
+        // Regional & Co-operative Banks
+        "SARASW" to BankInfo("Saraswat Bank"),
+        "SBCOBN" to BankInfo("Saraswat Bank"),
+        "KARBNK" to BankInfo("Karnataka Bank"),
+        "KTKBK" to BankInfo("Karnataka Bank"),
+        "SIBANK" to BankInfo("South Indian Bank"),
+        "SIBUS" to BankInfo("South Indian Bank"),
+        "NAINIT" to BankInfo("Nainital Bank"),
+        "TMBANK" to BankInfo("Tamilnad Mercantile Bank"),
+        "TMBBNK" to BankInfo("Tamilnad Mercantile Bank"),
+        "DCBANK" to BankInfo("DCB Bank"),
+        "DCBBNK" to BankInfo("DCB Bank"),
+        "JKBANK" to BankInfo("J&K Bank"),
+        "JKBBNK" to BankInfo("J&K Bank"),
+        "LAKSHM" to BankInfo("Lakshmi Vilas Bank"),
+        "LVBNK" to BankInfo("Lakshmi Vilas Bank"),
+        "UJJBNK" to BankInfo("Ujjivan Small Finance Bank"),
+        "UJJSFB" to BankInfo("Ujjivan Small Finance Bank"),
+        "ESAFBNK" to BankInfo("ESAF Small Finance Bank"),
+        "SURYOD" to BankInfo("Suryoday Small Finance Bank"),
+        "NORTBK" to BankInfo("North East Small Finance Bank")
     )
 
     // Known PSP / TPAP gateways where transactions often originate for other underlying bank accounts
@@ -160,7 +181,12 @@ object BankPatterns {
         "american express", "slice", "onecard", "kiwi", "indian bank",
         "bank of india", "idbi bank", "central bank of india", "ippb", "au small finance bank",
         "equitas small finance bank", "hsbc", "standard chartered bank", "paytm payments bank",
-        "airtel payments bank", "bandhan bank", "dbs bank", "muthoot fincorp"
+        "airtel payments bank", "bandhan bank", "dbs bank", "muthoot fincorp",
+        // Regional banks
+        "saraswat bank", "karnataka bank", "south indian bank", "nainital bank",
+        "tamilnad mercantile bank", "dcb bank", "j&k bank", "lakshmi vilas bank",
+        "ujjivan small finance bank", "esaf small finance bank", "suryoday small finance bank",
+        "north east small finance bank"
     )
 
     fun isVerifiedFinancialInstitution(bankName: String): Boolean {
@@ -254,7 +280,19 @@ object BankPatterns {
         Pair(Regex("""(?i)\bPAYTM\s+PAYMENTS\s+BANK\b|\bPAYTM\s+WALLET\b"""), BankInfo("Paytm", AccountType.WALLET)),
         Pair(Regex("""(?i)\bAIRTEL\s+PAYMENTS\s+BANK\b"""), BankInfo("Airtel Payments Bank", AccountType.WALLET)),
         Pair(Regex("""(?i)\bGROWW\s+WALLET\b|\bGROWW\b"""), BankInfo("Groww Wallet", AccountType.WALLET)),
-        Pair(Regex("""(?i)\bEPFO\b|\bPROVIDENT\s+FUND\b|\bPASSBOOK\s+BALANCE\b"""), BankInfo("EPFO PF Account", AccountType.SAVINGS))
+        Pair(Regex("""(?i)\bEPFO\b|\bPROVIDENT\s+FUND\b|\bPASSBOOK\s+BALANCE\b"""), BankInfo("EPFO PF Account", AccountType.SAVINGS)),
+        // Regional banks
+        Pair(Regex("""(?i)\bSARASWAT\s+BANK\b|\bSARASWAT\s+CO-?OP\b"""), BankInfo("Saraswat Bank")),
+        Pair(Regex("""(?i)\bKARNATAKA\s+BANK\b"""), BankInfo("Karnataka Bank")),
+        Pair(Regex("""(?i)\bSOUTH\s+INDIAN\s+BANK\b"""), BankInfo("South Indian Bank")),
+        Pair(Regex("""(?i)\bNAINITAL\s+BANK\b"""), BankInfo("Nainital Bank")),
+        Pair(Regex("""(?i)\bTAMILNAD\s+MERCANTILE\s+BANK\b|\bTMB\b"""), BankInfo("Tamilnad Mercantile Bank")),
+        Pair(Regex("""(?i)\bDCB\s+BANK\b"""), BankInfo("DCB Bank")),
+        Pair(Regex("""(?i)\bJ&K\s+BANK\b|\bJAMMU\s+AND\s+KASHMIR\s+BANK\b"""), BankInfo("J&K Bank")),
+        Pair(Regex("""(?i)\bLAKSHMI\s+VILAS\s+BANK\b|\bLVB\b"""), BankInfo("Lakshmi Vilas Bank")),
+        Pair(Regex("""(?i)\bUJJIVAN\s+SMALL\s+FINANCE\b|\bUJJIVAN\b"""), BankInfo("Ujjivan Small Finance Bank")),
+        Pair(Regex("""(?i)\bESAF\s+SMALL\s+FINANCE\b|\bESAF\s+BANK\b"""), BankInfo("ESAF Small Finance Bank")),
+        Pair(Regex("""(?i)\bSURYODAY\s+SMALL\s+FINANCE\b|\bSURYODAY\b"""), BankInfo("Suryoday Small Finance Bank"))
     )
 
     private fun extractSenderEntity(sender: String): String {
@@ -432,11 +470,45 @@ object BankPatterns {
         Pattern.compile("""(?:SMS\s+BLKCC|SMS\s+BLOCK\s+CC|SMS\s+BLOCK)\s*([0-9]{4})""", Pattern.CASE_INSENSITIVE)
     )
 
-    // Available Balance patterns (Handles "Available Bal in HDFC Bank A/c XX7011 ... is INR 88,148.00" and EPFO)
+    // ──────────────────────────────────────────────────────────────────────────────────
+    // BANK BALANCE patterns — deposit-account "available balance" ONLY.
+    //
+    // IMPORTANT: These deliberately DO NOT match credit-card "Available Limit / Avl Lmt",
+    // because a card's available limit is spending headroom, NOT money the user owns.
+    // Storing a limit as a positive balance is the #1 cause of wrong balances/totals.
+    //
+    // Matches: "Available Bal", "Avl Bal", "Avbl Bal", "A/c Balance", "Net Bal",
+    //          "passbook balance", "Bal:" — but NOT "Limit" / "Lmt".
+    // ──────────────────────────────────────────────────────────────────────────────────
     val BALANCE_PATTERNS = listOf(
-        Pattern.compile("""(?:Avail(?:able)?\s*(?:Bal|Balance|Limit|Lmt)|Avl\s*(?:Bal|Lmt|Limit)|Bal|AVL\s*BAL|Net\s*Bal|passbook\s*balance|total\s*balance).*?(?:is\s*)?(?:Rs\.?|INR|₹)\s*([\d,]+(?:\.\d{1,2})?)""", Pattern.CASE_INSENSITIVE),
-        Pattern.compile("""(?:Avail(?:able)?\s*(?:Bal|Balance|Limit|Lmt)|Avl\s*(?:Bal|Lmt|Limit)|Bal|AVL\s*BAL|Net\s*Bal|passbook\s*balance)[:\s]*(?:is\s*)?(?:Rs\.?|INR|₹)?\s*([\d,]+(?:\.\d{1,2})?)""", Pattern.CASE_INSENSITIVE),
+        // "Available Bal in HDFC Bank A/c XX7011 as on yesterday:24-AUG-26 is INR 88,148.00"
+        // The window between the balance keyword and the currency+amount can contain the
+        // account label and a date (with its own colon), so we allow up to 60 non-digit-ish
+        // chars but crucially DO NOT allow the word "Limit"/"Lmt" in between (negative lookahead)
+        // so a card's available-limit line never satisfies a bank-balance pattern.
+        Pattern.compile("""(?:Avail(?:able)?\s*Bal(?:ance)?|Avbl\s*Bal|Avl\s*Bal|A/c\s*Bal(?:ance)?|Acct\s*Bal(?:ance)?|Net\s*Bal(?:ance)?|passbook\s*balance)(?:(?!\bL(?:i)?m(?:i)?t\b).){0,60}?(?:Rs\.?|INR|₹)\s*([\d,]+(?:\.\d{1,2})?)""", Pattern.CASE_INSENSITIVE),
+        // "Bal: Rs 88,148.00" / "Balance is Rs 88148"
+        Pattern.compile("""(?:^|\s)(?:Bal|Balance)[:\s]+(?:is\s*)?(?:Rs\.?|INR|₹)\s*([\d,]+(?:\.\d{1,2})?)""", Pattern.CASE_INSENSITIVE),
+        // "Balance is 88148.00" (currency optional, but keyword must be a standalone balance word)
         Pattern.compile("""(?:Balance\s*(?:is|:)\s*(?:Rs\.?|INR|₹)?\s*([\d,]+(?:\.\d{1,2})?))""", Pattern.CASE_INSENSITIVE)
+    )
+
+    // ──────────────────────────────────────────────────────────────────────────────────
+    // CREDIT-CARD AVAILABLE LIMIT patterns — spending headroom on a credit card.
+    // This is a DIFFERENT quantity from a bank balance and must be stored separately.
+    // Matches: "Avl Lmt", "Available Limit", "Avl Limit", "Credit Limit avlbl".
+    // ──────────────────────────────────────────────────────────────────────────────────
+    val CREDIT_LIMIT_PATTERNS = listOf(
+        Pattern.compile("""(?:Avail(?:able)?\s*(?:Credit\s*)?Limit|Avl\s*Lmt|Avbl\s*Lmt|Avl\s*Limit|Available\s*Lmt)[:\s]*(?:is\s*)?(?:Rs\.?|INR|₹)?\s*([\d,]+(?:\.\d{1,2})?)""", Pattern.CASE_INSENSITIVE)
+    )
+
+    // ──────────────────────────────────────────────────────────────────────────────────
+    // CREDIT-CARD OUTSTANDING / AMOUNT DUE patterns — money the user OWES on the card.
+    // Stored as a positive "outstanding" value (represents debt, shown separately).
+    // Matches: "Outstanding", "Total Amt Due", "Total Amount Due", "Total Due".
+    // ──────────────────────────────────────────────────────────────────────────────────
+    val OUTSTANDING_PATTERNS = listOf(
+        Pattern.compile("""(?:Total\s*(?:Amt|Amount)\s*Due|Total\s*Due|Outstanding(?:\s*(?:Amt|Amount|Bal(?:ance)?))?|Amt\s*Due|Statement\s*Bal(?:ance)?)[:\s]*(?:is\s*)?(?:Rs\.?|INR|₹)\s*([\d,]+(?:\.\d{1,2})?)""", Pattern.CASE_INSENSITIVE)
     )
 
     // Reference ID / UTR patterns
@@ -446,6 +518,171 @@ object BankPatterns {
         Pattern.compile("""(?:IMPS|NEFT|RTGS)\s*[-:]\s*[A-Za-z0-9\s&.\-_]+?\s*-\s*([0-9]{6,24})""", Pattern.CASE_INSENSITIVE),
         Pattern.compile("""(?:IMPS(?:\s*Ref(?:\s*No)?)?|NEFT|RTGS)[:\s]*([a-zA-Z0-9]{6,24})""", Pattern.CASE_INSENSITIVE)
     )
+
+    // ──────────────────────────────────────────────────────────────────────────────────
+    // MCC (Merchant Category Code) — 4-digit code embedded in some credit-card SMS bodies.
+    // Card networks (Visa, Mastercard, RuPay) assign MCCs to classify merchant business type.
+    // When present, this gives ground-truth category signal that needs no ML.
+    //
+    // Common patterns in Indian CC SMS:
+    //   "MCC: 5812"  /  "MCC 5411"  /  "Merchant Code: 5812"  /  "mcc5812"
+    // ──────────────────────────────────────────────────────────────────────────────────
+    val MCC_PATTERN: java.util.regex.Pattern = java.util.regex.Pattern.compile(
+        """(?:MCC|Merchant\s+Category\s+Code|Merchant\s+Code)[:\s#]*([0-9]{4})""",
+        java.util.regex.Pattern.CASE_INSENSITIVE
+    )
+
+    /**
+     * Extracts a 4-digit MCC from an SMS body, or returns null if none is present.
+     */
+    fun extractMcc(body: String): String? {
+        val m = MCC_PATTERN.matcher(body)
+        return if (m.find()) m.group(1)?.trim() else null
+    }
+
+    /**
+     * Maps a 4-digit MCC code string to an expense Category.
+     *
+     * Source: ISO 18245 / Visa/Mastercard MCC guide, filtered to categories
+     * supported by this app.  Only well-defined, unambiguous MCCs are mapped;
+     * everything else returns null (falls through to keyword/ML classification).
+     *
+     * Reference: https://business.phonepe.com/articles/what-is-an-mcc-code-complete-guide-to-merchant-category-codes-in-india
+     */
+    fun mccToCategory(mcc: String?): com.expensemanager.app.core.model.Category? {
+        if (mcc == null) return null
+        return when (mcc) {
+            // ── Food & Dining ────────────────────────────────────────────────────
+            "5811" -> com.expensemanager.app.core.model.Category.FOOD  // Caterers
+            "5812" -> com.expensemanager.app.core.model.Category.FOOD  // Eating Places, Restaurants
+            "5813" -> com.expensemanager.app.core.model.Category.FOOD  // Drinking Places, Bars
+            "5814" -> com.expensemanager.app.core.model.Category.FOOD  // Fast Food Restaurants
+            "5441" -> com.expensemanager.app.core.model.Category.FOOD  // Candy, Nut, Confectionery Stores
+            "5451" -> com.expensemanager.app.core.model.Category.FOOD  // Dairy Products Stores
+            "5462" -> com.expensemanager.app.core.model.Category.FOOD  // Bakeries
+            "5499" -> com.expensemanager.app.core.model.Category.FOOD  // Miscellaneous Food Stores
+            // ── Groceries ───────────────────────────────────────────────────────
+            "5411" -> com.expensemanager.app.core.model.Category.GROCERIES  // Grocery Stores, Supermarkets
+            "5422" -> com.expensemanager.app.core.model.Category.GROCERIES  // Freezer/Meat Lockers
+            // NOTE: 5441 Candy/Confectionery kept in FOOD above — removed duplicate here
+            // NOTE: 5912 Drug Stores kept in HEALTHCARE below — removed from GROCERIES
+            // ── Shopping / Retail ────────────────────────────────────────────────
+            "5045" -> com.expensemanager.app.core.model.Category.SHOPPING  // Computers & Peripherals
+            "5065" -> com.expensemanager.app.core.model.Category.SHOPPING  // Electrical Parts/Equipment
+            "5200" -> com.expensemanager.app.core.model.Category.SHOPPING  // Home Supply/Hardware
+            "5251" -> com.expensemanager.app.core.model.Category.SHOPPING  // Hardware Stores
+            "5311" -> com.expensemanager.app.core.model.Category.SHOPPING  // Department Stores
+            "5331" -> com.expensemanager.app.core.model.Category.SHOPPING  // Variety Stores
+            "5399" -> com.expensemanager.app.core.model.Category.SHOPPING  // Misc General Merchandise
+            "5600" -> com.expensemanager.app.core.model.Category.SHOPPING  // Apparel/Accessory Stores
+            "5611" -> com.expensemanager.app.core.model.Category.SHOPPING  // Men's Clothing
+            "5621" -> com.expensemanager.app.core.model.Category.SHOPPING  // Women's Clothing
+            "5631" -> com.expensemanager.app.core.model.Category.SHOPPING  // Women's Accessories
+            "5641" -> com.expensemanager.app.core.model.Category.SHOPPING  // Children's Clothing
+            "5651" -> com.expensemanager.app.core.model.Category.SHOPPING  // Family Clothing
+            "5661" -> com.expensemanager.app.core.model.Category.SHOPPING  // Shoe Stores
+            "5691" -> com.expensemanager.app.core.model.Category.SHOPPING  // Men's/Women's Clothing
+            "5699" -> com.expensemanager.app.core.model.Category.SHOPPING  // Misc Apparel
+            "5719" -> com.expensemanager.app.core.model.Category.SHOPPING  // Misc Home Furnishings
+            "5722" -> com.expensemanager.app.core.model.Category.SHOPPING  // Household Appliance Stores
+            "5732" -> com.expensemanager.app.core.model.Category.SHOPPING  // Electronics Stores
+            "5734" -> com.expensemanager.app.core.model.Category.SHOPPING  // Computer Software Stores
+            "5735" -> com.expensemanager.app.core.model.Category.SHOPPING  // Music Stores
+            "5945" -> com.expensemanager.app.core.model.Category.SHOPPING  // Hobby/Toy/Game Shops
+            "5947" -> com.expensemanager.app.core.model.Category.SHOPPING  // Gift/Card/Novelty/Souvenir
+            "5999" -> com.expensemanager.app.core.model.Category.SHOPPING  // Misc Retail Stores
+            // ── Transport & Travel ───────────────────────────────────────────────
+            "4111" -> com.expensemanager.app.core.model.Category.TRANSPORT  // Local/Suburban Commuter Transport
+            "4112" -> com.expensemanager.app.core.model.Category.TRANSPORT  // Passenger Railways
+            "4121" -> com.expensemanager.app.core.model.Category.TRANSPORT  // Taxicabs/Limousines
+            "4131" -> com.expensemanager.app.core.model.Category.TRANSPORT  // Bus Lines
+            "4215" -> com.expensemanager.app.core.model.Category.TRANSPORT  // Courier Services
+            "4411" -> com.expensemanager.app.core.model.Category.TRANSPORT  // Cruise Lines
+            "4511" -> com.expensemanager.app.core.model.Category.TRANSPORT  // Airlines, Air Carriers
+            "4582" -> com.expensemanager.app.core.model.Category.TRANSPORT  // Airports, Flying Fields
+            "4722" -> com.expensemanager.app.core.model.Category.TRANSPORT  // Travel Agencies
+            "4784" -> com.expensemanager.app.core.model.Category.TRANSPORT  // Tolls, Bridge Fees
+            "5171" -> com.expensemanager.app.core.model.Category.TRANSPORT  // Petroleum Products
+            "5172" -> com.expensemanager.app.core.model.Category.TRANSPORT  // Petroleum & Petroleum Products
+            "5541" -> com.expensemanager.app.core.model.Category.TRANSPORT  // Service Stations
+            "5542" -> com.expensemanager.app.core.model.Category.TRANSPORT  // Automated Fuel Dispensers
+            "7011" -> com.expensemanager.app.core.model.Category.TRANSPORT  // Hotels & Motels
+            "7512" -> com.expensemanager.app.core.model.Category.TRANSPORT  // Car Rental Agencies
+            "7523" -> com.expensemanager.app.core.model.Category.TRANSPORT  // Parking Lots/Garages
+            "7531" -> com.expensemanager.app.core.model.Category.TRANSPORT  // Auto Body Repair
+            "7549" -> com.expensemanager.app.core.model.Category.TRANSPORT  // Towing Services
+            // ── Bills & Utilities ────────────────────────────────────────────────
+            "4812" -> com.expensemanager.app.core.model.Category.BILLS_UTILITIES  // Telephone Services
+            "4813" -> com.expensemanager.app.core.model.Category.BILLS_UTILITIES  // Telephone Services (non-fax)
+            "4814" -> com.expensemanager.app.core.model.Category.BILLS_UTILITIES  // Fax / Telecom
+            "4816" -> com.expensemanager.app.core.model.Category.BILLS_UTILITIES  // Computer Network Services
+            "4899" -> com.expensemanager.app.core.model.Category.BILLS_UTILITIES  // Cable/Satellite/Other Pay TV
+            "4900" -> com.expensemanager.app.core.model.Category.BILLS_UTILITIES  // Utilities
+            "4911" -> com.expensemanager.app.core.model.Category.BILLS_UTILITIES  // Electric, Gas, Sanitary Water
+            "4941" -> com.expensemanager.app.core.model.Category.BILLS_UTILITIES  // Water Supply
+            "6300" -> com.expensemanager.app.core.model.Category.BILLS_UTILITIES  // Insurance (general)
+            // ── Entertainment ────────────────────────────────────────────────────
+            "5815" -> com.expensemanager.app.core.model.Category.ENTERTAINMENT  // Digital Goods – Books, Movies, Music
+            "5816" -> com.expensemanager.app.core.model.Category.ENTERTAINMENT  // Digital Goods – Games
+            "5817" -> com.expensemanager.app.core.model.Category.ENTERTAINMENT  // Digital Goods – Applications
+            "5818" -> com.expensemanager.app.core.model.Category.ENTERTAINMENT  // Digital Goods – Multicat
+            // NOTE: 7011 Hotels — kept in TRANSPORT above (hotel stays = travel expense)
+            "7832" -> com.expensemanager.app.core.model.Category.ENTERTAINMENT  // Motion Picture Theaters
+            "7841" -> com.expensemanager.app.core.model.Category.ENTERTAINMENT  // Video Tape Rental
+            "7922" -> com.expensemanager.app.core.model.Category.ENTERTAINMENT  // Ticket Agencies, Theatrical Producers
+            "7929" -> com.expensemanager.app.core.model.Category.ENTERTAINMENT  // Bands, Orchestras, Entertainers
+            "7993" -> com.expensemanager.app.core.model.Category.ENTERTAINMENT  // Video Game Arcades, Establishments
+            "7994" -> com.expensemanager.app.core.model.Category.ENTERTAINMENT  // Video Game Supply Stores
+            "7999" -> com.expensemanager.app.core.model.Category.ENTERTAINMENT  // Recreation Services
+            // ── Healthcare ───────────────────────────────────────────────────────
+            "5047" -> com.expensemanager.app.core.model.Category.HEALTHCARE  // Medical & Dental Equipment
+            "5122" -> com.expensemanager.app.core.model.Category.HEALTHCARE  // Drugs, Drug Proprietaries
+            "5912" -> com.expensemanager.app.core.model.Category.HEALTHCARE  // Drug Stores, Pharmacies
+            "8011" -> com.expensemanager.app.core.model.Category.HEALTHCARE  // Doctors & Physicians
+            "8021" -> com.expensemanager.app.core.model.Category.HEALTHCARE  // Dentists & Orthodontists
+            "8031" -> com.expensemanager.app.core.model.Category.HEALTHCARE  // Osteopaths
+            "8041" -> com.expensemanager.app.core.model.Category.HEALTHCARE  // Chiropractors
+            "8049" -> com.expensemanager.app.core.model.Category.HEALTHCARE  // Podiatrists
+            "8050" -> com.expensemanager.app.core.model.Category.HEALTHCARE  // Nursing & Personal Care
+            "8062" -> com.expensemanager.app.core.model.Category.HEALTHCARE  // Hospitals
+            "8071" -> com.expensemanager.app.core.model.Category.HEALTHCARE  // Medical & Dental Labs
+            "8099" -> com.expensemanager.app.core.model.Category.HEALTHCARE  // Health Practitioners (not elsewhere)
+            // ── Investment & Insurance ────────────────────────────────────────────
+            "6211" -> com.expensemanager.app.core.model.Category.INVESTMENT  // Security Brokers/Dealers
+            "6282" -> com.expensemanager.app.core.model.Category.INVESTMENT  // Investment Advisory Services
+            "6311" -> com.expensemanager.app.core.model.Category.INVESTMENT  // Life Insurance
+            "6321" -> com.expensemanager.app.core.model.Category.INVESTMENT  // Accident/Health Insurance
+            "6331" -> com.expensemanager.app.core.model.Category.INVESTMENT  // Fire/Marine/Casualty Insurance
+            "6381" -> com.expensemanager.app.core.model.Category.INVESTMENT  // Insurance Premiums
+            // ── Education ────────────────────────────────────────────────────────
+            "8211" -> com.expensemanager.app.core.model.Category.EDUCATION  // Elementary/Secondary Schools
+            "8220" -> com.expensemanager.app.core.model.Category.EDUCATION  // Colleges, Universities
+            "8241" -> com.expensemanager.app.core.model.Category.EDUCATION  // Correspondence Schools
+            "8244" -> com.expensemanager.app.core.model.Category.EDUCATION  // Business & Secretarial Schools
+            "8249" -> com.expensemanager.app.core.model.Category.EDUCATION  // Vocational & Trade Schools
+            "8299" -> com.expensemanager.app.core.model.Category.EDUCATION  // Educational Services (not elsewhere)
+            // ── Personal Care ────────────────────────────────────────────────────
+            // NOTE: 7011 Hotels — kept in TRANSPORT; removed duplicate here
+            "7230" -> com.expensemanager.app.core.model.Category.PERSONAL  // Beauty/Barber Shops
+            "7297" -> com.expensemanager.app.core.model.Category.PERSONAL  // Massage Parlors
+            "7298" -> com.expensemanager.app.core.model.Category.PERSONAL  // Health & Beauty Spas
+            "7911" -> com.expensemanager.app.core.model.Category.PERSONAL  // Dance Studios
+            "7941" -> com.expensemanager.app.core.model.Category.PERSONAL  // Sports Clubs/Athletic Fields
+            "7991" -> com.expensemanager.app.core.model.Category.PERSONAL  // Tourist Attractions & Exhibits
+            "7997" -> com.expensemanager.app.core.model.Category.PERSONAL  // Clubs — Country, Golf, Athletic
+            // ── Fees & Charges ────────────────────────────────────────────────────
+            "6012" -> com.expensemanager.app.core.model.Category.FEES_CHARGES  // Financial Institutions — Merchandise
+            "6051" -> com.expensemanager.app.core.model.Category.FEES_CHARGES  // Non-Financial Institutions — Forex
+            "6099" -> com.expensemanager.app.core.model.Category.FEES_CHARGES  // Financial Institutions — not elsewhere
+            "6532" -> com.expensemanager.app.core.model.Category.FEES_CHARGES  // Payment Transaction / Money Transfer
+            // ── Transfers / Wallets ───────────────────────────────────────────────
+            "4829" -> com.expensemanager.app.core.model.Category.TRANSFERS  // Money Orders
+            "6010" -> com.expensemanager.app.core.model.Category.TRANSFERS  // Financial Institutions — Manual Cash
+            "6011" -> com.expensemanager.app.core.model.Category.TRANSFERS  // Financial Institutions — ATM
+            "6540" -> com.expensemanager.app.core.model.Category.TRANSFERS  // POI (Funding Transactions)
+            else -> null
+        }
+    }
 
     // Merchant & Payee extraction patterns
     val MERCHANT_PATTERNS = listOf(

@@ -5,8 +5,15 @@ data class Account(
     val bankName: String,
     val accountType: AccountType,
     val maskNumber: String,
+    /** For bank/wallet accounts: available balance (money owned). Null for cards. */
     val lastKnownBalance: Double? = null,
     val lastUpdated: Long = System.currentTimeMillis(),
+    /** For credit cards: available spending limit (headroom). Null for bank accounts. */
+    val availableLimit: Double? = null,
+    /** For credit cards: outstanding amount owed / total due. Null for bank accounts. */
+    val outstandingAmount: Double? = null,
+    /** Timestamp of the SMS that last set lastKnownBalance/availableLimit — decoupled from lastUpdated. */
+    val balanceTimestamp: Long = 0L,
     val transactionCount: Int = 0,
     val totalExpense: Double = 0.0,
     val totalIncome: Double = 0.0

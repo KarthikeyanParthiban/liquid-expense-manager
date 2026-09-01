@@ -51,15 +51,25 @@ class DashboardViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val totalBankBalance: StateFlow<Double> = accounts.map { list ->
-        list.filter {
-            it.accountType != AccountType.CREDIT_CARD &&
-            it.accountType != AccountType.WALLET &&
-            !it.bankName.contains("Groww", ignoreCase = true) &&
-            !it.bankName.contains("EPFO", ignoreCase = true) &&
-            !it.bankName.contains("PF Account", ignoreCase = true) &&
-            it.bankName != "Bank Account" &&
-            !it.isInactive
-        }
+        // Only deposit-type accounts contribute to the "bank balance" total.
+        // Whitelist the allowed types rather than blacklisting a couple — this prevents
+        // UPI / UNKNOWN / misclassified rows (and credit-card limits) from being summed in.
+        val depositTypes = setOf(
+            AccountType.BANK_ACCOUNT,
+            AccountType.SAVINGS,
+            AccountType.CURRENT
+        )
+        list.asSequence()
+            .filter { it.accountType in depositTypes }
+            .filter {
+                !it.bankName.contains("Groww", ignoreCase = true) &&
+                !it.bankName.contains("EPFO", ignoreCase = true) &&
+                !it.bankName.contains("PF Account", ignoreCase = true) &&
+                it.bankName != "Bank Account" &&
+                !it.isInactive
+            }
+            // De-duplicate by account id so a split/duplicated account isn't counted twice
+            .distinctBy { it.id }
             .mapNotNull { it.lastKnownBalance }
             .sum()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)

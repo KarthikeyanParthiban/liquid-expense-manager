@@ -126,20 +126,35 @@ class TransactionRepository(
                     val resolvedAccountId = resolveTargetAccountId(result.bankName, result.accountType.name, result.accountMask, result.accountId)
                     val existingAccount = accountDao.getAccountById(resolvedAccountId)
                     if (existingAccount != null) {
-                        val isNewer = result.timestamp >= existingAccount.lastUpdated
+                        // Only overwrite balance figures when THIS sms carries a figure AND is
+                        // chronologically newer than the last balance-bearing sms (balanceTimestamp),
+                        // NOT newer than lastUpdated (which advances on every txn, even balance-less ones).
+                        val carriesBalanceInfo = result.balanceAfter != null ||
+                                result.availableLimit != null || result.outstandingAmount != null
+                        val isNewerBalance = result.timestamp > existingAccount.balanceTimestamp
+                        val applyBalance = carriesBalanceInfo && isNewerBalance
+
                         val updatedAccount = existingAccount.copy(
-                            lastKnownBalance = if (isNewer && result.balanceAfter != null) result.balanceAfter else (existingAccount.lastKnownBalance ?: result.balanceAfter),
+                            lastKnownBalance = if (applyBalance && result.balanceAfter != null) result.balanceAfter else existingAccount.lastKnownBalance,
+                            availableLimit = if (applyBalance && result.availableLimit != null) result.availableLimit else existingAccount.availableLimit,
+                            outstandingAmount = if (applyBalance && result.outstandingAmount != null) result.outstandingAmount else existingAccount.outstandingAmount,
+                            balanceTimestamp = if (applyBalance) result.timestamp else existingAccount.balanceTimestamp,
                             lastUpdated = maxOf(existingAccount.lastUpdated, result.timestamp)
                         )
                         accountDao.insertOrUpdate(updatedAccount)
                     } else if (hasMask) {
-                        // ONLY create a new bank account card if ending account digits are present
+                        // ONLY create a new account card if ending account digits are present
+                        val carriesBalanceInfo = result.balanceAfter != null ||
+                                result.availableLimit != null || result.outstandingAmount != null
                         val newAccount = AccountEntity(
                             id = resolvedAccountId,
                             bankName = result.bankName,
                             accountType = result.accountType.name,
                             maskNumber = result.accountMask!!,
                             lastKnownBalance = result.balanceAfter,
+                            availableLimit = result.availableLimit,
+                            outstandingAmount = result.outstandingAmount,
+                            balanceTimestamp = if (carriesBalanceInfo) result.timestamp else 0L,
                             lastUpdated = result.timestamp
                         )
                         accountDao.insertOrUpdate(newAccount)
@@ -170,20 +185,31 @@ class TransactionRepository(
         val resolvedAccountId = resolveTargetAccountId(update.bankName, update.accountType.name, update.accountMask, update.accountId)
         val existingAccount = accountDao.getAccountById(resolvedAccountId)
         if (existingAccount != null) {
-            val shouldUpdateBalance = update.timestamp >= existingAccount.lastUpdated || existingAccount.lastKnownBalance == null
+            // Compare against balanceTimestamp (the last balance-bearing SMS), not lastUpdated.
+            // Also update if we have never recorded a balance figure for this account.
+            val hasNoFigureYet = existingAccount.lastKnownBalance == null &&
+                    existingAccount.availableLimit == null && existingAccount.outstandingAmount == null
+            val shouldUpdate = update.timestamp > existingAccount.balanceTimestamp || hasNoFigureYet
+
             val updatedAccount = existingAccount.copy(
-                lastKnownBalance = if (shouldUpdateBalance) update.balance else existingAccount.lastKnownBalance,
+                lastKnownBalance = if (shouldUpdate && update.balance != null) update.balance else existingAccount.lastKnownBalance,
+                availableLimit = if (shouldUpdate && update.availableLimit != null) update.availableLimit else existingAccount.availableLimit,
+                outstandingAmount = if (shouldUpdate && update.outstandingAmount != null) update.outstandingAmount else existingAccount.outstandingAmount,
+                balanceTimestamp = if (shouldUpdate) update.timestamp else existingAccount.balanceTimestamp,
                 lastUpdated = maxOf(existingAccount.lastUpdated, update.timestamp)
             )
             accountDao.insertOrUpdate(updatedAccount)
         } else if (hasMask) {
-            // ONLY create a new bank account card if ending account digits are present
+            // ONLY create a new account card if ending account digits are present
             val newAccount = AccountEntity(
                 id = resolvedAccountId,
                 bankName = update.bankName,
                 accountType = update.accountType.name,
                 maskNumber = update.accountMask!!,
                 lastKnownBalance = update.balance,
+                availableLimit = update.availableLimit,
+                outstandingAmount = update.outstandingAmount,
+                balanceTimestamp = update.timestamp,
                 lastUpdated = update.timestamp
             )
             accountDao.insertOrUpdate(newAccount)
@@ -207,12 +233,29 @@ class TransactionRepository(
             return match?.id ?: rawAccountId
         }
 
-        // 1. Direct exact match (bankName + mask)
+        // 1. Direct exact match (bankName + mask + accountType).
+        // accountType MUST be part of the match so a bank account XX1234 and a credit card
+        // XX1234 at the same bank are NOT collapsed into one row (which would mix an owned
+        // balance with a credit limit under a single lastKnownBalance).
         val exactMatch = existingAccounts.firstOrNull {
             it.bankName.equals(bankName, ignoreCase = true) &&
-                    it.maskNumber == accountMask
+                    it.maskNumber == accountMask &&
+                    it.accountType.equals(accountTypeName, ignoreCase = true)
         }
         if (exactMatch != null) return exactMatch.id
+
+        // 1b. Same bank+mask but a DIFFERENT known type — only merge when the types are
+        // compatible deposit types (BANK_ACCOUNT / SAVINGS / CURRENT). Never merge a card
+        // with a deposit account.
+        val depositTypes = setOf("BANK_ACCOUNT", "SAVINGS", "CURRENT")
+        if (accountTypeName in depositTypes) {
+            val depositMatch = existingAccounts.firstOrNull {
+                it.bankName.equals(bankName, ignoreCase = true) &&
+                        it.maskNumber == accountMask &&
+                        it.accountType in depositTypes
+            }
+            if (depositMatch != null) return depositMatch.id
+        }
 
         // 2. Cross-Bank Disambiguation: If incoming bank is a PSP / aggregator gateway,
         // resolve to the known unique issuing bank account for this mask number
@@ -230,7 +273,9 @@ class TransactionRepository(
     }
 
     suspend fun updateTransaction(transaction: Transaction) = processingMutex.withLock {
-        transactionDao.update(TransactionEntity.fromDomain(transaction))
+        // Ensure isUserEdited is always true when a transaction is manually updated
+        val marked = if (!transaction.isUserEdited) transaction.copy(isUserEdited = true) else transaction
+        transactionDao.update(TransactionEntity.fromDomain(marked))
     }
 
     suspend fun updateCategoryAndCreateRule(merchantKeyword: String, newCategory: Category) = processingMutex.withLock {
@@ -361,12 +406,22 @@ class TransactionRepository(
             val latestTxn = txns.maxByOrNull { it.timestamp } ?: sample
 
             val existing = accountDao.getAccountById(accId)
+            val resolvedBalance = latestTxnWithBalance?.balanceAfter ?: existing?.lastKnownBalance
+            val resolvedBalanceTs = latestTxnWithBalance?.timestamp
+                ?: existing?.balanceTimestamp
+                ?: 0L
+
             val newAccount = AccountEntity(
                 id = accId,
                 bankName = sample.bankName,
                 accountType = sample.accountType,
                 maskNumber = sample.accountMask!!,
-                lastKnownBalance = latestTxnWithBalance?.balanceAfter ?: existing?.lastKnownBalance,
+                lastKnownBalance = resolvedBalance,
+                // Preserve card-specific figures that were captured during live parsing —
+                // transactions don't carry limit/outstanding, so we don't recompute them here.
+                availableLimit = existing?.availableLimit,
+                outstandingAmount = existing?.outstandingAmount,
+                balanceTimestamp = resolvedBalanceTs,
                 lastUpdated = latestTxn.timestamp
             )
             accountDao.insertOrUpdate(newAccount)

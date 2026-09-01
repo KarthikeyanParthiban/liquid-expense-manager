@@ -9,7 +9,7 @@ import kotlin.math.abs
 object DeduplicationEngine {
 
     private const val FUZZY_WINDOW_MILLIS = 20 * 60 * 1000L // 20 minutes window
-    private const val SETTLEMENT_WINDOW_MILLIS = 60 * 60 * 1000L // 60 minutes window for CC settlements
+    private const val SETTLEMENT_WINDOW_MILLIS = 6 * 60 * 60 * 1000L // 6 hours window for CC settlements (banks can delay confirmation by 2–6 hours)
 
     sealed class DeduplicationResult {
         data class Unique(val reason: String = "No matching transaction found within window") : DeduplicationResult()
@@ -65,7 +65,7 @@ object DeduplicationEngine {
         // 3. Credit Card Bill Payment & Settlement Reconciliation (Bank Debit + Card Credit Settlement)
         val isCandidateCcSettlement = candidate.type == TransactionType.CARD_SETTLEMENT ||
                 candidate.category == Category.TRANSFERS ||
-                candidate.rawBody.contains("received towards your credit card", ignoreCase = true)
+                candidate.rawBody?.contains("received towards your credit card", ignoreCase = true) == true
 
         if (isCandidateCcSettlement) {
             val settlementMatch = existingTransactions.firstOrNull { existing ->
@@ -96,8 +96,18 @@ object DeduplicationEngine {
             val isSameAmount = abs(existing.amount - candidate.amount) < 0.01
             val isWithinWindow = abs(existing.timestamp - candidate.timestamp) <= FUZZY_WINDOW_MILLIS
 
-            val isUpiWrapper = existing.sender in setOf("Google Pay", "PhonePe", "Paytm", "CRED", "BHIM", "Amazon Pay") ||
-                    candidate.rawSender in setOf("Google Pay", "PhonePe", "Paytm", "CRED", "BHIM", "Amazon Pay")
+            val isUpiWrapper = existing.sender.equals("Google Pay", ignoreCase = true) ||
+                    existing.sender.equals("PhonePe", ignoreCase = true) ||
+                    existing.sender.equals("Paytm", ignoreCase = true) ||
+                    existing.sender.equals("CRED", ignoreCase = true) ||
+                    existing.sender.equals("BHIM", ignoreCase = true) ||
+                    existing.sender.equals("Amazon Pay", ignoreCase = true) ||
+                    candidate.rawSender?.equals("Google Pay", ignoreCase = true) == true ||
+                    candidate.rawSender?.equals("PhonePe", ignoreCase = true) == true ||
+                    candidate.rawSender?.equals("Paytm", ignoreCase = true) == true ||
+                    candidate.rawSender?.equals("CRED", ignoreCase = true) == true ||
+                    candidate.rawSender?.equals("BHIM", ignoreCase = true) == true ||
+                    candidate.rawSender?.equals("Amazon Pay", ignoreCase = true) == true
 
             val isSameAccount = existing.accountId == candidate.accountId ||
                     (existing.bankName.equals(candidate.bankName, ignoreCase = true) &&

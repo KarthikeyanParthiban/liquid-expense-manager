@@ -19,7 +19,7 @@ import com.expensemanager.app.data.local.entity.TransactionEntity
         AccountEntity::class,
         MerchantRuleEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class ExpenseDatabase : RoomDatabase() {
@@ -45,6 +45,17 @@ abstract class ExpenseDatabase : RoomDatabase() {
             }
         }
 
+        // Adds separate credit-card limit / outstanding columns and a decoupled balance timestamp.
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE accounts ADD COLUMN availableLimit REAL")
+                db.execSQL("ALTER TABLE accounts ADD COLUMN outstandingAmount REAL")
+                db.execSQL("ALTER TABLE accounts ADD COLUMN balanceTimestamp INTEGER NOT NULL DEFAULT 0")
+                // Seed balanceTimestamp from lastUpdated so existing balances aren't treated as unset
+                db.execSQL("UPDATE accounts SET balanceTimestamp = lastUpdated")
+            }
+        }
+
         fun getDatabase(context: Context): ExpenseDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -52,7 +63,7 @@ abstract class ExpenseDatabase : RoomDatabase() {
                     ExpenseDatabase::class.java,
                     "expense_manager.db"
                 )
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .build()
                 INSTANCE = instance
                 instance

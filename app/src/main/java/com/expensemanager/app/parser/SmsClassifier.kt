@@ -66,13 +66,16 @@ object SmsClassifier {
         Regex("""(?i)\b(?:insufficient\s+funds|limit\s+exceeded|incorrect\s+pin)\b""")
     )
 
-    // Telecom mobile recharge confirmations, data quotas, and validity extensions (Not Bank Account transactions)
+    // Telecom carrier-originated recharge/data/plan notifications (NOT bank payment confirmations)
+    // These are messages FROM the telecom carrier (Airtel/Jio/Vi) confirming data usage, plan expiry, etc.
+    // Bank payment SMS for telecom bills (from the user's bank) are NOT rejected here.
     private val REJECT_TELECOM_DATA_PATTERNS = listOf(
         Regex("""(?i)\b(?:recharge\s+plan\s+expir|plan\s+expired|data\s+quota|data\s+used|validity\s+expir|quota\s+as\s+per\s+plan|100%\s+of\s+daily\s+data|50%\s+data|90%\s+of\s+available\s+data)\b"""),
         Regex("""(?i)\b(?:pack\s+validity|recharge\s+now\s+to\s+continue|talktime\s+balance)\b"""),
-        Regex("""(?i)\b(?:recharge\s+of\s+rs.*(?:credited\s+to|successful)|credited\s+to\s+your\s+(?:airtel|jio|vi|vodafone|idea|bsnl)?\s*number|validity\s+has\s+been\s+extended)\b"""),
-        Regex("""(?i)\b(?:prepaid\s+bill\s+payment\s+of\s+rs.*(?:successful|completed))\b"""),
-        Regex("""(?i)\b(?:recharge\s+successful|recharge\s+credited\s+to\s+your|talktime\s+credited|validity\s+extended)\b""")
+        // Only reject carrier-originated recharge confirmations — those mention "credited to your [carrier] number"
+        // Bank-originated payment SMS saying "prepaid bill payment of Rs X successful" are real debits and must NOT be rejected
+        Regex("""(?i)\b(?:recharge\s+of\s+rs.*credited\s+to\s+your\s+(?:airtel|jio|vi|vodafone|idea|bsnl)\s*number|credited\s+to\s+your\s+(?:airtel|jio|vi|vodafone|idea|bsnl)\s*number|validity\s+has\s+been\s+extended)\b"""),
+        Regex("""(?i)\b(?:recharge\s+credited\s+to\s+your|talktime\s+credited|validity\s+extended)\b""")
     )
 
     private val REJECT_EPFO_PATTERNS = listOf(

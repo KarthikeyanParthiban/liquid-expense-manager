@@ -5,6 +5,7 @@ import com.expensemanager.app.core.model.MerchantRule
 import com.expensemanager.app.core.model.TransactionType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -109,7 +110,10 @@ class SmsParserTest {
         assertEquals(Category.GROCERIES, result.category)
         assertEquals("BLINKIT", result.merchant)
         assertEquals("XX1006", result.accountMask)
-        assertEquals(73248.27, result.balanceAfter ?: 0.0, 0.01)
+        // FIX: "Avl Lmt" on a credit card is available limit, NOT a bank balance.
+        assertNull("Card limit must not be stored as balanceAfter", result.balanceAfter)
+        assertNotNull("Card available limit must be captured", result.availableLimit)
+        assertEquals(73248.27, result.availableLimit!!, 0.01)
     }
 
     @Test
@@ -125,7 +129,10 @@ class SmsParserTest {
         assertEquals(Category.GROCERIES, result.category)
         assertEquals("Zepto", result.merchant)
         assertEquals("XX9117", result.accountMask)
-        assertEquals(64827.01, result.balanceAfter ?: 0.0, 0.01)
+        // FIX: "Avl Limit" on a credit card is available limit, NOT a bank balance.
+        assertNull("Card limit must not be stored as balanceAfter", result.balanceAfter)
+        assertNotNull("Card available limit must be captured", result.availableLimit)
+        assertEquals(64827.01, result.availableLimit!!, 0.01)
     }
 
     @Test
@@ -154,21 +161,27 @@ class SmsParserTest {
         assertEquals("HDFC_Bank_XX7011", balanceUpdate!!.accountId)
         assertEquals("HDFC Bank", balanceUpdate.bankName)
         assertEquals("XX7011", balanceUpdate.accountMask)
-        assertEquals(88148.00, balanceUpdate.balance, 0.01)
+        // Bank account → the figure is a real available balance
+        assertNotNull(balanceUpdate.balance)
+        assertEquals(88148.00, balanceUpdate.balance!!, 0.01)
+        assertNull("Bank account must not have a credit limit", balanceUpdate.availableLimit)
     }
 
     @Test
-    fun `test extracting credit limit balance from YES Bank Card SMS`() {
+    fun `test credit card Avl Lmt is stored as availableLimit not balance`() {
         val sender = "AX-YESBNK-S"
         val body = "INR 896.00 spent on YES BANK Card X1006 @UPI_BLINKIT 25-08-2026 07:54:51 am. Avl Lmt INR 73,248.27. SMS BLKCC 1006 to 9840909000 if not you"
         val timestamp = 1787624693534L
 
         val balanceUpdate = SmsParser.extractBalanceUpdate(sender, body, timestamp)
         assertNotNull(balanceUpdate)
-        assertEquals("Yes_Bank_XX1006", balanceUpdate!!.accountId)
-        assertEquals("Yes Bank", balanceUpdate.bankName)
+        assertEquals("Yes Bank", balanceUpdate!!.bankName)
         assertEquals("XX1006", balanceUpdate.accountMask)
-        assertEquals(73248.27, balanceUpdate.balance, 0.01)
+        // FIX: A credit card "Avl Lmt" is spending headroom, NOT a bank balance.
+        // It must land in availableLimit and leave balance null.
+        assertNull("Credit card limit must NOT be stored as balance", balanceUpdate.balance)
+        assertNotNull("Credit card available limit must be captured", balanceUpdate.availableLimit)
+        assertEquals(73248.27, balanceUpdate.availableLimit!!, 0.01)
     }
 
     @Test

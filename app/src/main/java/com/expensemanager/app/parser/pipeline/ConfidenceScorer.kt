@@ -31,8 +31,30 @@ object ConfidenceScorer {
             warnings.add("Amount is missing or invalid")
         }
 
-        // 2. Intent & Direction (0.20)
-        totalScore += 0.20f
+        // 2. Intent & Direction (0.20) — awarded when intent was positively detected.
+        // A non-DEBIT intent (CREDIT/REFUND/REVERSAL/TRANSFER/CARD_SETTLEMENT/CASH_WITHDRAWAL)
+        // is always a positive signal. A plain DEBIT counts as positively detected as long as
+        // there is at least one corroborating field (merchant, reference id, account mask, or
+        // a recognised bank). Only a bare, context-free DEBIT with no corroboration is treated
+        // as an unconfirmed default and does not earn the intent points.
+        val hasNonDebitIntent = rulesFired.any { rule ->
+            listOf("Intent: CREDIT", "Intent: REFUND", "Intent: REVERSAL",
+                   "Intent: TRANSFER", "Intent: CARD_SETTLEMENT", "Intent: CASH_WITHDRAWAL",
+                   "Intent: PAYMENT", "Intent: CARD_PAYMENT", "Intent: BILL_DUE")
+                .any { rule.contains(it) }
+        }
+        val hasDebitIntent = rulesFired.any { it.contains("Intent: DEBIT") }
+        val hasCorroboration = !merchant.isNullOrBlank() ||
+                !referenceId.isNullOrBlank() ||
+                !accountMask.isNullOrBlank() ||
+                bankRecognized
+        val intentDetected = hasNonDebitIntent || (hasDebitIntent && hasCorroboration)
+
+        if (intentDetected) {
+            totalScore += 0.20f
+        } else {
+            warnings.add("Intent direction could not be positively confirmed")
+        }
 
         // 3. Account Mask (0.15)
         if (!accountMask.isNullOrBlank()) {

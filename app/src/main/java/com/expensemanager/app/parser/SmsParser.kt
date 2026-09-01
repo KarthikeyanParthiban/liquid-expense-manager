@@ -50,23 +50,50 @@ object SmsParser {
 
         val accountMask = extractAccountMask(body)
         val accountId = "${bankInfo.name.replace(" ", "_")}_${accountMask ?: "PRIMARY"}"
-        val balance = extractBalance(body)
+
+        // Split balance semantics by account type:
+        //  - Credit cards report "Available Limit" (headroom) and/or "Outstanding" (debt),
+        //    NEVER a deposit balance. Storing a card limit as balance is the main cause of
+        //    wrong balances/totals, so we keep balanceAfter null for cards.
+        //  - Bank/wallet accounts report an "available balance" (owned funds).
+        val isCreditCard = bankInfo.defaultType == AccountType.CREDIT_CARD
+        val balance: Double?
+        val creditLimit: Double?
+        val outstanding: Double?
+        if (isCreditCard) {
+            balance = null
+            creditLimit = extractCreditLimit(body)
+            outstanding = extractOutstanding(body)
+        } else {
+            balance = extractBalance(body)
+            creditLimit = null
+            outstanding = null
+        }
+
         val referenceId = extractReferenceId(body)
         val merchant = extractMerchant(body)
 
-        val catResult = CategoryClassifier.classifyWithReason(merchant, body, type, userRules)
+        val catResult = CategoryClassifier.classifyWithReason(merchant, body, type, userRules, amount, currency, timestamp)
         val category = catResult.category
 
-        // ONLY exclude genuine inter-account transfers, CC bill payments, settlements, and ATM withdrawals
+        // ONLY exclude genuine inter-account transfers, CC bill payments, settlements, and ATM withdrawals.
+        // NOTE: We use \bcred\b (the CRED app), NOT a substring, so words like "Credit" don't match.
+        //       Credit-card BILL PAYMENTS are matched by the explicit "credit card ... bill ... paid"
+        //       phrasing below rather than by a loose "cred" substring.
+        val ccBillPayment = body.contains("credit card payment", ignoreCase = true) ||
+                body.contains("received towards your credit card", ignoreCase = true) ||
+                body.contains("towards your credit card", ignoreCase = true) ||
+                (body.contains("credit card", ignoreCase = true) &&
+                        body.contains("bill", ignoreCase = true) &&
+                        Regex("""(?i)\b(?:paid|payment|successfully\s+paid|has\s+been\s+paid)\b""").containsMatchIn(body))
+
         val isExcluded = category == Category.TRANSFERS ||
                 type == TransactionType.CARD_SETTLEMENT ||
                 type == TransactionType.CASH_WITHDRAWAL ||
                 type == TransactionType.TRANSFER ||
                 type == TransactionType.BILL_DUE ||
-                body.contains("cred", ignoreCase = true) ||
-                body.contains("credit card payment", ignoreCase = true) ||
-                body.contains("received towards your credit card", ignoreCase = true) ||
-                body.contains("towards your credit card", ignoreCase = true) ||
+                Regex("""\bcred\b""", RegexOption.IGNORE_CASE).containsMatchIn(body) ||
+                ccBillPayment ||
                 body.contains("self transfer", ignoreCase = true) ||
                 body.contains("transfer to own", ignoreCase = true)
 
@@ -100,6 +127,8 @@ object SmsParser {
             accountId = accountId,
             referenceId = referenceId,
             balanceAfter = balance,
+            availableLimit = creditLimit,
+            outstandingAmount = outstanding,
             timestamp = timestamp,
             confidence = scoreResult.score,
             isExcludedFromBudget = isExcluded,
@@ -115,7 +144,6 @@ object SmsParser {
         body: String,
         timestamp: Long
     ): AccountBalanceUpdate? {
-        val balance = extractBalance(body) ?: return null
         val bankInfo = BankPatterns.identifyBank(sender, body)
         if (!BankPatterns.isVerifiedFinancialInstitution(bankInfo.name)) {
             return null
@@ -128,6 +156,24 @@ object SmsParser {
         ) {
             return null
         }
+
+        // Type-aware extraction — never mix card limit with bank balance.
+        val isCreditCard = bankInfo.defaultType == AccountType.CREDIT_CARD
+        val balance: Double?
+        val creditLimit: Double?
+        val outstanding: Double?
+        if (isCreditCard) {
+            balance = null
+            creditLimit = extractCreditLimit(body)
+            outstanding = extractOutstanding(body)
+            // Nothing card-relevant found → not a balance update
+            if (creditLimit == null && outstanding == null) return null
+        } else {
+            balance = extractBalance(body) ?: return null
+            creditLimit = null
+            outstanding = null
+        }
+
         val accountMask = extractAccountMask(body)
         val accountId = "${bankInfo.name.replace(" ", "_")}_${accountMask ?: "PRIMARY"}"
 
@@ -137,6 +183,8 @@ object SmsParser {
             accountType = bankInfo.defaultType,
             accountMask = accountMask,
             balance = balance,
+            availableLimit = creditLimit,
+            outstandingAmount = outstanding,
             timestamp = timestamp,
             rawSender = sender,
             rawBody = body
@@ -212,6 +260,32 @@ object SmsParser {
                         return bal
                     }
                 }
+            }
+        }
+        return null
+    }
+
+    /** Extracts a credit-card available spending limit (headroom), or null. */
+    private fun extractCreditLimit(body: String): Double? {
+        for (pattern in BankPatterns.CREDIT_LIMIT_PATTERNS) {
+            val matcher = pattern.matcher(body)
+            if (matcher.find()) {
+                val matchStr = matcher.group(1)?.replace(",", "")?.trim()
+                val limit = matchStr?.toDoubleOrNull()
+                if (limit != null && limit >= 0.0) return limit
+            }
+        }
+        return null
+    }
+
+    /** Extracts a credit-card outstanding / total-due amount (debt), or null. */
+    private fun extractOutstanding(body: String): Double? {
+        for (pattern in BankPatterns.OUTSTANDING_PATTERNS) {
+            val matcher = pattern.matcher(body)
+            if (matcher.find()) {
+                val matchStr = matcher.group(1)?.replace(",", "")?.trim()
+                val out = matchStr?.toDoubleOrNull()
+                if (out != null && out >= 0.0) return out
             }
         }
         return null

@@ -20,3 +20,9 @@ app/src/test/resources/device_sms_dump.txt
 # Node / Tools
 node_modules/
 tools/web-adb-controller/node_modules/
+
+# ML training — never commit raw SMS dumps, pulled databases, or generated CSVs
+ml_training/raw_sms.txt
+ml_training/device_backup/
+ml_training/*.db
+ml_training/*.csv

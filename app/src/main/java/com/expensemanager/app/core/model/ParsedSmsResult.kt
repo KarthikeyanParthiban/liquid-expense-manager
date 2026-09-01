@@ -13,6 +13,10 @@ data class ParsedSmsResult(
     val accountId: String,
     val referenceId: String?,
     val balanceAfter: Double?,
+    /** Credit-card available limit, if this SMS reported one. */
+    val availableLimit: Double? = null,
+    /** Credit-card outstanding / total-due amount, if reported. */
+    val outstandingAmount: Double? = null,
     val timestamp: Long,
     val confidence: Float = 1.0f,
     val isExcludedFromBudget: Boolean = false,
